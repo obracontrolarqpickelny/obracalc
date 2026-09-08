@@ -457,6 +457,32 @@ body {
 .ia-panel-footer textarea { flex: 1; resize: none; font-size: 12.5px; padding: 8px 10px; }
 .ia-panel-footer .btn { padding: 0 16px; align-self: stretch; font-size: 16px; }
 
+/* El campo de la API key y el chat del asistente no son "datos de obra", así
+   que quedan fuera del dorado = editable (mismo criterio que ObraGestión). */
+.no-edit-hl {
+  background: var(--surface2);
+  border-color: var(--border);
+  font-weight: 400;
+}
+.no-edit-hl:focus {
+  border-color: var(--accent);
+  background: var(--surface3);
+  box-shadow: none;
+}
+
+.ia-key-box {
+  display: none; flex-direction: column; gap: 6px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2);
+  flex-shrink: 0;
+}
+.ia-key-box.open { display: flex; }
+.ia-key-label { font-size: 11px; font-weight: 600; color: var(--text2); line-height: 1.4; }
+.ia-key-box input { font-size: 12px; padding: 7px 10px; }
+.ia-key-msg { font-size: 11px; line-height: 1.4; min-height: 14px; }
+.ia-key-msg.ok { color: var(--green); }
+.ia-key-msg.err { color: var(--red); }
+.ia-key-hint { font-size: 10px; color: var(--text3); line-height: 1.4; }
+
 /* ─── CONTENT ─────────────────────────────── */
 .content { padding: 24px 28px; flex: 1; }
 
@@ -1010,6 +1036,8 @@ td input[type=text]:focus, td input[type=number]:focus {
 .save-indicator.saved .save-dot { background: var(--green); }
 .save-indicator.saved { color: var(--green); }
 .save-indicator.saving .save-dot { background: var(--accent); animation: pulse 0.8s infinite; }
+.save-indicator.error .save-dot { background: var(--red); }
+.save-indicator.error { color: var(--red); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* ─── MOBILE CONTENT PADDING ──────────────── */
@@ -1366,6 +1394,12 @@ td input[type=text]:focus, td input[type=number]:focus {
       <div id="proj-lista" style="min-height:60px;max-height:340px;overflow-y:auto;">
         <div style="color:var(--text3);font-size:12px;text-align:center;padding:20px 0;font-family:'DM Mono',monospace;">Sin proyectos guardados</div>
       </div>
+      <div id="proj-drive-wrap" style="display:none;margin-top:14px;">
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+          ☁ En Google Drive (no guardadas acá)
+        </div>
+        <div id="proj-drive-lista" style="min-height:30px;max-height:180px;overflow-y:auto;"></div>
+      </div>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="importarProyecto()" style="font-size:12px;">📂 Importar .json</button>
         <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:12px;">📊 Excel (.xlsx)</button>
@@ -1501,6 +1535,10 @@ td input[type=text]:focus, td input[type=number]:focus {
       <div class="save-indicator" id="saveIndicator">
         <div class="save-dot"></div>
         <span id="saveLabel">guardado</span>
+      </div>
+      <div class="save-indicator" id="driveIndicator" style="display:none;" title="Respaldo en Google Drive">
+        <div class="save-dot"></div>
+        <span id="driveLabel">☁ Drive</span>
       </div>
       <button class="btn btn-secondary" onclick="recalcAllUI()" style="padding:7px 10px;" title="Recalcular todo">⟳</button>
       <!-- Grupo backup rápido -->
@@ -3109,11 +3147,23 @@ td input[type=text]:focus, td input[type=number]:focus {
       <div class="ia-panel-title">🤖 Asistente de obra</div>
       <div class="ia-panel-sub">Describí columnas, vigas, bases o losas — las carga por vos</div>
     </div>
-    <button class="ia-panel-close" onclick="toggleIaPanel()" title="Cerrar">✕</button>
+    <div style="display:flex;gap:4px;align-items:flex-start;">
+      <button class="ia-panel-close" onclick="iaToggleKeyBox()" title="Configurar API key de Anthropic">🔑</button>
+      <button class="ia-panel-close" onclick="toggleIaPanel()" title="Cerrar">✕</button>
+    </div>
+  </div>
+  <div class="ia-key-box" id="iaKeyBox">
+    <div class="ia-key-label">API key de Anthropic <span style="font-weight:400;color:var(--text3);">— necesaria solo si abrís ObraCalc fuera de claude.ai (GitHub Pages, archivo local)</span></div>
+    <div style="display:flex;gap:6px;">
+      <input type="password" id="iaKeyInput" placeholder="sk-ant-...">
+      <button class="btn btn-primary" onclick="iaProbarYGuardarKey()" id="iaKeyBtn" style="white-space:nowrap;">Probar y guardar</button>
+    </div>
+    <div id="iaKeyMsg" class="ia-key-msg"></div>
+    <div class="ia-key-hint">La generás en <strong>platform.claude.com/settings/keys</strong>. Queda guardada solo en este navegador, nunca sale de tu equipo salvo hacia la API de Anthropic.</div>
   </div>
   <div class="ia-panel-body" id="iaMensajes"></div>
   <div class="ia-panel-footer">
-    <textarea id="iaInput" rows="2" placeholder="Ej: Agregá 3 columnas C20, sección 20x25, 4 barras de 12, estribo Ø6 cada 15..." onkeydown="iaOnKeyDown(event)"></textarea>
+    <textarea id="iaInput" class="no-edit-hl" rows="2" placeholder="Ej: Agregá 3 columnas C20, sección 20x25, 4 barras de 12, estribo Ø6 cada 15..." onkeydown="iaOnKeyDown(event)"></textarea>
     <button class="btn btn-primary" id="iaSendBtn" onclick="iaEnviar()" title="Enviar (Enter)">➤</button>
   </div>
 </div>
@@ -6493,6 +6543,36 @@ function openProyectos(){
   // Prellenar con nombre actual de la obra
   const nombre = document.getElementById('obra-nombre')?.value||'';
   if(nombre) document.getElementById('proj-nombre').value = nombre;
+  cargarListaDrive();
+}
+
+// Muestra las obras que están en Drive pero no en la lista local (por ej.
+// guardadas desde otra computadora). No pisa nada: solo ofrece cargarlas.
+async function cargarListaDrive(){
+  const wrap = document.getElementById('proj-drive-wrap');
+  if(!DRIVE_URL){ wrap.style.display='none'; return; }
+  const locales = new Set(getProyectos().map(p=>p.nombre));
+  const obras = await _driveList();
+  if(!obras){ wrap.style.display='none'; return; }
+  const soloEnDrive = obras.filter(n=>!locales.has(n));
+  if(!soloEnDrive.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  document.getElementById('proj-drive-lista').innerHTML = soloEnDrive.map(nombre=>`
+    <div class="proj-item">
+      <div class="proj-info"><div class="proj-name">${nombre}</div><div class="proj-meta">Guardada en Drive</div></div>
+      <div class="proj-actions"><button class="proj-btn proj-btn-load" onclick="cargarProyectoDesdeDrive('${nombre.replace(/'/g,"\\'")}')">Cargar</button></div>
+    </div>`).join('');
+}
+
+async function cargarProyectoDesdeDrive(nombre){
+  if(!confirm(`¿Cargar "${nombre}" desde Drive? Se perderán los datos no guardados del proyecto actual.`)) return;
+  const data = await _driveLoad(nombre);
+  if(!data){ showToast('⚠️ No se pudo traer la obra desde Drive','',2500); return; }
+  saveAll();
+  applySnapshot(data);
+  saveAll();
+  closeProyectos();
+  showToast(`✅ "${nombre}" cargada desde Drive`,'success',2500);
 }
 function closeProyectos(){
   document.getElementById('modalProyectos').classList.remove('open');
@@ -6528,6 +6608,7 @@ function guardarProyecto(){
   setProyectos(proyectos);
   renderProjLista();
   saveAll(); marcarGuardado();
+  driveSyncAhora(nombre);
   showToast(`✅ Proyecto "${nombre}" guardado`,'success',2500);
 }
 
@@ -6756,6 +6837,7 @@ async function backupRapido(){
   const blob   = new Blob([json], {type:'application/json'});
   const ok = await iaGuardarArchivo(nombre + '_' + ts + '_obracalc.json', blob);
   saveAll(); marcarGuardado();
+  driveSyncAhora(obra.trim());
   if(ok) showToast('💾 Backup descargado', 'success', 2500);
 }
 
@@ -6810,19 +6892,29 @@ function guardarEnDispositivo(){
   // También actualizar el autosave local
   saveAll();
   marcarGuardado();
+  driveSyncAhora(obra);
 }
 
 // ── ASISTENTE IA ────────────────────────────────────────────────────────────
-// Usa la capacidad "sample" del Artifact para conversar con Claude dentro de
-// la propia página (cuenta del que la abre, con su consentimiento). Si la
-// página no está publicada/abierta como Artifact, window.claude no existe y
-// el asistente queda visible pero avisa que no está disponible en este modo.
+// Dos motores posibles, según dónde se abra la página:
+//   1) "artifact" — capacidad "sample" de un Artifact de claude.ai (cuenta del
+//      que la abre, sin configurar nada). Sólo existe dentro del visor de
+//      claude.ai — window.claude no está definido en ningún otro lado.
+//   2) "apikey"   — API key propia de Anthropic, pegada una vez y guardada en
+//      este navegador, con fetch directo a api.anthropic.com. Funciona en
+//      cualquier hosting (GitHub Pages incluido) o como archivo local. Mismo
+//      patrón que usa ObraGestión.
+// Los dos motores devuelven el mismo contrato: {mensaje, acciones}. Lo que
+// hace cada acción (agregar/modificar/eliminar fila) es idéntico sea cual
+// sea el motor — ver aplicarAcciones().
 
 const IA_TIPOS_VALIDOS = ['columna','viga_vf','viga_vd','base','losa','losa_maciza'];
 const IA_TIPO_LABEL = {columna:'columna', viga_vf:'viga', viga_vd:'viga', base:'base', losa:'losa', losa_maciza:'losa maciza'};
 
+const AI_KEY_LS = 'obracalc_ai_key';
+const IA_API_MODEL = 'claude-opus-5';
+
 let _iaSample = null;
-let _iaToolsOk = false;
 let _iaDownloads = null;   // capacidad "downloads": necesaria para guardar archivos cuando la página corre publicada (el navegador local usa el método clásico de <a download>)
 let _iaTurnos = [];       // {role,content} — historial real del chat (sin la instrucción, que se rearma fresca)
 let _iaAcciones = [];     // log para la UI: {histIdx, tipo, verbo, denom, deshecho}
@@ -6832,17 +6924,65 @@ let _iaEnviando = false;
 let _iaCtl = null;
 
 async function iaInit(){
-  if(!window.claude || typeof window.claude.use !== 'function'){ _iaSample = null; return; }
-  try {
-    _iaSample = await window.claude.use('sample');
-    if(_iaSample){
-      const lim = await _iaSample.limits().catch(()=>null);
-      _iaToolsOk = !!(lim && lim.tools);
-    }
-  } catch(e){ _iaSample = null; }
+  if(!window.claude || typeof window.claude.use !== 'function') return;
+  try { _iaSample = await window.claude.use('sample'); } catch(e){ _iaSample = null; }
   try { _iaDownloads = await window.claude.use('downloads'); } catch(e){ _iaDownloads = null; }
 }
 iaInit();
+
+// ── API key propia (motor 2) ─────────────────────────────────────────────
+const setAIKey = k => { try{ k?localStorage.setItem(AI_KEY_LS,k):localStorage.removeItem(AI_KEY_LS); }catch(e){} };
+/* Al pegar la key suelen colarse espacios, saltos de línea o comillas curvas
+   que mete el autocorrector. Las cabeceras HTTP sólo aceptan Latin-1, así que
+   uno solo de esos caracteres hace fallar el fetch antes de contactar la API. */
+const limpiarKey = k => String(k||'')
+  .replace(/[^!-~]/g,'')
+  .replace(/^["'`«“‘]+|["'`»”’]+$/g,'');
+const KEY_SOSPECHOSA = k => !/^sk-ant-/.test(k) || k.length<30;
+const getAIKey = () => { try{ return limpiarKey(localStorage.getItem(AI_KEY_LS)||''); }catch(e){ return ''; } };
+
+function _iaErrAPI(status, cuerpo){
+  const txt = String(cuerpo||'');
+  if(status===401) return 'La API key no es válida o fue revocada. Generá una nueva en platform.claude.com/settings/keys';
+  if(status===400 && /credit balance|insufficient|too low/i.test(txt)) return 'La key es válida pero la cuenta no tiene crédito. Cargá saldo en platform.claude.com/settings/billing';
+  if(status===429) return 'Demasiadas consultas seguidas. Esperá unos segundos y reintentá.';
+  if(status>=500) return 'El servicio de Anthropic no está respondiendo. Reintentá en un rato.';
+  return `Error ${status}: ${txt.slice(0,180)}`;
+}
+
+function iaToggleKeyBox(forzar){
+  const box = document.getElementById('iaKeyBox');
+  const abrir = forzar===true ? true : forzar===false ? false : !box.classList.contains('open');
+  box.classList.toggle('open', abrir);
+  if(abrir) document.getElementById('iaKeyInput').value = getAIKey();
+}
+
+async function iaProbarYGuardarKey(){
+  const input = document.getElementById('iaKeyInput');
+  const msgEl = document.getElementById('iaKeyMsg');
+  const btn = document.getElementById('iaKeyBtn');
+  const k = limpiarKey(input.value);
+  if(!k){ msgEl.className='ia-key-msg err'; msgEl.textContent='Pegá la API key primero.'; return; }
+  if(KEY_SOSPECHOSA(k)){ msgEl.className='ia-key-msg err'; msgEl.textContent='Ojo: no tiene la forma habitual (empiezan con "sk-ant-"). La pruebo igual…'; }
+  btn.disabled = true;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,
+        'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:IA_API_MODEL, max_tokens:16, messages:[{role:'user',content:'ok'}]})
+    });
+    if(r.ok){
+      setAIKey(k);
+      msgEl.className='ia-key-msg ok'; msgEl.textContent='✓ La key funciona y quedó guardada en este navegador.';
+      setTimeout(()=>{ iaToggleKeyBox(false); msgEl.textContent=''; }, 1800);
+    } else {
+      msgEl.className='ia-key-msg err'; msgEl.textContent=_iaErrAPI(r.status, await r.text().catch(()=>''));
+    }
+  } catch(e){
+    msgEl.className='ia-key-msg err'; msgEl.textContent='No se pudo contactar a la API: '+(e&&e.message||'')+' (¿hay conexión?)';
+  } finally { btn.disabled = false; }
+}
 
 // Guarda un archivo generado por la app. Publicada como página (con la
 // capacidad "downloads"), pasa por el visor — el navegador bloquea el
@@ -6986,8 +7126,8 @@ function toggleIaPanel(){
   p.classList.toggle('open');
   if(abriendo && _iaTurnos.length===0){
     iaRenderMensaje('assistant', '¡Hola! Contame qué querés cargar — columnas, vigas, bases o losas — con medidas y cantidades, y te lo completo en la tabla correspondiente.\n\nEj: "Agregá 4 columnas C20, sección 20x30, 4 barras de 12, estribo Ø6 cada 15, altura 4.5m"\n\nSiempre podés corregir a mano lo que cargue, o deshacerlo con el botón ↩ de cada acción.');
-    if(_iaSample && !_iaToolsOk){
-      iaRenderMensaje('assistant', '⚠️ En esta vista puedo charlar pero no puedo completar las tablas directamente (esta vista no admite herramientas). Cargá a mano lo que te sugiera.');
+    if(!_iaSample && !getAIKey()){
+      iaRenderMensaje('assistant', '🔑 Para que pueda cargar datos acá, tocá el botón 🔑 de arriba y pegá tu API key de Anthropic (la generás gratis en platform.claude.com/settings/keys — el uso se cobra por consulta, aparte).');
     }
   }
 }
@@ -7015,6 +7155,15 @@ function iaRegistrarAccion(histIdx, tipo, verbo, denom, detalle){
   cont.appendChild(div);
   cont.scrollTop = cont.scrollHeight;
 }
+function iaRegistrarErrorAccion(entidad, denom, mensaje){
+  const cont = document.getElementById('iaMensajes');
+  const div = document.createElement('div');
+  div.className = 'ia-error';
+  const label = IA_TIPO_LABEL[entidad]||entidad||'elemento';
+  div.textContent = `⚠️ No pude aplicar ${label}${denom?' "'+denom+'"':''}: ${mensaje}`;
+  cont.appendChild(div);
+  cont.scrollTop = cont.scrollHeight;
+}
 function iaDeshacerAccion(accIdx){
   const acc = _iaAcciones[accIdx];
   if(!acc || acc.deshecho) return;
@@ -7038,12 +7187,14 @@ function iaManejarError(e, elPensando){
     empty_completion: 'No llegó respuesta. Probá de nuevo con menos texto.',
     session_expired: 'Tu sesión de Claude expiró — recargá la página.',
     sampling_disabled: 'El uso de IA no está disponible en esta cuenta.',
+    invalid_json: 'La respuesta no se pudo interpretar. Probá reformulando el pedido.',
   };
   elPensando.className = 'ia-error';
-  elPensando.textContent = (e && copy[e.code]) || ('⚠️ Error: '+((e&&e.message)||'desconocido'));
+  elPensando.textContent = (e && copy[e.code]) || (e && e.message) || '⚠️ Error inesperado.';
 }
 
-// ── Contexto vivo que se manda en cada llamado (sample no tiene memoria) ──
+// ── Contexto vivo que se manda en cada llamado (ninguno de los dos motores
+//    tiene memoria propia entre llamados) ──────────────────────────────────
 function iaContextoActual(){
   const compact = (arr, campos) => (arr||[]).map(o=>{ const r={}; campos.forEach(c=>{ if(o[c]!==undefined) r[c]=o[c]; }); return r; });
   return {
@@ -7055,17 +7206,15 @@ function iaContextoActual(){
     losas_macizas: compact(state.losas_macizas, ['denom','cant','ancho','largo','alto','phiX','sepX','phiY','sepY','factor']),
   };
 }
+
 function iaInstrucciones(){
-  const sinHerramientas = _iaSample && !_iaToolsOk;
-  return `Sos el asistente de obra de ObraCalc, una app de cómputo de materiales para construcción en Argentina (hormigón armado, CIRSOC 201). Hablás en español, tono directo de colega de obra, sin rodeos.
+  return `Sos el asistente de obra de ObraCalc, una app de cómputo de materiales para construcción en Argentina (hormigón armado, CIRSOC 201). Hablás en español, tono directo de colega de obra, sin rodeos. Sos criterioso: si algo no cierra estructuralmente, lo decís aunque no te lo pregunten.
 
-Tu trabajo es ayudar a cargar datos en las tablas de la app a partir de lo que el usuario describe en lenguaje natural: columnas, vigas (VF/VA = inferiores/fundación, VD/VE/VC = superiores/dinteles), bases y cimientos, losas pretensadas y losas macizas.
+Tu trabajo es cargar datos en las tablas de la app a partir de lo que el usuario describe en lenguaje natural: columnas, vigas (VF/VA = inferiores/fundación, VD/VE/VC = superiores/dinteles), bases y cimientos, losas pretensadas y losas macizas.
 
-${sinHerramientas ? 'IMPORTANTE: en esta vista NO tenés herramientas para modificar la tabla — solo podés charlar y decirle al usuario qué cargar a mano.' : 'Herramientas disponibles: agregar_elemento, modificar_elemento, eliminar_elemento. Usalas para EJECUTAR los cambios que te piden, no solo para describirlos — si el usuario te pide agregar algo con datos suficientes, llamá a la herramienta directamente.'}
+Entidades válidas: columna, viga_vf, viga_vd, base, losa, losa_maciza.
 
-Tipos válidos (parámetro "tipo"): columna, viga_vf, viga_vd, base, losa, losa_maciza.
-
-Campos por tipo:
+Campos por entidad:
 - columna: denom (ej "C1"), cantElem (cant. de columnas iguales), phi/nBarras (Ø principal en mm: 6,8,10,12,16,20 — y cant. de barras), phi2/n2 y phi3/n3 (armaduras secundarias, 0 si no hay), alt (altura libre en m), secA/secB (sección en cm), phiEstr/sepEstr (estribo: Ø en mm y separación en mm), estribType (1=simple, 2=doble rama, 3=triple — default 1 si no te lo dicen).
 - viga_vf / viga_vd: denom, phi/nBarras (+ phi2/n2 opcional), phiEstr/sepEstr, longLibre (luz libre en m), ancho/alto (sección en cm), estribType, hormTipo ('H8'|'H13'|'H17'|'H21'|'H25'|'obra'), techoLiviano (bool).
 - base: denom, cant, ancho/largo/alto (en METROS), phi/sep (armadura principal), phi2/sep2 (secundaria opcional), hormTipo.
@@ -7074,24 +7223,95 @@ Campos por tipo:
 
 No inventes valores estructurales (secciones, armaduras) si el usuario no los da y no son deducibles del contexto — preguntá. Sí podés completar valores administrativos obvios (denominación correlativa, estribType=1) sin preguntar.
 
-Sé criterioso: con los datos ya cargados abajo, cruzá información — si algo que te piden es inconsistente con lo existente (sección chica para esa altura, estribo muy separado, una denominación repetida) decilo antes de cargar, o cargalo y avisá igual, según corresponda. Si el usuario corrige algo que ya existe (mismo denom), usá modificar_elemento en vez de crear uno nuevo.
+Cruzá información con lo que ya está cargado (abajo): si algo que te piden es inconsistente con lo existente (sección chica para esa altura, estribo muy separado, una denominación repetida) decilo antes de cargar, o cargalo y avisá igual, según corresponda. Si el usuario corrige algo que ya existe (mismo denom), modificalo en vez de crear uno nuevo.
 
 Estado actual de la obra (para que cruces información, no repitas ni contradigas lo que ya está cargado):
 ${JSON.stringify(iaContextoActual())}
 
-Respondé siempre corto (2-4 líneas): confirmá qué hiciste o qué preguntás. No repitas toda la tabla de vuelta.`;
+RESPONDÉ SIEMPRE con un único objeto JSON válido, sin markdown, sin backticks, sin texto antes ni después:
+{"mensaje": "texto corto para el usuario (2-4 líneas): qué hiciste o qué preguntás", "acciones": [ ... ]}
+
+Si sólo charlás o preguntás algo, "acciones" va vacío: [].
+
+TIPOS DE ACCIÓN (van dentro de "acciones"):
+{"tipo":"agregar","entidad":"columna","datos":{...campos...}}
+{"tipo":"modificar","entidad":"columna","denom":"C1","cambios":{...campos a cambiar...}}
+{"tipo":"eliminar","entidad":"columna","denom":"C1"}
+"entidad" es una de: columna, viga_vf, viga_vd, base, losa, losa_maciza. Para modificar/eliminar, "denom" tiene que ser EXACTO tal como figura en el estado de arriba.`;
+}
+
+// Aplica lo que el modelo decidió, sea cual sea el motor que lo generó.
+// Una acción que falla (denom no encontrado, entidad inválida) no frena las
+// demás — se muestra como chip rojo en vez de verde, y Claude lo va a ver
+// reflejado en el estado actualizado del turno siguiente.
+function aplicarAcciones(acciones){
+  if(!Array.isArray(acciones)) return;
+  acciones.forEach(a=>{
+    if(!a || typeof a!=='object') return;
+    try{
+      if(a.tipo==='agregar') iaAgregar({tipo:a.entidad, datos:a.datos});
+      else if(a.tipo==='modificar') iaModificar({tipo:a.entidad, denom:a.denom, cambios:a.cambios});
+      else if(a.tipo==='eliminar') iaEliminar({tipo:a.entidad, denom:a.denom});
+      else iaRegistrarErrorAccion(a.entidad, a.denom, 'tipo de acción desconocido: "'+a.tipo+'"');
+    }catch(e){
+      iaRegistrarErrorAccion(a.entidad, a.denom||(a.datos&&a.datos.denom), (e&&e.message)||String(e));
+    }
+  });
+}
+
+// Parseo tolerante para el motor de API key (el de Artifact ya lo hace sample.json()).
+function iaParsearJSON(texto){
+  try{ return JSON.parse(texto); }catch(e){}
+  const m = String(texto||'').match(/\{[\s\S]*\}/);
+  if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  throw {code:'invalid_json', message:'La respuesta no se pudo interpretar como JSON.', text:texto};
+}
+
+// ── Motor 1: Artifact de claude.ai ───────────────────────────────────────
+async function iaLlamarArtifact(turnos){
+  return await _iaSample.json(turnos, {cache:false, modelTier:'default', signal:_iaCtl.signal});
+}
+
+// ── Motor 2: API key propia, fetch directo a Anthropic ───────────────────
+async function iaLlamarApiKey(turnos){
+  const key = getAIKey();
+  const sistema = turnos[0].content;
+  const mensajes = turnos.slice(1).map(t=>({role:t.role, content:t.content}));
+  let r;
+  try {
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', signal:_iaCtl.signal,
+      headers:{'Content-Type':'application/json','x-api-key':key,
+        'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:IA_API_MODEL, max_tokens:1500, system:sistema, messages:mensajes})
+    });
+  } catch(e){
+    if(e && e.name==='AbortError') throw {code:'cancelled'};
+    throw {code:'network_error', message:'No se pudo contactar a la API de Anthropic: '+(e&&e.message||'')+' (¿hay conexión?)'};
+  }
+  if(!r.ok){
+    const txt = await r.text().catch(()=>'');
+    throw {code:'api_error', message:_iaErrAPI(r.status, txt)};
+  }
+  const j = await r.json();
+  const texto = (j.content||[]).map(b=>b.text||'').join('');
+  return iaParsearJSON(texto);
 }
 
 async function iaEnviar(){
   const input = document.getElementById('iaInput');
   const texto = input.value.trim();
   if(!texto || _iaEnviando) return;
-  if(!_iaSample){
+
+  const motor = _iaSample ? 'artifact' : (getAIKey() ? 'apikey' : null);
+  if(!motor){
     iaRenderMensaje('user', texto);
     input.value='';
-    iaRenderMensaje('assistant', '⚠️ El asistente con IA no está disponible en este modo. Esta función funciona cuando ObraCalc se abre como página publicada con tu cuenta de Claude, no como archivo local en el navegador.');
+    iaRenderMensaje('assistant', '⚠️ Todavía no configuraste cómo hablar con Claude acá. Tocá el 🔑 de arriba y pegá tu API key de Anthropic.');
+    iaToggleKeyBox(true);
     return;
   }
+
   input.value = '';
   iaRenderMensaje('user', texto);
   _iaTurnos.push({role:'user', content:texto});
@@ -7100,44 +7320,17 @@ async function iaEnviar(){
   _iaEnviando = true;
   document.getElementById('iaSendBtn').disabled = true;
   const elPensando = iaRenderMensaje('thinking', 'Pensando…');
-
-  const tools = _iaToolsOk ? [
-    { name:'agregar_elemento',
-      description:'Agrega una fila nueva (columna, viga_vf, viga_vd, base, losa o losa_maciza) con los datos dados. Devuelve {ok, tipo, id, denom}.',
-      inputSchema:{ type:'object', properties:{
-        tipo:{type:'string', enum:IA_TIPOS_VALIDOS},
-        datos:{type:'object', description:'Campos del elemento según su tipo. denom es opcional, se autogenera si falta.'}
-      }, required:['tipo'] },
-      execute:(input)=>iaAgregar(input) },
-    { name:'modificar_elemento',
-      description:'Modifica campos de un elemento existente, ubicado por su denominación (denom). Devuelve {ok, tipo, denom, valores}.',
-      inputSchema:{ type:'object', properties:{
-        tipo:{type:'string', enum:IA_TIPOS_VALIDOS},
-        denom:{type:'string', description:'Denominación del elemento a modificar, ej "C1"'},
-        cambios:{type:'object', description:'Campos a cambiar y sus nuevos valores'}
-      }, required:['tipo','denom','cambios'] },
-      execute:(input)=>iaModificar(input) },
-    { name:'eliminar_elemento',
-      description:'Elimina un elemento existente por su denominación. Devuelve {ok, tipo, denom}.',
-      inputSchema:{ type:'object', properties:{
-        tipo:{type:'string', enum:IA_TIPOS_VALIDOS},
-        denom:{type:'string'}
-      }, required:['tipo','denom'] },
-      execute:(input)=>iaEliminar(input) },
-  ] : undefined;
-
-  const turnos = [{role:'user', content: iaInstrucciones()}, ..._iaTurnos];
   _iaCtl = new AbortController();
 
+  const turnos = [{role:'user', content: iaInstrucciones()}, ..._iaTurnos];
+
   try {
-    const {text} = await _iaSample(turnos, {
-      cache: false,
-      signal: _iaCtl.signal,
-      tools,
-      modelTier: 'default',
-      onText: ({text}) => { elPensando.textContent = text; elPensando.className = 'ia-msg ia-msg-assistant'; },
-    });
-    _iaTurnos.push({role:'assistant', content:text});
+    const data = motor==='artifact' ? await iaLlamarArtifact(turnos) : await iaLlamarApiKey(turnos);
+    const mensaje = (data && typeof data.mensaje==='string') ? data.mensaje : 'Listo.';
+    elPensando.textContent = mensaje;
+    elPensando.className = 'ia-msg ia-msg-assistant';
+    aplicarAcciones(data && data.acciones);
+    _iaTurnos.push({role:'assistant', content:mensaje});
   } catch(e){
     iaManejarError(e, elPensando);
   } finally {
@@ -7146,6 +7339,68 @@ async function iaEnviar(){
     _iaCtl = null;
   }
 }
+
+// ── RESPALDO EN DRIVE ────────────────────────────────────────────────────
+// Mismo criterio que ObraControl y ObraGestión: un Google Apps Script propio
+// (desplegado una sola vez, ver INSTALAR_BACKEND.md) guarda cada obra en una
+// carpeta de tu Drive, navegable, con datos.json + CSV legibles. La URL y la
+// clave quedan embebidas acá — no hay panel de configuración, como en
+// ObraGestión (es una app de un solo usuario).
+const DRIVE_URL = '';      // se completa cuando esté desplegado el Apps Script
+const DRIVE_SECRET = 'obracalc-7b9b1555c4423a7a1e2061a0';
+
+let _driveStatus = 'idle'; // idle | pending | saving | saved | error
+
+function actualizarIndicadorDrive(){
+  const el = document.getElementById('driveIndicator');
+  const lbl = document.getElementById('driveLabel');
+  if(!el || !DRIVE_URL){ if(el) el.style.display='none'; return; }
+  el.style.display = 'flex';
+  el.classList.remove('saving','saved','error');
+  const textos = {idle:'☁ Drive', pending:'☁ Drive', saving:'☁ sincronizando…', saved:'☁ sincronizado', error:'☁ error'};
+  lbl.textContent = textos[_driveStatus] || '☁ Drive';
+  if(_driveStatus==='saving') el.classList.add('saving');
+  else if(_driveStatus==='saved') el.classList.add('saved');
+  else if(_driveStatus==='error') el.classList.add('error');
+}
+
+async function _driveSave(obraName, data){
+  if(!DRIVE_URL || !obraName) return false;
+  try{
+    const r = await fetch(DRIVE_URL, {method:'POST', redirect:'follow', body:JSON.stringify({secreto:DRIVE_SECRET, obraName, data})});
+    const j = await r.json();
+    return !!j.ok;
+  }catch(e){ return false; }
+}
+async function _driveLoad(obraName){
+  if(!DRIVE_URL || !obraName) return null;
+  try{
+    const r = await fetch(`${DRIVE_URL}?action=load&obra=${encodeURIComponent(obraName)}&secreto=${DRIVE_SECRET}`);
+    const j = await r.json();
+    return j.ok ? j.data : null;
+  }catch(e){ return null; }
+}
+async function _driveList(){
+  if(!DRIVE_URL) return null;
+  try{
+    const r = await fetch(`${DRIVE_URL}?action=list&secreto=${DRIVE_SECRET}`);
+    const j = await r.json();
+    return j.ok ? (j.obras||[]) : null;
+  }catch(e){ return null; }
+}
+
+// Sube al Drive con feedback visual — usada por las acciones EXPLÍCITAS de
+// guardado (Guardar proyecto, Guardar rápido, Backup). No hay auto-sync en
+// cada tecleo: sólo cuando el usuario efectivamente pide guardar.
+async function driveSyncAhora(obraName){
+  if(!DRIVE_URL || !obraName) return;
+  _driveStatus = 'saving'; actualizarIndicadorDrive();
+  const ok = await _driveSave(obraName, captureSnapshot());
+  _driveStatus = ok ? 'saved' : 'error'; actualizarIndicadorDrive();
+  if(ok) setTimeout(()=>{ _driveStatus='idle'; actualizarIndicadorDrive(); }, 4000);
+}
+
+document.addEventListener('DOMContentLoaded', actualizarIndicadorDrive);
 </script>
 </body>
 </html>
