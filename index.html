@@ -717,7 +717,9 @@ td.red { color: var(--red); }
 td.total-row { background: var(--surface2); font-weight: 600; color: var(--text); }
 /* Inputs dentro de tablas: mismo dorado que el resto, pero compacto para no
    romper filas densas (columnas/vigas/bases llegan a ~10 campos por fila). */
-td input[type=text], td input[type=number] {
+/* input:not([type]) = casillas sin type declarado (ej. denominación C1, VF-2):
+   también son editables, así que también van en dorado */
+td input[type=text], td input[type=number], td input:not([type]) {
   background: var(--edit-bg);
   border: 1px solid var(--edit-border);
   color: var(--text);
@@ -729,8 +731,8 @@ td input[type=text], td input[type=number] {
   padding: 3px 5px;
   border-radius: 4px;
 }
-td input[type=text]:hover, td input[type=number]:hover { background: var(--edit-bg2); }
-td input[type=text]:focus, td input[type=number]:focus {
+td input[type=text]:hover, td input[type=number]:hover, td input:not([type]):hover { background: var(--edit-bg2); }
+td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):focus {
   background: var(--edit-bg2);
   border: 1.5px solid var(--edit);
   box-shadow: 0 0 0 2px var(--edit-dim);
@@ -1231,6 +1233,38 @@ td input[type=text]:focus, td input[type=number]:focus {
   width: 62px !important; font-size: 12px !important;
   padding: 3px 2px 3px 6px !important; text-align: center;
   font-family: 'DM Mono', monospace; font-weight: 600;
+}
+/* Separación de estribos / mallas: 3 dígitos (mm) + flechas, sin cortar el último */
+.sep-input {
+  width: 62px !important; font-size: 11px !important;
+  padding: 3px 2px 3px 6px !important; text-align: center;
+}
+
+/* Sección de columna según plano */
+.forma-select {
+  width: 100% !important; font-size: 11px !important;
+  padding: 3px 4px !important; margin-bottom: 4px;
+}
+.sec-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; }
+.sec-input {
+  width: 58px !important; font-size: 12px !important;
+  padding: 3px 2px 3px 6px !important; text-align: center;
+}
+.sec-x { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.sec-igual {
+  width: 58px; text-align: center; font-size: 12px; color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.sec-derivado { cursor: pointer; line-height: 1.45; }
+.sec-derivado:hover { color: var(--text); text-decoration: underline dotted; }
+
+.modal-col-box {
+  padding: 12px 14px; margin-bottom: 14px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+}
+.modal-col-lbl {
+  font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 3px; font-family: 'DM Mono', monospace;
 }
 .phi-select {
   width: 50px !important; font-size: 11px !important;
@@ -2068,6 +2102,7 @@ td input[type=text]:focus, td input[type=number]:focus {
                 <tr>
                   <th>Denom.</th>
                   <th class="center">Cant.</th>
+                  <th style="min-width:150px" data-tip="Sección de hormigón según plano. Debajo: medida exterior del estribo y recubrimiento que resulta">Sección (cm)<br><span style="text-transform:none;letter-spacing:0;">según plano</span></th>
                   <th style="min-width:130px">Armadura · Ø / n° barras</th>
                   <th class="right" data-tip="Altura libre del elemento">Alt.<br>libre (m)</th>
                   <th class="right" data-tip="Alt + 0.25m pata + 60×Ø anclaje, redondeado ↑ a 0.50m">L. barra<br>CIRSOC ↑</th>
@@ -3409,7 +3444,7 @@ const ESTRIBO_TIPOS = [
   { id:7, name:'Cuadrado simple', abbr:'cuadrado',
     dims:[
       {label:'Estribo cuadrado',color:'#e05c3a',hookLen:0.12,
-       aDefault:A=>A, bDefault:B=>A, aLabel:'Lado A (cm)',bLabel:'(= A)'}
+       aDefault:A=>A, bDefault:B=>B, aLabel:'Lado A (cm)',bLabel:'(= A)'}
     ],
     perim:(dv)=> 4*dv[0].a/100 + 0.12,
     svg:`<svg width="76" height="76" viewBox="0 0 76 76">
@@ -3427,8 +3462,8 @@ const ESTRIBO_TIPOS = [
   { id:8, name:'Cuad. + diagonales sísmico', abbr:'cuad.+diag.',
     dims:[
       {label:'Estribo exterior',color:'#e05c3a',hookLen:0.12,
-       aDefault:A=>A, bDefault:B=>A, aLabel:'Lado A (cm)',bLabel:'(= A)'},
-      {label:'4 diagonales',color:'#4a7fc1',hookLen:0.08,
+       aDefault:A=>A, bDefault:B=>B, aLabel:'Lado A (cm)',bLabel:'(= A)'},
+      {label:'4 diagonales',color:'#4a7fc1',hookLen:0.08,mult:4,
        aDefault:A=>Math.round(A*Math.SQRT2/2), bDefault:B=>0, aLabel:'Long. diagonal (cm)',bLabel:'—'}
     ],
     perim:(dv)=> 4*dv[0].a/100+0.12 + 4*(dv[1].a/100+0.08),
@@ -3594,6 +3629,109 @@ function calcPerimEstribo(tipo_id, a_cm, b_cm, customDimVals){
   return t.perim(dv);
 }
 
+// ── COLUMNAS: SECCIÓN SEGÚN PLANO ≠ MEDIDAS DEL ESTRIBO ────────────────────
+// secA/secB (+ espA/espB en L y T) son la sección de HORMIGÓN de la columna,
+// tal como figura en el plano. El estribo es más chico: su medida exterior
+// es la sección menos 2 × recubrimiento. Si se cargan medidas de estribo a
+// mano (estriboManual), el recubrimiento pasa a ser el resultado.
+const REC_DEFAULT = 2;   // cm, recubrimiento al estribo por defecto
+
+const COL_FORMAS = {
+  cuad:{label:'□ cuadrada'}, rect:{label:'▭ rectangular'},
+  L:{label:'L'}, T:{label:'T'}, circ:{label:'○ circular'},
+};
+
+// Columnas cargadas antes de existir "forma": se deduce del tipo de estribo.
+function colForma(c){
+  if(c.forma) return c.forma;
+  return ({6:'circ',7:'cuad',8:'cuad',11:'L',12:'T'})[c.estribType] || 'rect';
+}
+
+// Medidas de la sección en cm, normalizadas según la forma
+function colSecc(c){
+  const f = colForma(c);
+  const A = +c.secA || 20;
+  const B = (f==='cuad' || f==='circ') ? A : (+c.secB || 20);
+  const eA = +c.espA || Math.round(A*0.4);
+  const eB = +c.espB || Math.round(B*0.4);
+  return {f, A, B, eA, eB};
+}
+
+// Área de hormigón de la sección (m²)
+function colArea(c){
+  const {f, A, B, eA, eB} = colSecc(c);
+  if(f==='circ') return Math.PI*(A/100)**2/4;
+  if(f==='L' || f==='T') return (A*eB + eA*(B-eB))/1e4;   // banda completa + brazo restante
+  return (A*B)/1e4;
+}
+
+function colSeccTxt(c){
+  const {f, A, B, eA, eB} = colSecc(c);
+  if(f==='circ') return `Ø${A}`;
+  if(f==='cuad') return `${A}×${A}`;
+  if(f==='L' || f==='T') return `${f} ${A}×${B} (${eA}/${eB})`;
+  return `${A}×${B}`;
+}
+
+// Medidas exteriores de cada estribo derivadas de la sección − 2 × recubrimiento
+function estriboDimValsAuto(c){
+  const t = ESTRIBO_TIPOS.find(x=>x.id===(c.estribType||1)) || ESTRIBO_TIPOS[0];
+  const r = (c.recub ?? REC_DEFAULT);
+  const {A, B, eA, eB} = colSecc(c);
+  const q = v => Math.max(Math.round(v*10)/10, 1);
+  if(t.id===11) return [{a:q(eA-2*r), b:q(B-2*r)}, {a:q(A-2*r), b:q(eB-2*r)}];   // L: brazo V, brazo H
+  if(t.id===12) return [{a:q(A-2*r), b:q(eB-2*r)}, {a:q(eA-2*r), b:q(B-2*r)}];   // T: ala, alma
+  const Ae = A-2*r, Be = B-2*r;
+  return t.dims.map(d=>({a:q(d.aDefault(Ae)), b:q(d.bDefault(Be))}));
+}
+
+// Medidas que efectivamente se computan: las manuales si las hay, si no las derivadas
+function estriboDimVals(c){
+  return (c.estriboManual && Array.isArray(c.dimVals) && c.dimVals.length) ? c.dimVals : estriboDimValsAuto(c);
+}
+
+// Largo total de estribo por "conjunto" (m), con el largo de ganchos elegido.
+// Los perim() de ESTRIBO_TIPOS traen los ganchos incluidos (hookLen por pieza);
+// si la columna define su propio "gancho" (cm por pieza, ambos extremos), se
+// reemplazan esos valores por el elegido.
+function estriboPerim(c){
+  const t = ESTRIBO_TIPOS.find(x=>x.id===(c.estribType||1)) || ESTRIBO_TIPOS[0];
+  let p = t.perim(estriboDimVals(c));
+  if(c.gancho!=null && c.gancho!==''){
+    const piezas   = t.dims.reduce((s,d)=>s+(d.mult||1), 0);
+    const incluido = t.dims.reduce((s,d)=>s+(d.hookLen||0.12)*(d.mult||1), 0);
+    p = p - incluido + piezas*(+c.gancho/100);
+  }
+  return p;
+}
+
+function ganchoDefault(tipoId){
+  const t = ESTRIBO_TIPOS.find(x=>x.id===tipoId) || ESTRIBO_TIPOS[0];
+  return Math.round((t.dims[0].hookLen||0.12)*100);
+}
+
+// Recubrimiento que resulta de sección vs estribo exterior (el menor de los dos lados)
+function recubResultante(c, dv){
+  const {f, A, B, eA, eB} = colSecc(c);
+  const d0 = (dv||estriboDimVals(c))[0] || {a:0,b:0};
+  const tipo = c.estribType||1;
+  let rA, rB;
+  if(tipo===11){ rA=(eA-d0.a)/2; rB=(B-d0.b)/2; }
+  else if(tipo===12){ rA=(A-d0.a)/2; rB=(eB-d0.b)/2; }
+  else if(f==='circ' || tipo===6){ rA=rB=(A-d0.a)/2; }
+  else { rA=(A-d0.a)/2; rB=(B-d0.b)/2; }
+  return Math.round(Math.min(rA,rB)*10)/10;
+}
+
+function recubAviso(r){
+  if(r<=0)  return '⚠ el estribo no entra en la sección';
+  if(r<1.5) return '⚠ recubrimiento muy chico';
+  if(r>5)   return '⚠ recubrimiento muy grande';
+  return '';
+}
+
+const fmt1 = v => String(Math.round(v*10)/10).replace('.',',');
+
 
 
 // Calcula alambre 14, 17 y clavos PP por m³ H° armado
@@ -3683,14 +3821,79 @@ function duplicarBase(id){
 // ── MODAL ESTRIBO ──────────────────────────────────────────────────────────
 let _modalContext = null;
 
+// Columna "virtual" con lo que está cargado en el modal (recubrimiento, ganchos, tipo)
+function modalColBase(){
+  if(!_modalContext || _modalContext.source!=='col') return null;
+  const el = state.columnas.find(x=>x.id===_modalContext.id);
+  if(!el) return null;
+  const r = parseFloat(document.getElementById('modal-recub')?.value);
+  const g = document.getElementById('modal-gancho')?.value;
+  return {...el, estribType:_modalContext.selected||1,
+    recub: isNaN(r) ? (el.recub ?? REC_DEFAULT) : r,
+    gancho: (g===''||g==null) ? null : +g};
+}
+
+// Bloque superior del modal, sólo para columnas
+function modalColBoxHTML(tipoId){
+  const el = state.columnas.find(x=>x.id===_modalContext.id);
+  if(!el) return '';
+  const {f} = colSecc(el);
+  const r = el.recub ?? REC_DEFAULT;
+  const g = el.gancho ?? ganchoDefault(tipoId);
+  return `<div class="modal-col-box">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;">
+      Columna <strong style="color:var(--text);">${el.denom}</strong> según plano:
+      <strong style="color:var(--text);">${colSeccTxt(el)} cm</strong> (${COL_FORMAS[f].label.replace(/^[^a-zA-Z]+/,'')})
+      <span style="color:var(--text3);">— la sección se cambia en la tabla</span>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">
+      <div>
+        <div class="modal-col-lbl">Recubrimiento (cm)</div>
+        <input type="number" id="modal-recub" value="${r}" step="0.5" min="0" oninput="modalRecubCambio()" style="width:80px;">
+      </div>
+      <div>
+        <div class="modal-col-lbl">Ganchos (cm por estribo, ambos extremos)</div>
+        <input type="number" id="modal-gancho" value="${g}" step="1" min="0" oninput="updateModalPerim()" style="width:80px;">
+      </div>
+      <div id="modal-recub-res" style="font-family:'DM Mono',monospace;font-size:12px;padding-bottom:6px;"></div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.5;">
+      Las medidas de abajo son <strong>exteriores del estribo</strong> (sección − 2 × recubrimiento).
+      Si las cambiás a mano, el recubrimiento pasa a ser el que resulte.
+    </div>
+  </div>`;
+}
+
+// Cambió el recubrimiento: las medidas del estribo vuelven a derivarse de la sección
+function modalRecubCambio(){
+  const base = modalColBase();
+  if(!base) return;
+  _modalContext.manual = false;
+  const t = ESTRIBO_TIPOS.find(x=>x.id===base.estribType);
+  estriboDimValsAuto(base).forEach((d,i)=>{
+    const ea = document.getElementById(`modal-dim-${i}-a`), eb = document.getElementById(`modal-dim-${i}-b`);
+    if(ea && t.dims[i].aLabel!=='—') ea.value = d.a;
+    if(eb) eb.value = d.b;
+  });
+  updateModalPerim();
+}
+
+// El usuario tocó una medida del estribo: queda como medida manual
+function modalDimInput(){
+  if(_modalContext) _modalContext.manual = true;
+  updateModalPerim();
+}
+
 function renderModalDims(tipoId, elA, elB, savedDimVals){
   const t = ESTRIBO_TIPOS.find(x=>x.id===tipoId);
   if(!t) return;
   const wrap = document.getElementById('modal-dims-wrap');
   const multiEstr = t.dims.length > 1;
+  const esCol = _modalContext?.source==='col';
   wrap.innerHTML =
-    `<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;">
-      ${multiEstr ? `Este tipo usa <strong style="color:var(--text);">${t.dims.length} estribos independientes</strong> — ingresá las dimensiones de cada uno:` : 'Dimensiones del estribo (cm):'}
+    (esCol ? modalColBoxHTML(tipoId) : '')
+    + `<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;">
+      ${multiEstr ? `Este tipo usa <strong style="color:var(--text);">${t.dims.length} estribos independientes</strong> — ingresá las medidas exteriores de cada uno:` : 'Medidas exteriores del estribo (cm):'}
     </div>`
     + t.dims.map((d, i) => {
       const aVal = savedDimVals?.[i]?.a ?? Math.round(d.aDefault(elA));
@@ -3705,11 +3908,11 @@ function renderModalDims(tipoId, elA, elB, savedDimVals){
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
             ${skipA ? '' : `<div>
               <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;">${d.aLabel||'A (cm)'}</div>
-              <input type="number" id="modal-dim-${i}-a" value="${aVal}" oninput="updateModalPerim()" style="width:65px;">
+              <input type="number" id="modal-dim-${i}-a" value="${aVal}" step="0.5" oninput="modalDimInput()" style="width:72px;">
             </div>`}
             <div>
               <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;">${d.bLabel||'B (cm)'}</div>
-              <input type="number" id="modal-dim-${i}-b" value="${bVal}" oninput="updateModalPerim()" style="width:65px;">
+              <input type="number" id="modal-dim-${i}-b" value="${bVal}" step="0.5" oninput="modalDimInput()" style="width:72px;">
             </div>
             <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${d.color};min-width:72px;" id="modal-dim-${i}-perim">—</div>
           </div>
@@ -3741,9 +3944,15 @@ function openEstriboPicker(source, id){
       <div class="estribo-formula">${t.abbr}</div>
     </div>`).join('');
   _modalContext.selected = curType;
-  const elA = el?.secA||el?.ancho||20;
-  const elB = el?.secB||el?.alto||20;
-  renderModalDims(curType, elA, elB, el?.dimVals);
+  if(source==='col' && el){
+    // Columna: se muestran las medidas del ESTRIBO (manuales o derivadas), nunca la sección
+    _modalContext.manual = !!el.estriboManual;
+    renderModalDims(curType, 20, 20, estriboDimVals(el));
+  } else {
+    const elA = el?.secA||el?.ancho||20;
+    const elB = el?.secB||el?.alto||20;
+    renderModalDims(curType, elA, elB, el?.dimVals);
+  }
   document.getElementById('modalEstribo').classList.add('open');
 }
 
@@ -3756,6 +3965,18 @@ function selectEstribo(id){
   if(source==='col') el=state.columnas.find(x=>x.id===elId);
   else if(source==='vf') el=state.vigas_vf.find(x=>x.id===elId);
   else el=state.vigas_vd.find(x=>x.id===elId);
+  if(source==='col' && el){
+    // Otro tipo de estribo: medidas derivadas de la sección con el recubrimiento actual
+    const base = modalColBase() || el;
+    _modalContext.manual = false;
+    renderModalDims(id, 20, 20, estriboDimValsAuto({...base, estribType:id}));
+    const rIn = document.getElementById('modal-recub');
+    if(rIn) rIn.value = base.recub ?? REC_DEFAULT;
+    const gIn = document.getElementById('modal-gancho');
+    if(gIn && (el.gancho==null)) gIn.value = ganchoDefault(id);
+    updateModalPerim();
+    return;
+  }
   const elA = el?.secA||el?.ancho||20;
   const elB = el?.secB||el?.alto||20;
   renderModalDims(id, elA, elB);
@@ -3776,7 +3997,9 @@ function updateModalPerim(){
               b:parseFloat(document.getElementById(`modal-dim-${j+1}-b`)?.value)||0};
     })]) : null;
     // Compute individual perim for display
-    const indiv = 2*(a+b)/100 + (d.hookLen||0.12);
+    const gIn = document.getElementById('modal-gancho');
+    const gancho = (gIn && gIn.value!=='') ? (+gIn.value/100) : (d.hookLen||0.12);
+    const indiv = 2*(a+b)/100 + gancho;
     total = i===0 ? 0 : total; // will compute total via t.perim
     const el = document.getElementById(`modal-dim-${i}-perim`);
     if(el) el.textContent = indiv.toFixed(3)+' m';
@@ -3789,9 +4012,19 @@ function updateModalPerim(){
       b: parseFloat(document.getElementById(`modal-dim-${i}-b`)?.value)||Math.round(d.bDefault(20))
     };
   });
-  const totalPerim = t.perim(dv);
+  const base = modalColBase();
+  const totalPerim = base ? estriboPerim({...base, estriboManual:true, dimVals:dv}) : t.perim(dv);
   const tv = document.getElementById('modal-perim-val');
   if(tv) tv.textContent = totalPerim.toFixed(3);
+  // Columna: recubrimiento que resulta de sección vs. estribo cargado
+  const res = document.getElementById('modal-recub-res');
+  if(res && base){
+    const r = recubResultante(base, dv);
+    const aviso = recubAviso(r);
+    res.innerHTML = `Recubrimiento resultante: <strong style="color:${aviso?'var(--red)':'var(--green)'};">${fmt1(r)} cm</strong>`
+      + (_modalContext.manual ? ' <span style="color:var(--text3);">(medidas de estribo manuales)</span>' : '')
+      + (aviso ? `<div style="color:var(--red);font-weight:700;">${aviso}</div>` : '');
+  }
 }
 
 function confirmEstriboPicker(){
@@ -3810,7 +4043,24 @@ function confirmEstriboPicker(){
   let el;
   if(source==='col'){
     el=state.columnas.find(x=>x.id===id);
-    if(el){el.estribType=tipo; el.secA=dimVals[0]?.a||20; el.secB=dimVals[0]?.b||20; el.dimVals=dimVals;}
+    if(el){
+      // La sección de la columna (secA/secB) NO se toca: es la del plano.
+      // Acá sólo se guarda lo del estribo: tipo, recubrimiento, ganchos y,
+      // si se cargaron a mano, sus medidas exteriores.
+      el.estribType = tipo;
+      const r = parseFloat(document.getElementById('modal-recub')?.value);
+      if(!isNaN(r)) el.recub = r;
+      const g = document.getElementById('modal-gancho')?.value;
+      el.gancho = (g===''||g==null) ? null : +g;
+      if(_modalContext.manual){ el.dimVals = dimVals; el.estriboManual = true; }
+      else { el.estriboManual = false; delete el.dimVals; }
+      // Tipos de estribo que sólo tienen sentido con una forma de columna
+      const formaPorTipo = {6:'circ', 11:'L', 12:'T'};
+      if(formaPorTipo[tipo] && colForma(el)!==formaPorTipo[tipo]){
+        el.forma = formaPorTipo[tipo];
+        if(el.forma==='circ') el.secB = el.secA;
+      }
+    }
     renderColumnas();
   } else if(source==='vf'){
     el=state.vigas_vf.find(x=>x.id===id);
@@ -3905,20 +4155,74 @@ function recorteCellHTML(recorte, cantBarras){
   return `<span style="color:var(--text3);font-size:11px;">—</span>`;
 }
 
+// Celda "Sección": forma + medidas según plano + estribo/recubrimiento derivados
+function colSeccionCellHTML(c){
+  const {f, A, B, eA, eB} = colSecc(c);
+  const dv = estriboDimVals(c);
+  const r  = recubResultante(c, dv);
+  const aviso = recubAviso(r);
+  const d0 = dv[0] || {a:0,b:0};
+  const estTxt = (f==='circ' || c.estribType===6) ? `Ø${fmt1(d0.a)}` : `${fmt1(d0.a)}×${fmt1(d0.b)}`;
+  const inp = (campo, val, tit) =>
+    `<input type="number" class="sec-input" data-k="${c.id}-${campo}" value="${val}" step="0.5" min="1"
+      onchange="colCambio(${c.id},'${campo}',+this.value)" title="${tit}">`;
+  let medidas;
+  if(f==='circ')      medidas = `<span class="sec-x">Ø</span>${inp('secA',A,'Diámetro (cm)')}`;
+  else if(f==='cuad') medidas = `${inp('secA',A,'Lado (cm)')}<span class="sec-x">×</span><span class="sec-igual">${A}</span>`;
+  else                medidas = `${inp('secA',A,'Ancho total A (cm)')}<span class="sec-x">×</span>${inp('secB',B,'Alto total B (cm)')}`;
+  const brazos = (f==='L' || f==='T') ? `
+    <div class="sec-row" title="${f==='L'?'Ancho del brazo vertical / alto del brazo horizontal':'Ancho del alma / espesor del ala'}">
+      <span class="sec-x" style="min-width:26px;">${f==='L'?'brazos':'alma/ala'}</span>
+      ${inp('espA',eA, f==='L'?'Ancho brazo vertical (cm)':'Ancho del alma (cm)')}<span class="sec-x">/</span>${inp('espB',eB, f==='L'?'Alto brazo horizontal (cm)':'Espesor del ala (cm)')}
+    </div>` : '';
+  return `
+    <select class="forma-select" data-k="${c.id}-forma" onchange="updateColForma(${c.id},this.value)" title="Forma de la columna según plano">
+      ${Object.entries(COL_FORMAS).map(([k,v])=>`<option value="${k}" ${k===f?'selected':''}>${v.label}</option>`).join('')}
+    </select>
+    <div class="sec-row">${medidas}</div>
+    ${brazos}
+    <div class="estr-preview sec-derivado" onclick="openEstriboPicker('col',${c.id})" title="Medidas exteriores del estribo — tocá para cambiarlas">
+      estribo ${estTxt}${c.estriboManual?' <b>(manual)</b>':''} · rec. <span style="${aviso?'color:var(--red);font-weight:700;':''}">${fmt1(r)} cm</span>
+      ${aviso?`<div style="color:var(--red);">${aviso}</div>`:''}
+    </div>`;
+}
+
+// Cambio de medida de sección: re-dibuja la fila (cambia estribo, recubrimiento y m³),
+// diferido para que el foco ya esté en la casilla siguiente y se pueda restaurar.
+function colCambio(id, campo, val){
+  const c = state.columnas.find(x=>x.id===id);
+  if(!c) return;
+  c[campo] = val;
+  if(campo==='secA' && (colForma(c)==='cuad' || colForma(c)==='circ')) c.secB = val;
+  setTimeout(renderColumnas, 0);
+}
+
+// Cambio de forma: acomoda el tipo de estribo para que sea coherente
+function updateColForma(id, forma){
+  const c = state.columnas.find(x=>x.id===id);
+  if(!c) return;
+  const tipoPorForma = {circ:6, L:11, T:12};
+  if(tipoPorForma[forma]) c.estribType = tipoPorForma[forma];
+  else if([6,11,12].includes(c.estribType)) c.estribType = forma==='cuad' ? 7 : 1;
+  if(forma==='cuad' || forma==='circ') c.secB = c.secA;
+  c.forma = forma;
+  c.estriboManual = false;   // la forma cambió: las medidas manuales del estribo ya no aplican
+  setTimeout(renderColumnas, 0);
+}
+
 function renderColumnas(){
   const tbody = document.getElementById('col-tbody');
   const PHI_COLORS = {6:'#6a9fd8',8:'#6db87a',10:'#d4a853',12:'#d4854a',16:'#a07ecc',20:'#e07070'};
+  const foco = document.activeElement?.dataset?.k;
   tbody.innerHTML = state.columnas.map(c=>{
-    const a=c.secA||20, b=c.secB||20;
 
     // L. Barra con empalmes si corresponde
     const calc1 = lBarraCIRSOC(c.alt, c.phi||12);
     const { lTramo: lCIRSOC, empalmes: nEmpalmes, bruto: brutoPhi1, recorte: recortePorBarra } = calc1;
 
-    const perim = calcPerimEstribo(c.estribType||1, a, b, c.dimVals);
+    const perim = estriboPerim(c);
     const nEstr  = Math.ceil((lCIRSOC*100)/c.sepEstr);
-    const seccion = (a/100)*(b/100);
-    const horm = c.cantElem * seccion * c.alt * 0.75;
+    const horm = c.cantElem * colArea(c) * c.alt * 0.75;
     const barrasEstr = Math.ceil((c.cantElem * nEstr * perim) / BARRA_COMERCIAL);
     const tipoInfo = ESTRIBO_TIPOS.find(t=>t.id===(c.estribType||1));
 
@@ -3928,6 +4232,7 @@ function renderColumnas(){
     return `<tr>
       <td style="min-width:55px;"><input value="${c.denom}" onchange="updateCol(${c.id},'denom',this.value)" style="width:52px;color:var(--accent);font-weight:700;font-size:12px;"></td>
       <td class="center"><input type="number" value="${c.cantElem}" onchange="updateCol(${c.id},'cantElem',+this.value);calcColTotals()" class="qty-input"></td>
+      <td style="min-width:150px;">${colSeccionCellHTML(c)}</td>
       <td style="min-width:120px;">
         <div class="phi-row">
           <span class="phi-badge" style="background:${PHI_COLORS[c.phi]||'#d4a853'}22;color:${PHI_COLORS[c.phi]||'#d4a853'};">Ø1</span>
@@ -3959,7 +4264,7 @@ function renderColumnas(){
         <div class="estr-preview" style="margin-top:3px;">Ø${c.phiEstr} c/${c.sepEstr}mm · ${perim.toFixed(2)}m</div>
         <div style="display:flex;gap:4px;margin-top:3px;align-items:center;">
           ${phiSelectHtml(c.phiEstr, `updateCol(${c.id},'phiEstr',+this.value);calcColTotals()`)}
-          <input type="number" value="${c.sepEstr}" onchange="updateCol(${c.id},'sepEstr',+this.value);calcColTotals()" style="width:45px;font-size:11px;" title="Separación mm">
+          <input type="number" value="${c.sepEstr}" onchange="updateCol(${c.id},'sepEstr',+this.value);calcColTotals()" class="sep-input" title="Separación mm">
         </div>
       </td>
       <td class="right" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);">${barrasEstr}</td>
@@ -3967,6 +4272,10 @@ function renderColumnas(){
       <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button onclick="duplicarColumna(${c.id})" title="Duplicar fila" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeCol(${c.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
     </tr>`;
   }).join('');
+  if(foco){
+    const el = tbody.querySelector(`[data-k="${foco}"]`);
+    if(el){ el.focus(); if(el.select) el.select(); }
+  }
   calcColTotals();
 }
 
@@ -4023,17 +4332,15 @@ function calcColTotals(){
         recortesReg.push({phi, long:recSec, cant:totalB, origen:`${c.denom} Ø${phi} redondeo`});
       }
     });
-    // ESTRIBOS
-    const a=c.secA||20, b=c.secB||20;
-    const perim = calcPerimEstribo(c.estribType||1, a, b, c.dimVals);
+    // ESTRIBOS — medidas exteriores del estribo (sección − 2 × recubrimiento)
+    const perim = estriboPerim(c);
     const nEstr = Math.ceil((lCIRSOC*100)/c.sepEstr);
     const mlEstr = c.cantElem * nEstr * perim;
     if(!hierrosPhi[c.phiEstr]) hierrosPhi[c.phiEstr]={ml:0,barras:0,recortesML:0,recorteLong:0};
     hierrosPhi[c.phiEstr].ml += mlEstr;
 
-    // H°
-    const seccion=(a/100)*(b/100);
-    totalHorm += c.cantElem * seccion * c.alt * 0.75;
+    // H° — sección de hormigón según plano (cuadrada, rectangular, L, T o circular)
+    totalHorm += c.cantElem * colArea(c) * c.alt * 0.75;
   });
 
   // Calcular barras comerciales y recortes finales por phi
@@ -4501,7 +4808,7 @@ function renderVigas(tipo){
           ${phiSelectHtml(v.phiEstr,`updateViga('${tipo}',${v.id},'phiEstr',+this.value);calcVigaTotals()`)}
           <input type="number" value="${v.sepEstr}"
             onchange="updateViga('${tipo}',${v.id},'sepEstr',+this.value);calcVigaTotals()"
-            style="width:40px;font-size:11px;" title="Sep cm">
+            class="sep-input" title="Sep cm">
         </div>
         <div style="font-size:9px;color:var(--text3);margin-top:2px;">${barrasEstr} barras estr.</div>
       </td>
@@ -4752,12 +5059,12 @@ function renderBases(){
         <div class="phi-row">
           <span class="phi-badge" style="background:#6db87a22;color:var(--green);">Ø1</span>
           ${phiSelectHtml(b.phi,`updateBase(${b.id},'phi',+this.value);calcBases()`)}
-          <input type="number" value="${b.sep}" onchange="updateBase(${b.id},'sep',+this.value);calcBases()" style="width:45px;font-size:10px;" title="Sep mm">
+          <input type="number" value="${b.sep}" onchange="updateBase(${b.id},'sep',+this.value);calcBases()" class="sep-input" title="Sep mm">
         </div>
         <div class="phi-row">
           <span class="phi-badge" style="background:#33333388;color:var(--text3);">Ø2</span>
           ${phiSelectHtml(b.phi2||0,`updateBase(${b.id},'phi2',+this.value);calcBases()`)}
-          <input type="number" value="${b.sep2||150}" onchange="updateBase(${b.id},'sep2',+this.value);calcBases()" style="width:45px;font-size:10px;" title="Sep mm Ø2">
+          <input type="number" value="${b.sep2||150}" onchange="updateBase(${b.id},'sep2',+this.value);calcBases()" class="sep-input" title="Sep mm Ø2">
         </div>
       </td>
       <td style="min-width:95px;">
@@ -6791,12 +7098,12 @@ async function exportarExcel(){
 
   // COLUMNAS DETALLE
   h1('DETALLE DE COLUMNAS');
-  rows.push(['Denom.','Cant.','Alt.libre (m)','L.barra CIRSOC (m)','Ø princ.','N°barras','m³ H°']);
+  rows.push(['Denom.','Cant.','Sección (cm)','Estribo ext. (cm)','Recub. (cm)','Alt.libre (m)','L.barra CIRSOC (m)','Ø princ.','N°barras','m³ H°']);
   state.columnas.forEach(c=>{
     const calc=lBarraCIRSOC(c.alt,c.phi||12);
-    const sec=(c.secA||20)/100*(c.secB||20)/100;
-    const horm=c.cantElem*sec*c.alt*0.75;
-    rows.push([c.denom,c.cantElem,x(c.alt),x(calc.lTramo),`Ø${c.phi}`,c.nBarras,x(horm,3)]);
+    const horm=c.cantElem*colArea(c)*c.alt*0.75;
+    const d0=estriboDimVals(c)[0]||{a:0,b:0};
+    rows.push([c.denom,c.cantElem,colSeccTxt(c),`${x(d0.a,1)}×${x(d0.b,1)}`,x(recubResultante(c),1),x(c.alt),x(calc.lTramo),`Ø${c.phi}`,c.nBarras,x(horm,3)]);
   });
   sep();
 
@@ -7008,7 +7315,7 @@ async function iaGuardarArchivo(filename, blob){
 // ── Dispatch por tipo (reusa las mismas formas que addColumna/addViga/etc.) ─
 function iaDefaults(tipo, id){
   switch(tipo){
-    case 'columna': return {id,denom:'C'+id,cantElem:1,phi:12,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,alt:2.70,secA:20,secB:20,phiEstr:6,sepEstr:150,estribType:1};
+    case 'columna': return {id,denom:'C'+id,cantElem:1,phi:12,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,alt:2.70,forma:'rect',secA:20,secB:20,recub:REC_DEFAULT,phiEstr:6,sepEstr:150,estribType:1};
     case 'viga_vf': return {id,denom:'VF-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false};
     case 'viga_vd': return {id,denom:'VD-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false};
     case 'base':    return {id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:0,sep2:150,hormTipo:'H17'};
@@ -7050,7 +7357,7 @@ function iaRenderTipo(tipo){
 }
 function iaResumenCampos(tipo, o){
   switch(tipo){
-    case 'columna': return `${o.cantElem} uds · ${o.secA}x${o.secB}cm · ${o.nBarras}Ø${o.phi} · estribo Ø${o.phiEstr} c/${o.sepEstr}mm`;
+    case 'columna': return `${o.cantElem} uds · ${colSeccTxt(o)}cm · ${o.nBarras}Ø${o.phi} · estribo Ø${o.phiEstr} c/${o.sepEstr}mm · rec. ${fmt1(recubResultante(o))}cm`;
     case 'viga_vf': case 'viga_vd': return `${o.longLibre}m libres · ${o.ancho}x${o.alto}cm · ${o.nBarras}Ø${o.phi} · estribo Ø${o.phiEstr} c/${o.sepEstr}mm`;
     case 'base': return `${o.cant} uds · ${o.ancho}x${o.largo}x${o.alto}m · Ø${o.phi} c/${o.sep}mm`;
     case 'losa': return `${o.cant} uds · ${o.sup}m² · esp.${o.alt}cm`;
@@ -7198,7 +7505,7 @@ function iaManejarError(e, elPensando){
 function iaContextoActual(){
   const compact = (arr, campos) => (arr||[]).map(o=>{ const r={}; campos.forEach(c=>{ if(o[c]!==undefined) r[c]=o[c]; }); return r; });
   return {
-    columnas: compact(state.columnas, ['denom','cantElem','phi','nBarras','phi2','n2','phi3','n3','alt','secA','secB','phiEstr','sepEstr','estribType']),
+    columnas: compact(state.columnas, ['denom','cantElem','phi','nBarras','phi2','n2','phi3','n3','alt','forma','secA','secB','espA','espB','recub','gancho','phiEstr','sepEstr','estribType']),
     vigas_vf: compact(state.vigas_vf, ['denom','phi','nBarras','phi2','n2','longLibre','ancho','alto','phiEstr','sepEstr','estribType','hormTipo']),
     vigas_vd: compact(state.vigas_vd, ['denom','phi','nBarras','phi2','n2','longLibre','ancho','alto','phiEstr','sepEstr','estribType','hormTipo']),
     bases: compact(state.bases, ['denom','cant','ancho','largo','alto','phi','sep','phi2','sep2','hormTipo']),
@@ -7215,7 +7522,8 @@ Tu trabajo es cargar datos en las tablas de la app a partir de lo que el usuario
 Entidades válidas: columna, viga_vf, viga_vd, base, losa, losa_maciza.
 
 Campos por entidad:
-- columna: denom (ej "C1"), cantElem (cant. de columnas iguales), phi/nBarras (Ø principal en mm: 6,8,10,12,16,20 — y cant. de barras), phi2/n2 y phi3/n3 (armaduras secundarias, 0 si no hay), alt (altura libre en m), secA/secB (sección en cm), phiEstr/sepEstr (estribo: Ø en mm y separación en mm), estribType (1=simple, 2=doble rama, 3=triple — default 1 si no te lo dicen).
+- columna: denom (ej "C1"), cantElem (cant. de columnas iguales), phi/nBarras (Ø principal en mm: 6,8,10,12,16,20 — y cant. de barras), phi2/n2 y phi3/n3 (armaduras secundarias, 0 si no hay), alt (altura libre en m), forma ('cuad'|'rect'|'L'|'T'|'circ'), secA/secB (SECCIÓN DE HORMIGÓN SEGÚN PLANO en cm; en 'cuad' y 'circ' sólo secA — lado o diámetro), espA/espB (sólo L y T: en L ancho del brazo vertical / alto del brazo horizontal; en T ancho del alma / espesor del ala), recub (recubrimiento al estribo en cm, default 2), gancho (cm de ganchos por estribo, ambos extremos), phiEstr/sepEstr (estribo: Ø en mm y separación en mm), estribType (1=rectangular simple, 2=+trabante, 3=+estribo interior, 6=circular, 7=cuadrado, 11=sección L, 12=sección T — default 1, o el de la forma).
+  IMPORTANTE: secA/secB es la medida de la COLUMNA, no del estribo. El estribo exterior se calcula solo como sección − 2×recub. Si el usuario te da la medida del estribo (ej "estribos de 15x15" en una columna de 20x20), NO la pongas en secA/secB: poné la sección de la columna y deducí recub = (20−15)/2 = 2.5. Si sólo te da una medida y no queda claro si es de la columna o del estribo, preguntá.
 - viga_vf / viga_vd: denom, phi/nBarras (+ phi2/n2 opcional), phiEstr/sepEstr, longLibre (luz libre en m), ancho/alto (sección en cm), estribType, hormTipo ('H8'|'H13'|'H17'|'H21'|'H25'|'obra'), techoLiviano (bool).
 - base: denom, cant, ancho/largo/alto (en METROS), phi/sep (armadura principal), phi2/sep2 (secundaria opcional), hormTipo.
 - losa: denom, cant, sup (superficie en m²), alt (espesor total en cm), phi/sep (malla), capComp (capa de compresión en cm), hormTipo.
