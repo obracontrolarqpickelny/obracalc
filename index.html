@@ -1343,6 +1343,73 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
   border-top: 2px solid var(--border);
 }
 
+/* Niveles: color por nivel en la primera celda + filtro + sumas parciales */
+.nivel-select { display: block; width: 100% !important; margin-top: 4px; font-size: 10px !important; padding: 2px 3px !important; }
+tr[data-niv="PB"] > td:first-child { box-shadow: inset 4px 0 0 var(--blue); }
+tr[data-niv="PA"] > td:first-child { box-shadow: inset 4px 0 0 var(--green); }
+tr[data-niv="N3"] > td:first-child { box-shadow: inset 4px 0 0 var(--purple); }
+tr[data-niv="TQ"] > td:first-child { box-shadow: inset 4px 0 0 var(--orange); }
+.niv-filtro { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); }
+.niv-filtro select { width: auto !important; font-size: 11px !important; padding: 3px 6px !important; }
+.niv-panel { padding: 10px 14px 14px; border-top: 1px solid var(--border); background: var(--surface2); }
+.niv-panel-tit { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.niv-panel-tit span { font-weight: 400; color: var(--text3); font-size: 11px; }
+.niv-tabla { font-size: 12px; }
+.niv-tabla td, .niv-tabla th { padding: 5px 8px; }
+.niv-tabla b { color: var(--accent); }
+.niv-ml { font-size: 9.5px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.niv-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.niv-tot td { font-weight: 700; border-top: 2px solid var(--border2); }
+
+/* Buscador general */
+.busq-wrap { position: relative; flex: 0 1 300px; min-width: 150px; margin-left: 12px; }
+.busq-input { width: 100% !important; font-size: 12px !important; padding: 7px 10px !important;
+  background: var(--surface2) !important; border: 1px solid var(--border2) !important; color: var(--text) !important; border-radius: 8px !important; }
+.busq-res { display: none; position: absolute; top: calc(100% + 6px); left: 0; width: min(520px, 90vw); max-height: 70vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; box-shadow: 0 12px 34px rgba(0,0,0,.25); z-index: 1200; padding: 6px 0; }
+.busq-res.open { display: block; }
+.busq-cant { font-size: 10px; color: var(--text3); padding: 2px 12px 6px; font-family: 'DM Mono', monospace; }
+.busq-pag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent);
+  padding: 8px 12px 3px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
+.busq-pag span { color: var(--text3); font-weight: 400; }
+.busq-item { font-size: 12px; color: var(--text2); padding: 5px 12px 5px 18px; cursor: pointer; line-height: 1.4; }
+.busq-item:hover, .busq-item.sel { background: var(--accent-dim2); color: var(--text); }
+.busq-item mark { background: var(--edit-bg); color: var(--text); border-radius: 2px; padding: 0 1px; }
+.busq-vacio { font-size: 12px; color: var(--text3); padding: 8px 12px; }
+@keyframes busqFlash { 0%,60% { outline-color: var(--accent); background: var(--accent-dim2); } 100% { outline-color: transparent; } }
+.busq-flash { outline: 3px solid var(--accent); outline-offset: 2px; animation: busqFlash 2.6s ease-out; border-radius: 4px; }
+@media (max-width: 900px){ .busq-wrap { flex-basis: 170px; margin-left: 6px; } }
+
+/* Obras y versiones */
+.obra-chip { padding: 7px 12px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obra-chip.sucio { border-color: var(--accent); }
+.obra-actual { font-size: 12.5px; color: var(--text2); line-height: 1.6; padding: 10px 12px; margin-bottom: 12px;
+  background: var(--surface2); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; }
+.obra-sucia { color: var(--accent); font-weight: 700; font-style: normal; }
+.obra-ok { color: var(--green); font-weight: 600; }
+.obras-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.obras-acciones .btn { font-size: 12px; }
+.obras-sec-t { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); font-family: 'DM Mono', monospace;
+  margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.obras-vacio { color: var(--text3); font-size: 12px; padding: 8px 2px; }
+.obra-grupo { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+.obra-grupo.act { border-color: var(--accent); }
+.obra-grupo-tit { font-weight: 700; font-size: 13px; color: var(--text); padding: 8px 12px; background: var(--surface2); }
+.obra-grupo-tit span { font-weight: 400; font-size: 11px; color: var(--text3); margin-left: 6px; }
+.obra-ver { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--border); }
+.obra-ver.act { background: var(--accent-dim2); }
+.obra-ver-info { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 12px; color: var(--text); }
+.obra-ver-info span { font-size: 10.5px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.gc-box { padding: 12px; margin-bottom: 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-dim2); }
+.gc-tit { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.gc-ayuda { font-size: 11px; color: var(--text3); margin-bottom: 8px; line-height: 1.5; }
+.gc-campo { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.gc-campo input { width: 100% !important; font-size: 13px !important; padding: 7px 10px !important;
+  background: var(--surface) !important; border: 1px solid var(--border2) !important; color: var(--text) !important; }
+.gc-opc { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+.gc-acc { display: flex; justify-content: flex-end; gap: 8px; }
+.undo-bar .undo-x { border: none; color: var(--text3); padding: 3px 6px; }
+
 /* Aplicar a toda la columna */
 .col-apl {
   margin-left: 4px; padding: 0 4px; border-radius: 4px; cursor: pointer; vertical-align: middle;
@@ -1520,42 +1587,53 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
 </div>
 
 
-<!-- ══ MODAL PROYECTOS ══════════════════════════════════════════════ -->
+<!-- ══ MODAL OBRAS (obras, versiones, Drive) ═════════════════════════ -->
 <div class="modal-backdrop" id="modalProyectos">
-  <div class="modal" style="max-width:500px;">
+  <div class="modal" style="max-width:640px;">
     <div class="modal-header">
-      <span class="modal-title">📁 Mis Proyectos</span>
+      <span class="modal-title">🏗 Obras</span>
       <button class="modal-close" onclick="closeProyectos()">✕</button>
     </div>
     <div class="modal-body">
-      <div style="margin-bottom:14px;">
-        <div class="field-label" style="margin-bottom:6px;">Guardar proyecto actual como…</div>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="proj-nombre" placeholder="Nombre del proyecto (ej: Casa López)" style="flex:1;">
-          <button class="btn btn-primary" onclick="guardarProyecto()" style="white-space:nowrap;">💾 Guardar</button>
-        </div>
+      <div class="obra-actual" id="obraActualBox"></div>
+      <div class="obras-acciones">
+        <button class="btn btn-primary" onclick="guardarObra()" title="Ctrl+S">💾 Guardar</button>
+        <button class="btn btn-secondary" onclick="abrirGuardarComo('version')" title="Otra versión de la misma obra">📑 Guardar como versión…</button>
+        <button class="btn btn-secondary" onclick="abrirGuardarComo('nueva')">＋ Nueva obra</button>
+        <button class="btn btn-secondary" onclick="importarProyecto()">📂 Importar .json</button>
       </div>
-      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
-        Proyectos guardados
-      </div>
-      <div id="proj-lista" style="min-height:60px;max-height:340px;overflow-y:auto;">
-        <div style="color:var(--text3);font-size:12px;text-align:center;padding:20px 0;font-family:'DM Mono',monospace;">Sin proyectos guardados</div>
-      </div>
-      <div id="proj-drive-wrap" style="display:none;margin-top:14px;">
-        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
-          ☁ En Google Drive (no guardadas acá)
-        </div>
-        <div id="proj-drive-lista" style="min-height:30px;max-height:180px;overflow-y:auto;"></div>
-      </div>
+      <div id="gc-box" class="gc-box" style="display:none;"></div>
+
+      <div class="obras-sec-t">En este navegador</div>
+      <div id="proj-lista"></div>
+
+      <div class="obras-sec-t">☁ En Google Drive</div>
+      <div id="proj-drive-lista"></div>
+      <div id="proj-hist"></div>
+
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" onclick="importarProyecto()" style="font-size:12px;">📂 Importar .json</button>
-        <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:12px;">📊 Excel (.xlsx)</button>
+        <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:12px;">📊 Excel</button>
         <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:12px;">📋 CSV</button>
       </div>
     </div>
   </div>
 </div>
 <input type="file" id="proj-import-input" accept=".json" style="display:none;" onchange="importarArchivoJSON(this)">
+
+<!-- ══ ¿GUARDAR LOS CAMBIOS? ═════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modalCambios" style="z-index:1100;">
+  <div class="modal" style="max-width:430px;">
+    <div class="modal-header"><span class="modal-title">💾 Cambios sin guardar</span></div>
+    <div class="modal-body">
+      <div id="cambiosTxt" style="font-size:13px;line-height:1.6;color:var(--text2);margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="cambiosCancelar">Cancelar</button>
+        <button class="btn btn-secondary" id="cambiosNo">No guardar</button>
+        <button class="btn btn-primary" id="cambiosSi">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1605,7 +1683,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
       <div class="logo-sub">Cómputo de obra v1.0</div>
     </div>
 
-    <div class="obra-card">
+    <div class="obra-card" onclick="openProyectos()" style="cursor:pointer;" title="Obras y versiones">
       <div class="obra-label">Obra activa</div>
       <div class="obra-name" id="sb-obra-name">Sin definir</div>
       <div class="obra-sup" id="sb-sup">— m²</div>
@@ -1675,6 +1753,11 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="topbar-sub" id="topbar-sub">Resumen general de la obra</div>
       </div>
+      <div class="busq-wrap">
+        <input type="search" data-busq class="no-edit-hl busq-input" placeholder="🔎 Buscar material o palabra  (Ctrl+K)" autocomplete="off"
+          oninput="busqProgramar()" onkeydown="busqTecla(event)" onfocus="busqProgramar()">
+        <div class="busq-res" id="busq-res"></div>
+      </div>
       <div class="color-legend" title="Lenguaje de color, igual en todas las secciones">
         <span class="legend-item"><span class="legend-dot legend-dot-edit"></span>Editable</span>
         <span class="legend-item"><span class="legend-dot legend-dot-calc"></span>Calculado</span>
@@ -1694,13 +1777,15 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
       <!-- Grupo backup rápido -->
       <button class="btn btn-secondary" onclick="backupRapido()"
         style="padding:7px 12px;border-color:var(--green);color:var(--green);"
-        title="Backup rápido — descarga JSON con timestamp">💾 Backup</button>
+        title="Backup rápido — descarga un .json con fecha y hora">⤓ Backup</button>
       <button class="btn btn-secondary" onclick="restaurarBackup()"
         style="padding:7px 10px;"
         title="Restaurar desde archivo JSON">📂</button>
-      <button class="btn btn-secondary" id="btnGuardar" onclick="guardarEnDispositivo()"
+      <button class="btn btn-secondary obra-chip" id="obraChip" onclick="openProyectos()"
+        title="Obras y versiones — abrir, guardar como, Drive">🏗 <span id="obraChipTxt">Obra sin guardar</span></button>
+      <button class="btn btn-secondary" id="btnGuardar" onclick="guardarObra()"
         style="padding:7px 12px;"
-        title="Guardar como proyecto en este dispositivo">🗄 Guardar</button>
+        title="Guardar la obra abierta — en este navegador y en Drive (Ctrl+S)">💾 Guardar</button>
       <button class="btn btn-primary" onclick="showPage('resumen')" style="padding:7px 12px;">📋 Resumen</button>
       <input type="file" id="restore-backup-input" accept=".json" style="display:none;" onchange="restaurarDesdeArchivo(this)">
     </div>
@@ -2210,13 +2295,19 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <div class="card-header">
             <span class="card-icon">📋</span>
             <span class="card-title">Listado de columnas</span>
-            <button class="btn btn-secondary" style="margin-left:auto;font-size:11px;padding:4px 10px;" onclick="addColumna()">+ Agregar</button>
+            <label class="niv-filtro">Mostrar
+              <select id="col-nivel-filtro" onchange="renderColumnas()">
+                <option value="">Todos los niveles</option>
+                <option value="PB">1° nivel · PB</option><option value="PA">2° nivel · PA</option>
+                <option value="N3">3° nivel</option><option value="TQ">Tanque</option>
+              </select></label>
+            <button class="btn btn-secondary" style="margin-left:8px;font-size:11px;padding:4px 10px;" onclick="addColumna()">+ Agregar</button>
           </div>
           <div class="table-wrap">
             <table id="tabla-columnas">
               <thead>
                 <tr>
-                  <th>Denom.</th>
+                  <th>Denom. · nivel<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','nivel')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="center">Cant.<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','cantElem')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th style="min-width:150px" data-tip="Sección de hormigón según plano. Debajo: medida exterior del estribo y recubrimiento que resulta">Sección (cm)<br><span style="text-transform:none;letter-spacing:0;">según plano</span></th>
                   <th style="min-width:130px">Armadura · Ø / n° barras</th>
@@ -2239,12 +2330,16 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   </td>
                 </tr>
                 <tr>
-                  <td class="total-row" colspan="9"><strong>H° TOTAL COLUMNAS</strong></td>
+                  <td class="total-row" colspan="9"><strong id="col-total-lbl">H° TOTAL COLUMNAS</strong></td>
                   <td class="total-row right accent" id="col-total-horm">—</td>
                   <td class="total-row"></td>
                 </tr>
               </tfoot>
             </table>
+          </div>
+          <div class="niv-panel">
+            <div class="niv-panel-tit">Sumas por nivel <span>— para pedidos parciales de obra</span></div>
+            <div id="col-niveles"></div>
           </div>
         </div>
       </div>
@@ -2320,6 +2415,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                 <thead>
                   <tr>
                     <th>Denom.</th>
+                    <th style="min-width:150px" data-tip="Sección de hormigón según plano. Debajo: medida exterior del estribo y recubrimiento que resulta">Sección (cm)<br><span style="text-transform:none;letter-spacing:0;">según plano</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'vigas_vf','seccion')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                     <th style="min-width:130px">Armadura · Ø / n°</th>
                     <th style="min-width:110px">Estribo · tipo · sep<button type="button" class="col-apl" onclick="colAplAbrir(event,'vigas_vf','estribo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                     <th class="right" data-tip="Longitud libre entre columnas">Long.<br>libre (m)</th>
@@ -2334,12 +2430,12 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                 <tbody id="vf-tbody"></tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="10" style="padding:4px 8px;">
+                    <td colspan="11" style="padding:4px 8px;">
                       <button onclick="addViga('vf')" style="background:var(--blue-dim);border:1px dashed var(--blue);color:var(--blue);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:11px;font-family:'Syne',sans-serif;font-weight:600;width:100%;text-align:left;">+ Agregar fila de viga VF/VA</button>
                     </td>
                   </tr>
                   <tr>
-                    <td class="total-row" colspan="6"><strong>TOTALES VF/VA</strong></td>
+                    <td class="total-row" colspan="7"><strong>TOTALES VF/VA</strong></td>
                     <td class="total-row right accent" id="vf-total-ppal">—</td>
                     <td class="total-row right accent" id="vf-total-estr">—</td>
                     <td class="total-row right accent" id="vf-total-horm">—</td>
@@ -2356,13 +2452,20 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
             <div class="card-header">
               <span class="card-icon">━</span>
               <span class="card-title">Vigas de Descarga, Encadenado y Carga</span>
-              <button class="btn btn-secondary" style="margin-left:auto;font-size:11px;padding:4px 10px;" onclick="addViga('vd')">+ Agregar</button>
+              <label class="niv-filtro">Mostrar
+                <select id="vd-nivel-filtro" onchange="renderVigas('vd')">
+                  <option value="">Todos los niveles</option>
+                  <option value="PB">1° nivel · PB</option><option value="PA">2° nivel · PA</option>
+                  <option value="N3">3° nivel</option><option value="TQ">Tanque</option>
+                </select></label>
+              <button class="btn btn-secondary" style="margin-left:8px;font-size:11px;padding:4px 10px;" onclick="addViga('vd')">+ Agregar</button>
             </div>
             <div class="table-wrap">
               <table id="tabla-vigas-vd">
                 <thead>
                   <tr>
-                    <th>Denom.</th>
+                    <th>Denom. · nivel<button type="button" class="col-apl" onclick="colAplAbrir(event,'vigas_vd','nivel')" title="Poner el mismo valor en todas las filas">⇊</button></th>
+                    <th style="min-width:150px" data-tip="Sección de hormigón según plano. Debajo: medida exterior del estribo y recubrimiento que resulta">Sección (cm)<br><span style="text-transform:none;letter-spacing:0;">según plano</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'vigas_vd','seccion')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                     <th style="min-width:130px">Armadura · Ø / n°</th>
                     <th style="min-width:110px">Estribo · tipo · sep<button type="button" class="col-apl" onclick="colAplAbrir(event,'vigas_vd','estribo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                     <th class="right" data-tip="Longitud libre entre columnas">Long.<br>libre (m)</th>
@@ -2377,12 +2480,12 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                 <tbody id="vd-tbody"></tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="10" style="padding:4px 8px;">
+                    <td colspan="11" style="padding:4px 8px;">
                       <button onclick="addViga('vd')" style="background:var(--blue-dim);border:1px dashed var(--blue);color:var(--blue);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:11px;font-family:'Syne',sans-serif;font-weight:600;width:100%;text-align:left;">+ Agregar fila de viga VD/VE/VC</button>
                     </td>
                   </tr>
                   <tr>
-                    <td class="total-row" colspan="6"><strong>TOTALES VD/VE/VC</strong></td>
+                    <td class="total-row" colspan="7"><strong id="vd-total-lbl">TOTALES VD/VE/VC</strong></td>
                     <td class="total-row right accent" id="vd-total-ppal">—</td>
                     <td class="total-row right accent" id="vd-total-estr">—</td>
                     <td class="total-row right accent" id="vd-total-horm">—</td>
@@ -2390,6 +2493,10 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   </tr>
                 </tfoot>
               </table>
+            </div>
+            <div class="niv-panel">
+              <div class="niv-panel-tit">Sumas por nivel <span>— para pedidos parciales de obra</span></div>
+              <div id="vd-niveles"></div>
             </div>
           </div>
         </div>
@@ -2685,7 +2792,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <span class="edit-guide-step">7</span>
           <div class="edit-guide-text">
             <strong>Revoques</strong><br>
-            <span>Completá m² de revoque grueso y fino por nivel (interior y exterior) y el espesor de cada uno. La mezcla sale de Dosificaciones. El hidrófugo aplica sólo al revoque grueso de planta baja, en el % que indiques.</span>
+            <span>Completá m² de revoque grueso y fino por nivel (interior y exterior) y de cielorraso, y el espesor de cada uno. La mezcla sale de Dosificaciones. El hidrófugo aplica sólo al revoque grueso de planta baja, en el % que indiques.</span>
           </div>
           <div class="edit-guide-tip">Interior ≠ exterior</div>
         </div>
@@ -2733,6 +2840,11 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   <div class="field"><div class="field-label">R. Fino Ext.</div>
                     <input type="number" id="rf-ext-pb" value="123" class="input-editable" oninput="calcRevoques()"></div>
                 </div>
+                <div class="field-row">
+                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                    <input type="number" id="cr-pb" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"></div>
+                </div>
 
                 <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:'DM Mono',monospace;margin:10px 0 6px;">2° nivel / Planta Alta</div>
                 <div class="field-row">
@@ -2747,6 +2859,11 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   <div class="field"><div class="field-label">R. Fino Ext.</div>
                     <input type="number" id="rf-ext-pa" value="95.25" class="input-editable" oninput="calcRevoques()"></div>
                 </div>
+                <div class="field-row">
+                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                    <input type="number" id="cr-pa" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"></div>
+                </div>
 
                 <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:'DM Mono',monospace;margin:10px 0 6px;">3° nivel</div>
                 <div class="field-row">
@@ -2760,6 +2877,11 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                     <input type="number" id="rf-int-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
                   <div class="field"><div class="field-label">R. Fino Ext.</div>
                     <input type="number" id="rf-ext-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                    <input type="number" id="cr-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"></div>
                 </div>
 
                 <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
@@ -2794,6 +2916,12 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                         <td class="rev-mez" id="rev-mez-fe">—</td>
                         <td class="right"><input type="number" id="rev-esp-fe" value="0.5" step="0.1" min="0" class="rev-esp" oninput="calcRevoques()"></td>
                         <td class="right rev-cons" id="rev-cons-fe">—</td>
+                      </tr>
+                      <tr>
+                        <td>Cielorraso</td>
+                        <td class="rev-mez" id="rev-mez-cr">—</td>
+                        <td class="right"><input type="number" id="rev-esp-cr" value="1" step="0.5" min="0" class="rev-esp" oninput="calcRevoques()"></td>
+                        <td class="right rev-cons" id="rev-cons-cr">—</td>
                       </tr>
                     </tbody>
                   </table>
@@ -3322,10 +3450,6 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <div class="field">
             <div class="field-label">Incremento por imprevistos <span class="field-hint">%</span></div>
             <input type="number" id="res-pct" value="12" step="1" class="input-editable" oninput="calcResumen()">
-          </div>
-          <div class="field">
-            <div class="field-label">Yeso <span class="field-hint">kg por m² de superficie de obra</span></div>
-            <input type="number" id="res-yeso-kgm2" value="1.35" step="0.05" min="0" class="input-editable" oninput="calcResumen();updateDashboard()">
           </div>
           <div class="field" style="display:flex;align-items:flex-end;">
             <div style="font-size:11px;color:var(--text3);line-height:1.5;padding-bottom:8px;">
@@ -3947,25 +4071,42 @@ function estriboDimVals(c){
   return (c.estriboManual && Array.isArray(c.dimVals) && c.dimVals.length) ? c.dimVals : estriboDimValsAuto(c);
 }
 
-// Largo total de estribo por "conjunto" (m), con el largo de ganchos elegido.
-// Los perim() de ESTRIBO_TIPOS traen los ganchos incluidos (hookLen por pieza);
-// si la columna define su propio "gancho" (cm por pieza, ambos extremos), se
-// reemplazan esos valores por el elegido.
-function estriboPerim(c){
-  const t = ESTRIBO_TIPOS.find(x=>x.id===(c.estribType||1)) || ESTRIBO_TIPOS[0];
-  let p = t.perim(estriboDimVals(c));
-  if(c.gancho!=null && c.gancho!==''){
-    const piezas   = t.dims.reduce((s,d)=>s+(d.mult||1), 0);
-    const incluido = t.dims.reduce((s,d)=>s+(d.hookLen||0.12)*(d.mult||1), 0);
-    p = p - incluido + piezas*(+c.gancho/100);
-  }
-  return p;
+// Ganchos por reglamento: mínimo 10 × Ø en cada extremo → por pieza 2 × 10Ø.
+// Ø6 → 12 cm · Ø8 → 16 cm · Ø10 → 20 cm. Es el valor automático; si el elemento
+// tiene "gancho" cargado a mano (cm por pieza, ambos extremos), manda ese.
+function ganchoAuto(phiEstr){ return 2 * 10 * (+phiEstr || 6) / 10; }
+function ganchoEfectivo(c){
+  return (c.gancho!=null && c.gancho!=='') ? +c.gancho : ganchoAuto(c.phiEstr);
 }
 
-function ganchoDefault(tipoId){
+// Largo total de estribo por "conjunto" (m). Los perim() de ESTRIBO_TIPOS traen
+// ganchos fijos incluidos (hookLen por pieza): se reemplazan siempre por el
+// gancho efectivo (10Ø por extremo o el cargado a mano).
+function estriboPerim(c){
+  const t = ESTRIBO_TIPOS.find(x=>x.id===(c.estribType||1)) || ESTRIBO_TIPOS[0];
+  const piezas   = t.dims.reduce((s,d)=>s+(d.mult||1), 0);
+  const incluido = t.dims.reduce((s,d)=>s+(d.hookLen||0.12)*(d.mult||1), 0);
+  return t.perim(estriboDimVals(c)) - incluido + piezas*(ganchoEfectivo(c)/100);
+}
+
+// Obras guardadas antes de la regla 10Ø: el modal guardaba el gancho fijo del
+// tipo (12 / 14 cm) como si fuera manual. Ese valor vuelve a ser automático.
+function ganchoViejoFijo(tipoId){
   const t = ESTRIBO_TIPOS.find(x=>x.id===tipoId) || ESTRIBO_TIPOS[0];
   return Math.round((t.dims[0].hookLen||0.12)*100);
 }
+function normGancho(el){
+  if(el && el.gancho!=null && el.gancho!=='' && !el.ganchoManual && +el.gancho===ganchoViejoFijo(el.estribType||1))
+    el.gancho = null;
+}
+
+// Vigas: sección según plano (ancho × alto) ≠ estribo. Se reusan los helpers
+// de columnas con una "columna rectangular" equivalente.
+function vigaCol(v){
+  return {forma:'rect', secA:+v.ancho||20, secB:+v.alto||20, recub:v.recub, gancho:v.gancho,
+          estriboManual:v.estriboManual, dimVals:v.dimVals, estribType:v.estribType||1, phiEstr:v.phiEstr};
+}
+function vigaPerim(v){ return estriboPerim(vigaCol(v)); }
 
 // Recubrimiento que resulta de sección vs estribo exterior (el menor de los dos lados)
 function recubResultante(c, dv){
@@ -4078,10 +4219,18 @@ function duplicarBase(id){
 // ── MODAL ESTRIBO ──────────────────────────────────────────────────────────
 let _modalContext = null;
 
-// Columna "virtual" con lo que está cargado en el modal (recubrimiento, ganchos, tipo)
+// Elemento del modal (columna o viga) y su equivalente "columna" para los helpers
+function _modalEl(){
+  if(!_modalContext) return null;
+  const {source, id} = _modalContext;
+  const arr = source==='col' ? state.columnas : source==='vf' ? state.vigas_vf : state.vigas_vd;
+  return arr.find(x=>x.id===id) || null;
+}
+function _modalAdapt(el){ return !el ? null : (_modalContext.source==='col' ? el : vigaCol(el)); }
+
+// Elemento "virtual" con lo que está cargado en el modal (recubrimiento, ganchos, tipo)
 function modalColBase(){
-  if(!_modalContext || _modalContext.source!=='col') return null;
-  const el = state.columnas.find(x=>x.id===_modalContext.id);
+  const el = _modalAdapt(_modalEl());
   if(!el) return null;
   const r = parseFloat(document.getElementById('modal-recub')?.value);
   const g = document.getElementById('modal-gancho')?.value;
@@ -4090,17 +4239,19 @@ function modalColBase(){
     gancho: (g===''||g==null) ? null : +g};
 }
 
-// Bloque superior del modal, sólo para columnas
+// Bloque superior del modal: sección según plano, recubrimiento y ganchos
 function modalColBoxHTML(tipoId){
-  const el = state.columnas.find(x=>x.id===_modalContext.id);
+  const orig = _modalEl(), el = _modalAdapt(orig);
   if(!el) return '';
+  const esCol = _modalContext.source==='col';
   const {f} = colSecc(el);
   const r = el.recub ?? REC_DEFAULT;
-  const g = el.gancho ?? ganchoDefault(tipoId);
+  const gAuto = ganchoAuto(el.phiEstr);
+  const g = (el.gancho!=null && el.gancho!=='') ? el.gancho : '';
   return `<div class="modal-col-box">
     <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;">
-      Columna <strong style="color:var(--text);">${el.denom}</strong> según plano:
-      <strong style="color:var(--text);">${colSeccTxt(el)} cm</strong> (${COL_FORMAS[f].label.replace(/^[^a-zA-Z]+/,'')})
+      ${esCol?'Columna':'Viga'} <strong style="color:var(--text);">${orig.denom}</strong> según plano:
+      <strong style="color:var(--text);">${colSeccTxt(el)} cm</strong>${esCol?` (${COL_FORMAS[f].label.replace(/^[^a-zA-Z]+/,'')})`:' (ancho × alto)'}
       <span style="color:var(--text3);">— la sección se cambia en la tabla</span>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">
@@ -4110,13 +4261,15 @@ function modalColBoxHTML(tipoId){
       </div>
       <div>
         <div class="modal-col-lbl">Ganchos (cm por estribo, ambos extremos)</div>
-        <input type="number" id="modal-gancho" value="${g}" step="1" min="0" oninput="updateModalPerim()" style="width:80px;">
+        <input type="number" id="modal-gancho" value="${g}" placeholder="${gAuto} auto" step="1" min="0" oninput="updateModalPerim()" style="width:90px;"
+          title="Vacío = automático: 10 × Ø en cada extremo (Ø${el.phiEstr||6} → ${gAuto} cm)">
       </div>
       <div id="modal-recub-res" style="font-family:'DM Mono',monospace;font-size:12px;padding-bottom:6px;"></div>
     </div>
     <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.5;">
       Las medidas de abajo son <strong>exteriores del estribo</strong> (sección − 2 × recubrimiento).
       Si las cambiás a mano, el recubrimiento pasa a ser el que resulte.
+      Ganchos vacío = automático por reglamento: 10 × Ø en cada extremo.
     </div>
   </div>`;
 }
@@ -4146,9 +4299,8 @@ function renderModalDims(tipoId, elA, elB, savedDimVals){
   if(!t) return;
   const wrap = document.getElementById('modal-dims-wrap');
   const multiEstr = t.dims.length > 1;
-  const esCol = _modalContext?.source==='col';
   wrap.innerHTML =
-    (esCol ? modalColBoxHTML(tipoId) : '')
+    modalColBoxHTML(tipoId)
     + `<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;">
       ${multiEstr ? `Este tipo usa <strong style="color:var(--text);">${t.dims.length} estribos independientes</strong> — ingresá las medidas exteriores de cada uno:` : 'Medidas exteriores del estribo (cm):'}
     </div>`
@@ -4201,14 +4353,10 @@ function openEstriboPicker(source, id){
       <div class="estribo-formula">${t.abbr}</div>
     </div>`).join('');
   _modalContext.selected = curType;
-  if(source==='col' && el){
-    // Columna: se muestran las medidas del ESTRIBO (manuales o derivadas), nunca la sección
+  if(el){
+    // Se muestran las medidas del ESTRIBO (manuales o derivadas), nunca la sección
     _modalContext.manual = !!el.estriboManual;
-    renderModalDims(curType, 20, 20, estriboDimVals(el));
-  } else {
-    const elA = el?.secA||el?.ancho||20;
-    const elB = el?.secB||el?.alto||20;
-    renderModalDims(curType, elA, elB, el?.dimVals);
+    renderModalDims(curType, 20, 20, estriboDimVals(_modalAdapt(el)));
   }
   document.getElementById('modalEstribo').classList.add('open');
 }
@@ -4222,21 +4370,19 @@ function selectEstribo(id){
   if(source==='col') el=state.columnas.find(x=>x.id===elId);
   else if(source==='vf') el=state.vigas_vf.find(x=>x.id===elId);
   else el=state.vigas_vd.find(x=>x.id===elId);
-  if(source==='col' && el){
-    // Otro tipo de estribo: medidas derivadas de la sección con el recubrimiento actual
-    const base = modalColBase() || el;
+  if(el){
+    // Otro tipo de estribo: medidas derivadas de la sección con el recubrimiento
+    // y los ganchos que estén cargados en el modal
+    const base = modalColBase() || _modalAdapt(el);
+    const gAntes = document.getElementById('modal-gancho')?.value ?? '';
     _modalContext.manual = false;
     renderModalDims(id, 20, 20, estriboDimValsAuto({...base, estribType:id}));
     const rIn = document.getElementById('modal-recub');
     if(rIn) rIn.value = base.recub ?? REC_DEFAULT;
     const gIn = document.getElementById('modal-gancho');
-    if(gIn && (el.gancho==null)) gIn.value = ganchoDefault(id);
+    if(gIn) gIn.value = gAntes;
     updateModalPerim();
-    return;
   }
-  const elA = el?.secA||el?.ancho||20;
-  const elB = el?.secB||el?.alto||20;
-  renderModalDims(id, elA, elB);
 }
 
 function updateModalPerim(){
@@ -4255,7 +4401,7 @@ function updateModalPerim(){
     })]) : null;
     // Compute individual perim for display
     const gIn = document.getElementById('modal-gancho');
-    const gancho = (gIn && gIn.value!=='') ? (+gIn.value/100) : (d.hookLen||0.12);
+    const gancho = (gIn && gIn.value!=='') ? (+gIn.value/100) : ganchoAuto(_modalAdapt(_modalEl())?.phiEstr)/100;
     const indiv = 2*(a+b)/100 + gancho;
     total = i===0 ? 0 : total; // will compute total via t.perim
     const el = document.getElementById(`modal-dim-${i}-perim`);
@@ -4304,13 +4450,7 @@ function confirmEstriboPicker(){
       // La sección de la columna (secA/secB) NO se toca: es la del plano.
       // Acá sólo se guarda lo del estribo: tipo, recubrimiento, ganchos y,
       // si se cargaron a mano, sus medidas exteriores.
-      el.estribType = tipo;
-      const r = parseFloat(document.getElementById('modal-recub')?.value);
-      if(!isNaN(r)) el.recub = r;
-      const g = document.getElementById('modal-gancho')?.value;
-      el.gancho = (g===''||g==null) ? null : +g;
-      if(_modalContext.manual){ el.dimVals = dimVals; el.estriboManual = true; }
-      else { el.estriboManual = false; delete el.dimVals; }
+      guardarEstriboModal(el, tipo, dimVals);
       // Tipos de estribo que sólo tienen sentido con una forma de columna
       const formaPorTipo = {6:'circ', 11:'L', 12:'T'};
       if(formaPorTipo[tipo] && colForma(el)!==formaPorTipo[tipo]){
@@ -4319,17 +4459,27 @@ function confirmEstriboPicker(){
       }
     }
     renderColumnas();
-  } else if(source==='vf'){
-    el=state.vigas_vf.find(x=>x.id===id);
-    if(el){el.estribType=tipo; el.ancho=dimVals[0]?.a||20; el.alto=dimVals[0]?.b||20; el.dimVals=dimVals;}
-    renderVigas('vf');
   } else {
-    el=state.vigas_vd.find(x=>x.id===id);
-    if(el){el.estribType=tipo; el.ancho=dimVals[0]?.a||20; el.alto=dimVals[0]?.b||20; el.dimVals=dimVals;}
-    renderVigas('vd');
+    // Vigas: la sección (ancho × alto) es la del plano y NO se toca
+    el = (source==='vf' ? state.vigas_vf : state.vigas_vd).find(x=>x.id===id);
+    if(el) guardarEstriboModal(el, tipo, dimVals);
+    renderVigas(source);
   }
   closeEstriboPicker();
+  scheduleAutosave();
   showToast('✓ Estribo actualizado','success',1800);
+}
+
+// Lo del estribo que se guarda desde el modal (columnas y vigas por igual)
+function guardarEstriboModal(el, tipo, dimVals){
+  el.estribType = tipo;
+  const r = parseFloat(document.getElementById('modal-recub')?.value);
+  if(!isNaN(r)) el.recub = r;
+  const g = document.getElementById('modal-gancho')?.value;
+  el.gancho = (g===''||g==null) ? null : +g;
+  el.ganchoManual = el.gancho!=null;
+  if(_modalContext.manual){ el.dimVals = dimVals; el.estriboManual = true; }
+  else { el.estriboManual = false; delete el.dimVals; }
 }
 
 function closeEstriboPicker(){
@@ -4444,6 +4594,74 @@ function colSeccionCellHTML(c){
     </div>`;
 }
 
+// Celda "Sección" de vigas: ancho × alto según plano + estribo y recubrimiento
+function vigaSeccionCellHTML(v, tipo){
+  const c = vigaCol(v);
+  const dv = estriboDimVals(c);
+  const r  = recubResultante(c, dv);
+  const aviso = recubAviso(r);
+  const d0 = dv[0] || {a:0,b:0};
+  const inp = (campo, val, tit) =>
+    `<input type="number" class="sec-input" data-k="${tipo}-${v.id}-${campo}" value="${val}" step="0.5" min="1"
+      onchange="vigaCambio('${tipo}',${v.id},'${campo}',+this.value)" title="${tit}">`;
+  return `<div class="sec-row">${inp('ancho', c.secA, 'Ancho de la viga según plano (cm)')}<span class="sec-x">×</span>${inp('alto', c.secB, 'Alto de la viga según plano (cm)')}</div>
+    <div class="estr-preview sec-derivado" onclick="openEstriboPicker('${tipo}',${v.id})" title="Medidas exteriores del estribo — tocá para cambiarlas">
+      estribo ${fmt1(d0.a)}×${fmt1(d0.b)}${v.estriboManual?' <b>(manual)</b>':''} · rec. <span style="${aviso?'color:var(--red);font-weight:700;':''}">${fmt1(r)} cm</span>
+      ${aviso?`<div style="color:var(--red);">${aviso}</div>`:''}
+    </div>`;
+}
+function vigaCambio(tipo, id, campo, val){
+  const v = (tipo==='vf' ? state.vigas_vf : state.vigas_vd).find(x=>x.id===id);
+  if(!v) return;
+  v[campo] = val;
+  setTimeout(()=>renderVigas(tipo), 0);
+}
+
+// ── NIVELES (columnas y vigas VD/VE/VC) ───────────────────────────────────
+// Cada fila lleva su nivel: se identifica con un color y se puede filtrar;
+// debajo de cada tabla van las sumas por nivel para armar pedidos parciales.
+const NIVELES = [
+  {k:'PB', corto:'PB',     largo:'1° nivel · PB', color:'var(--blue)'},
+  {k:'PA', corto:'PA',     largo:'2° nivel · PA', color:'var(--green)'},
+  {k:'N3', corto:'3°',     largo:'3° nivel',      color:'var(--purple)'},
+  {k:'TQ', corto:'Tanque', largo:'Tanque',        color:'var(--orange)'},
+];
+const nivelInfo = k => NIVELES.find(x=>x.k===k) || {k:'', corto:'s/n', largo:'Sin nivel', color:'var(--text3)'};
+function nivelSelectHTML(val, onchg){
+  return `<select class="nivel-select" data-niv="${val||''}" onchange="${onchg}" title="Nivel">
+    <option value="" ${!val?'selected':''}>— nivel —</option>
+    ${NIVELES.map(n=>`<option value="${n.k}" ${n.k===val?'selected':''}>${n.largo}</option>`).join('')}
+  </select>`;
+}
+// Filtro "Mostrar" arriba de cada tabla (select con id → se guarda con la obra)
+function nivelVisible(lista, niv){
+  const f = document.getElementById(lista+'-nivel-filtro')?.value || '';
+  return !f || f===(niv||'');
+}
+// Suma por nivel: {nivel: {n, horm, phi:{Ø: ml}}}
+function sumasPorNivelHTML(porNivel, titElem){
+  const niveles = Object.keys(porNivel).sort((a,b)=>{
+    const ia = NIVELES.findIndex(x=>x.k===a), ib = NIVELES.findIndex(x=>x.k===b);
+    return (ia<0?99:ia) - (ib<0?99:ib);
+  });
+  if(!niveles.length) return '<div style="color:var(--text3);font-size:12px;padding:10px;">Sin datos</div>';
+  const phis = [...new Set(niveles.flatMap(k=>Object.keys(porNivel[k].phi)))].filter(p=>+p>0).sort((a,b)=>+a-+b);
+  const fila = (lbl, color, d, fuerte) => `<tr${fuerte?' class="niv-tot"':''}>
+      <td><span class="niv-dot" style="background:${color};"></span>${lbl}</td>
+      <td class="right">${d.n}</td>
+      <td class="right" style="color:var(--blue);">${n(d.horm,2)}</td>
+      ${phis.map(p=>{ const ml=d.phi[p]||0; return `<td class="right">${ml>0.05?`<b>${Math.ceil(ml/BARRA_COMERCIAL)}</b><div class="niv-ml">${n(ml,1)} m</div>`:'—'}</td>`; }).join('')}
+    </tr>`;
+  const tot = {n:0, horm:0, phi:{}};
+  niveles.forEach(k=>{ const d=porNivel[k]; tot.n+=d.n; tot.horm+=d.horm; Object.entries(d.phi).forEach(([p,ml])=>tot.phi[p]=(tot.phi[p]||0)+ml); });
+  return `<div class="table-wrap" style="border:none;"><table class="niv-tabla">
+    <thead><tr><th>Nivel</th><th class="right">${titElem}</th><th class="right">H° (m³)</th>
+      ${phis.map(p=>`<th class="right">Ø${p}<br><span style="text-transform:none;letter-spacing:0;">barras ${BARRA_COMERCIAL} m</span></th>`).join('')}</tr></thead>
+    <tbody>${niveles.map(k=>{ const i=nivelInfo(k); return fila(i.largo, i.color, porNivel[k]); }).join('')}
+      ${niveles.length>1 ? fila('Total', 'var(--accent)', tot, true) : ''}</tbody>
+  </table></div>`;
+}
+
 // Cambio de medida de sección: re-dibuja la fila (cambia estribo, recubrimiento y m³),
 // diferido para que el foco ya esté en la casilla siguiente y se pueda restaurar.
 function colCambio(id, campo, val){
@@ -4479,15 +4697,16 @@ function renderColumnas(){
 
     const perim = estriboPerim(c);
     const nEstr  = Math.ceil((lCIRSOC*1000)/c.sepEstr);   // separación en mm
-    const horm = c.cantElem * colArea(c) * c.alt * 0.75;
+    const horm = c.cantElem * colArea(c) * c.alt;
     const barrasEstr = Math.ceil((c.cantElem * nEstr * perim) / BARRA_COMERCIAL);
     const tipoInfo = ESTRIBO_TIPOS.find(t=>t.id===(c.estribType||1));
 
     // Celdas con helpers compartidos
     const lBarraLabel = lBarraCellHTML(calc1);
 
-    return `<tr>
-      <td style="min-width:55px;"><input value="${c.denom}" onchange="updateCol(${c.id},'denom',this.value)" style="width:52px;color:var(--accent);font-weight:700;font-size:12px;"></td>
+    return `<tr data-niv="${c.nivel||''}" ${nivelVisible('col',c.nivel)?'':'style="display:none;"'}>
+      <td style="min-width:55px;"><input value="${c.denom}" onchange="updateCol(${c.id},'denom',this.value)" style="width:52px;color:var(--accent);font-weight:700;font-size:12px;">
+        ${nivelSelectHTML(c.nivel, `updateCol(${c.id},'nivel',this.value);renderColumnas()`)}</td>
       <td class="center"><input type="number" value="${c.cantElem}" onchange="updateCol(${c.id},'cantElem',+this.value);calcColTotals()" class="qty-input"></td>
       <td style="min-width:150px;">${colSeccionCellHTML(c)}</td>
       <td style="min-width:120px;">
@@ -4548,13 +4767,15 @@ function addColumna(){
   const id=++state.nextId.col;
   // Default alt 2.70, phi 12 → lBarra auto-calculated
   state.columnas.push({id,denom:'C'+id,cantElem:1,phi:12,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,
-    alt:2.70,secA:20,secB:20,phiEstr:6,sepEstr:150,estribType:1});
+    alt:2.70,secA:20,secB:20,recub:REC_DEFAULT,phiEstr:6,sepEstr:150,estribType:1,
+    nivel: document.getElementById('col-nivel-filtro')?.value || state.columnas.at(-1)?.nivel || 'PB'});
   renderColumnas();
 }
 
 function calcColTotals(){
   const hierrosPhi   = {};   // phi → {ml, barrasNec, barrasComerciales, recortesTotal, recortesLong}
   const recortesReg  = [];   // para registrar en pestaña recortes
+  const porNivel     = {};   // nivel → {n, horm, phi:{Ø: ml}}
   let totalHorm = 0;
 
   state.columnas.forEach(c=>{
@@ -4597,8 +4818,21 @@ function calcColTotals(){
     hierrosPhi[c.phiEstr].ml += mlEstr;
 
     // H° — sección de hormigón según plano (cuadrada, rectangular, L, T o circular)
-    totalHorm += c.cantElem * colArea(c) * c.alt * 0.75;
+    totalHorm += c.cantElem * colArea(c) * c.alt;
+
+    // Sumas por nivel (pedidos parciales)
+    const nk = c.nivel||'';
+    const niv = porNivel[nk] || (porNivel[nk] = {n:0, horm:0, phi:{}});
+    niv.n += c.cantElem; niv.horm += c.cantElem * colArea(c) * c.alt;
+    const addN = (p, ml) => { if(p && ml) niv.phi[p] = (niv.phi[p]||0) + ml; };
+    if(c.phi && c.nBarras) addN(c.phi, c.cantElem*c.nBarras*lCIRSOC);
+    [[c.phi2,c.n2],[c.phi3,c.n3]].forEach(([p,nb])=>{ if(p && nb) addN(p, c.cantElem*nb*lBarraCIRSOC(c.alt,p).lTramo); });
+    addN(c.phiEstr, mlEstr);
   });
+  const nivDiv = document.getElementById('col-niveles');
+  if(nivDiv) nivDiv.innerHTML = sumasPorNivelHTML(porNivel, 'Columnas');
+  const filtroCol = document.getElementById('col-nivel-filtro')?.value;
+  setTxt('col-total-lbl', filtroCol ? 'H° TOTAL COLUMNAS (todos los niveles)' : 'H° TOTAL COLUMNAS');
 
   // Calcular barras comerciales y recortes finales por phi
   Object.entries(hierrosPhi).forEach(([phi,d])=>{
@@ -4647,7 +4881,7 @@ const pageNames = {
   vigas: {title:'Vigas H°A°', sub:'VF · VA · VD · VE · VC'},
   bases: {title:'Bases y Cimientos', sub:'Fundaciones'},
   mamposteria: {title:'Mampostería', sub:'Ladrillones, mortero y dosaje'},
-  revoques: {title:'Revoques', sub:'Grueso y fino · Interior y exterior'},
+  revoques: {title:'Revoques', sub:'Grueso y fino · Interior y exterior · Cielorrasos'},
   contrapiso: {title:'Contrapiso / Carpeta', sub:'Cemento, arena gruesa y ripio'},
   losas: {title:'Losas y Techos', sub:'Pretensadas · Macizas · Cubierta'},
   recortes: {title:'Recortes de Hierro', sub:'Stock y optimización de sobrantes'},
@@ -4970,8 +5204,9 @@ function rendMezcla(p){
   const cem=+p.cem||0, cal=+p.cal||0, alb=+p.alb||0, are=+p.are||0, liv=+p.liv||0;
   const agr = are + liv, lig = cem + cal + alb;
   const V = agr + Math.max(0, 0.5*lig - 0.30*agr);
-  if(!(V>0)) return {portKg:0, calKg:0, albKg:0, arenaM3:0, livM3:0};
+  if(!(V>0)) return {portKg:0, calKg:0, albKg:0, arenaM3:0, livM3:0, yesoKg:0};
   return {
+    yesoKg:  0,
     portKg:  cem/V * DENS_AP.cemento,
     calKg:   cal/V * DENS_AP.cal,
     albKg:   alb/V * DENS_AP.cemAlb,
@@ -4996,13 +5231,17 @@ const MORT_TIPOS = {
   '2': {lbl:'Cem. albañilería + arena', corto:'Cem. alb.',   campos:[['alb','Cem. alb.'],['are','Arena']]},
   '1': {lbl:'Cemento + cal + arena',    corto:'Cem.+cal',    campos:[['cem','Cemento'],['cal','Cal'],['are','Arena']]},
   '3': {lbl:'Cemento + arena',          corto:'Cemento',     campos:[['cem','Cemento'],['are','Arena']]},
+  '4': {lbl:'Yeso (enlucido)',          corto:'Yeso',        campos:[['ykg','kg yeso / m³']]},
 };
+// Yeso aplicado: ~1.000 kg de yeso por m³ de enlucido (≈ 10 kg/m² por cm de espesor)
+const YESO_KG_M3 = 1000;
 const MORTEROS = [
   {k:'mamp', lbl:'Mampostería',             sub:'asiento · arena gruesa', sel:'mamp-mort-tipo', tipos:['2','1']},
   {k:'gi',   lbl:'Revoque grueso interior', sub:'arena gruesa',          sel:'rev-opc-gi',     tipos:['2','1']},
   {k:'ge',   lbl:'Revoque grueso exterior', sub:'arena gruesa',          sel:'rev-opc-ge',     tipos:['2','1','3']},
   {k:'fi',   lbl:'Revoque fino interior',   sub:'arena fina',            sel:'rev-opc-fi',     tipos:['2','1']},
   {k:'fe',   lbl:'Revoque fino exterior',   sub:'arena fina',            sel:'rev-opc-fe',     tipos:['2','1','3']},
+  {k:'cr',   lbl:'Cielorraso',              sub:'aplicado · arena fina', sel:'cr-mort-tipo',   tipos:['4','2','1']},
 ];
 // Valores iniciales: reproducen los consumos que ya usaba la planilla
 // (mampostería 18,6 kg cem. alb. + 0,078 m³ arena por m² · grueso 7,5 kg/m²)
@@ -5012,6 +5251,7 @@ const MORT_DEF = {
   ge:   {tipo:'2', t2:{alb:1, are:4}, t1:{cem:0.25, cal:1, are:4}, t3:{cem:1, are:3}},
   fi:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}},
   fe:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}, t3:{cem:1, are:3}},
+  cr:   {tipo:'4', t4:{ykg:YESO_KG_M3}, t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}},
 };
 
 // Arma las filas UNA vez, antes de restaurar lo guardado: los selects y las
@@ -5027,7 +5267,7 @@ function construirMorteros(){
       `<div class="mort-partes" id="mz-${M.k}-t${t}" ${t===def.tipo?'':'style="display:none;"'}>`
       + MORT_TIPOS[t].campos.map(([c,lbl],i)=>
           (i?'<span class="mort-dos">:</span>':'')
-          + `<label class="mort-parte"><input type="number" id="mz-${M.k}-t${t}-${c}" value="${def['t'+t][c]}" step="0.125" min="0" oninput="morteroCambio()"><span>${lbl}</span></label>`
+          + `<label class="mort-parte"><input type="number" id="mz-${M.k}-t${t}-${c}" value="${def['t'+t][c]}" step="${c==='ykg'?50:0.125}" min="0" oninput="morteroCambio()"${c==='ykg'?' style="width:74px !important;"':''}><span>${lbl}</span></label>`
         ).join('')
       + '</div>').join('');
     return `<tr>
@@ -5050,6 +5290,11 @@ function mortero(k){
     const v = parseFloat(document.getElementById(`mz-${k}-t${tipo}-${c}`)?.value);
     partes[c] = isFinite(v) && v>=0 ? v : def['t'+tipo][c];
   });
+  if(tipo==='4'){
+    // Yeso: no es mezcla con arena, se computa por kg de yeso por m³ aplicado
+    const rend = {...rendMezcla({}), yesoKg: partes.ykg};
+    return {k, tipo, partes, rend, label:'Yeso'};
+  }
   const rend = rendMezcla(partes);
   const label = MORT_TIPOS[tipo].corto + ' ' + MORT_TIPOS[tipo].campos.map(([c])=>fmtParte(partes[c])).join(':');
   return {k, tipo, partes, rend, label};
@@ -5061,6 +5306,7 @@ function txtMezcla(rend, m3, arenaLbl, sep){
   if(rend.portKg >0.001) out.push(`${n(rend.portKg*m3, m3<0.1?2:0)} kg cemento`);
   if(rend.albKg  >0.001) out.push(`${n(rend.albKg*m3,  m3<0.1?2:0)} kg cem. alb.`);
   if(rend.calKg  >0.001) out.push(`${n(rend.calKg*m3,  m3<0.1?2:0)} kg cal`);
+  if(rend.yesoKg >0.001) out.push(`${n(rend.yesoKg*m3, m3<0.1?2:0)} kg yeso`);
   if(rend.arenaM3>0.0001) out.push(`${n(rend.arenaM3*m3, 3)} m³ ${arenaLbl||'arena'}`);
   return out.join(sep||' + ');
 }
@@ -5071,16 +5317,17 @@ function calcMortero(){
   MORTEROS.forEach(M=>{
     const m = mortero(M.k);
     M.tipos.forEach(t=>{ const p=document.getElementById(`mz-${M.k}-t${t}`); if(p) p.style.display = t===m.tipo?'':'none'; });
-    const fina = M.k==='fi' || M.k==='fe';
+    const fina = M.k==='fi' || M.k==='fe' || M.k==='cr';
     const R = m.rend;
     const lin = (kg, lbl, k) => kg>0.001
       ? `<div><b>${n(kg,0)}</b> kg ${lbl} <span class="mort-eq">${n(ucDesdeBase(k,kg),1)} ${ucLabel(k)}</span></div>` : '';
     const el = document.getElementById('mort-m3-'+M.k);
     if(el) el.innerHTML =
         lin(R.portKg,'cemento','portland') + lin(R.albKg,'cem. alb.','cemAlb') + lin(R.calKg,'cal','cal')
-      + `<div><b>${n(R.arenaM3,2)}</b> m³ arena ${fina?'fina':'gruesa'}</div>`;
+      + lin(R.yesoKg,'yeso','yeso')
+      + (R.arenaM3>0.0001 ? `<div><b>${n(R.arenaM3,2)}</b> m³ arena ${fina?'fina':'gruesa'}</div>` : '');
     const em = document.getElementById('mort-maq-'+M.k);
-    if(em) em.innerHTML = [
+    if(em) em.innerHTML = m.tipo==='4' ? '<div style="color:var(--text3);">se prepara a mano</div>' : [
         R.portKg>0.001 ? `${n(R.portKg*mq.m3,1)} kg cemento` : '',
         R.albKg >0.001 ? `${n(R.albKg*mq.m3,1)} kg cem. alb.` : '',
         R.calKg >0.001 ? `${n(R.calKg*mq.m3,1)} kg cal` : '',
@@ -5120,6 +5367,7 @@ function renderVigas(tipo){
   const arr = tipo==='vf'?state.vigas_vf:state.vigas_vd;
   const tbody = document.getElementById(tipo+'-tbody');
   const PHI_COLORS = {6:'#6a9fd8',8:'#6db87a',10:'#d4a853',12:'#d4854a',16:'#a07ecc',20:'#e07070'};
+  const foco = document.activeElement?.dataset?.k;
   tbody.innerHTML = arr.map(v=>{
     const a=v.ancho||20, b=v.alto||20;
 
@@ -5127,7 +5375,7 @@ function renderVigas(tipo){
     const calc1 = lBarraCIRSOC_viga(v.longLibre, v.phi||10);
     const { lTramo: lV1, empalmes: emp1, bruto: br1, recorte: rec1 } = calc1;
 
-    const perim  = calcPerimEstribo(v.estribType||1, a, b, v.dimVals);
+    const perim  = vigaPerim(v);
     const nEstr  = Math.ceil((v.longLibre*100)/v.sepEstr);
     const mlEstr = nEstr * perim;
     const barrasEstr = Math.ceil((mlEstr) / BARRA_COMERCIAL);
@@ -5146,9 +5394,11 @@ function renderVigas(tipo){
     const cantBarras1 = v.nBarras;
     const recorteTotal1 = parseFloat((rec1 * cantBarras1).toFixed(2));
 
-    return `<tr>
+    return `<tr data-niv="${tipo==='vd'?(v.nivel||''):''}" ${tipo==='vd'&&!nivelVisible('vd',v.nivel)?'style="display:none;"':''}>
       <td><input value="${v.denom}" onchange="updateViga('${tipo}',${v.id},'denom',this.value)"
-        style="width:62px;color:var(--blue);font-weight:700;font-size:12px;"></td>
+        style="width:62px;color:var(--blue);font-weight:700;font-size:12px;">
+        ${tipo==='vd' ? nivelSelectHTML(v.nivel, `updateViga('vd',${v.id},'nivel',this.value)`) : ''}</td>
+      <td style="min-width:150px;">${vigaSeccionCellHTML(v, tipo)}</td>
       <td style="min-width:130px;">
         <div class="phi-row">
           <span class="phi-badge" style="background:${PHI_COLORS[v.phi]||'#d4a853'}22;color:${PHI_COLORS[v.phi]||'#d4a853'};">Ø1</span>
@@ -5214,6 +5464,10 @@ function renderVigas(tipo){
       <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button onclick="duplicarViga('${tipo}',${v.id})" title="Duplicar fila" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeViga('${tipo}',${v.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
     </tr>`;
   }).join('');
+  if(foco){
+    const el = tbody.querySelector(`[data-k="${foco}"]`);
+    if(el){ el.focus(); if(el.select) el.select(); }
+  }
   calcVigaTotals();
 }
 
@@ -5233,7 +5487,9 @@ function removeViga(tipo,id){
 }
 function addViga(tipo){
   const id=++state.nextId.vf;
-  const obj={id,denom:(tipo==='vf'?'VF':'VD')+'-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false};
+  const obj={id,denom:(tipo==='vf'?'VF':'VD')+'-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,recub:REC_DEFAULT,estribType:1,hormTipo:'H17',techoLiviano:false};
+  // Nivel: el que se está mirando (filtro) o el de la última viga cargada
+  if(tipo==='vd') obj.nivel = document.getElementById('vd-nivel-filtro')?.value || state.vigas_vd.at(-1)?.nivel || 'PB';
   if(tipo==='vf') state.vigas_vf.push(obj); else state.vigas_vd.push(obj);
   renderVigas(tipo);
 }
@@ -5275,7 +5531,7 @@ function calcHierrosPhi(arr){
     addPhi(v.phi3, v.n3||0,     lV3);
     // estribos
     const a=v.ancho||20, b=v.alto||20;
-    const perim = calcPerimEstribo(v.estribType||1, a, b, v.dimVals);
+    const perim = vigaPerim(v);
     const nE = Math.ceil((v.longLibre*100)/v.sepEstr);
     const mlEstr = nE*perim;
     if(!phi[v.phiEstr]) phi[v.phiEstr]={ml:0,barras:0};
@@ -5319,7 +5575,7 @@ function calcVigaTotals(){
     const byTipo = {};  // hormTipo → m³
     arr.forEach(v=>{
       const a=v.ancho||20, b=v.alto||20;
-      const perim = calcPerimEstribo(v.estribType||1, a, b, v.dimVals);
+      const perim = vigaPerim(v);
       const nE = Math.ceil((v.longLibre*100)/v.sepEstr);
       estr += nE*perim;
       const lV1 = lBarraCIRSOC_viga(v.longLibre, v.phi||10).lTramo;
@@ -5337,6 +5593,19 @@ function calcVigaTotals(){
     return {ml, estr, horm, hormElab, hormObra, byTipo};
   };
   const vf=calcArr(state.vigas_vf), vd=calcArr(state.vigas_vd);
+
+  // VD/VE/VC: sumas por nivel (pedidos parciales)
+  const gruposVd = {};
+  state.vigas_vd.forEach(v=>{ (gruposVd[v.nivel||''] ||= []).push(v); });
+  const porNivelVd = {};
+  Object.entries(gruposVd).forEach(([k, sub])=>{
+    const c = calcArr(sub);
+    porNivelVd[k] = {n: sub.length, horm: Object.values(c.byTipo).reduce((s,x)=>s+x,0),
+      phi: Object.fromEntries(Object.entries(calcHierrosPhi(sub)).map(([p,d])=>[p, d.ml]))};
+  });
+  const vdNivDiv = document.getElementById('vd-niveles');
+  if(vdNivDiv) vdNivDiv.innerHTML = sumasPorNivelHTML(porNivelVd, 'Vigas');
+  setTxt('vd-total-lbl', document.getElementById('vd-nivel-filtro')?.value ? 'TOTALES VD/VE/VC (todos los niveles)' : 'TOTALES VD/VE/VC');
   setTxt('vf-total-horm',n(vf.horm,2)+' m³');
   setTxt('vd-total-horm',n(vd.horm,2)+' m³');
   setTxt('vf-total-ppal',n(vf.ml,1));   setTxt('vf-total-estr',n(vf.estr,1));
@@ -5822,6 +6091,7 @@ function calcRevoques(){
     {k:'ge', lbl:'R. Grueso Ext.', grueso:true,  pre:'rg-ext', pctId:'rev-hid-ext', espDef:2.5},
     {k:'fi', lbl:'R. Fino Int.',   grueso:false, pre:'rf-int',                      espDef:0.5},
     {k:'fe', lbl:'R. Fino Ext.',   grueso:false, pre:'rf-ext',                      espDef:0.5},
+    {k:'cr', lbl:'Cielorraso',     grueso:false, pre:'cr',                          espDef:1},
   ];
   const espM = t => {
     const el = document.getElementById('rev-esp-'+t.k);
@@ -5837,13 +6107,13 @@ function calcRevoques(){
   // Materiales de "sup" m² de revoque de espesor e (m) con la mezcla m
   const dosMort = (sup, m, e, fino) => {
     const v = sup * e, R = m.rend;
-    return {portKg: v*R.portKg, calKg: v*R.calKg, cemAlbKg: v*R.albKg,
+    return {portKg: v*R.portKg, calKg: v*R.calKg, cemAlbKg: v*R.albKg, yesoKg: v*(R.yesoKg||0),
             [fino ? 'arenaFi' : 'arenaGr']: v*R.arenaM3};
   };
   const dosHidro = (sup, e) => ({portKg: sup*e*mezH.portKg, calKg: 0, cemAlbKg: 0,
                                  arenaGr: sup*e*mezH.arenaM3, hidroL: sup*hidLm2});
 
-  const tot = {portKg:0, calKg:0, cemAlbKg:0, arenaGr:0, arenaFi:0, hidroL:0};
+  const tot = {portKg:0, calKg:0, cemAlbKg:0, yesoKg:0, arenaGr:0, arenaFi:0, hidroL:0};
   const sumar = d => Object.keys(tot).forEach(k=>{ tot[k] += d[k]||0; });
 
   // Filas de materiales, en la presentación comercial vigente
@@ -5853,11 +6123,12 @@ function calcRevoques(){
       (d.portKg  >0.001 ? dr('Cem. Portland',      ucDesdeBase('portland', d.portKg), ucLabel('portland'), fuerte) : '')
     + (d.cemAlbKg>0.001 ? dr('Cem. Albañilería',   ucDesdeBase('cemAlb', d.cemAlbKg), ucLabel('cemAlb'),   fuerte) : '')
     + (d.calKg   >0.001 ? dr('Cal Hidr. Especial', ucDesdeBase('cal', d.calKg),       ucLabel('cal'),      fuerte) : '')
+    + (d.yesoKg  >0.001 ? dr('Yeso',               ucDesdeBase('yeso', d.yesoKg),     ucLabel('yeso'),     fuerte) : '')
     + (d.arenaGr >0.0001? dr('Arena gruesa',       ucDesdeBase('arenaG', d.arenaGr),  ucLabel('arenaG'),   fuerte) : '')
     + (d.arenaFi >0.0001? dr('Arena fina',         ucDesdeBase('arenaF', d.arenaFi),  ucLabel('arenaF'),   fuerte) : '')
     + (d.hidroL  >0.001 ? dr('Hidrófugo SIKA 1',   ucDesdeBase('hidrofugo', d.hidroL),ucLabel('hidrofugo'),fuerte) : '');
 
-  const COL_TIPO = {'1':'var(--accent)', '2':'var(--green)', '3':'var(--blue)'};
+  const COL_TIPO = {'1':'var(--accent)', '2':'var(--green)', '3':'var(--blue)', '4':'var(--purple)'};
   const tag = m => `<span style="color:${COL_TIPO[m.tipo]};font-size:9px;">${m.label}</span>`;
 
   // Cuadro "Mezcla y espesor por tipo de revoque": se actualiza solo
@@ -5921,6 +6192,7 @@ function calcRevoques(){
     arenaGr:   tot.arenaGr,
     arenaFi:   tot.arenaFi,
     sika:      tot.hidroL,             // litros de hidrófugo (sólo grueso PB)
+    yesoKg:    tot.yesoKg,             // cielorrasos de yeso
     bagKg
   };
   updateDashboard();
@@ -6273,15 +6545,19 @@ const COL_APLICAR = {
     factor: [{k:'factor',lbl:'Factor malla', num:true, opts:[[1,'× 1 simple'],[1.5,'× 1.5 escalera'],[2,'× 2 doble malla']]}],
   }},
   columnas: {nombre:'columnas', arr:()=>state.columnas, render:()=>renderColumnas(), campos:{
+    nivel:    [{k:'nivel', lbl:'Nivel', opts:()=>NIVELES.map(n=>[n.k,n.largo])}],
     cantElem: [{k:'cantElem', lbl:'Cantidad', num:true, step:1}],
     alt:      [{k:'alt',      lbl:'Altura libre (m)', num:true, step:0.1}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (mm)', num:true, step:10}],
   }},
   vigas_vf: {nombre:'vigas VF/VA', arr:()=>state.vigas_vf, render:()=>renderVigas('vf'), campos:{
+    seccion:  [{k:'ancho', lbl:'Ancho (cm)', num:true, step:0.5}, {k:'alto', lbl:'Alto (cm)', num:true, step:0.5}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (cm)', num:true, step:1}],
     hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
   }},
   vigas_vd: {nombre:'vigas VD/VE/VC', arr:()=>state.vigas_vd, render:()=>renderVigas('vd'), campos:{
+    nivel:    [{k:'nivel', lbl:'Nivel', opts:()=>NIVELES.map(n=>[n.k,n.largo])}],
+    seccion:  [{k:'ancho', lbl:'Ancho (cm)', num:true, step:0.5}, {k:'alto', lbl:'Alto (cm)', num:true, step:0.5}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (cm)', num:true, step:1}],
     hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
   }},
@@ -6383,16 +6659,18 @@ function colAplAplicar(){
   });
 }
 
-// Aviso con botón "Deshacer" (8 s)
-function toastDeshacer(msg, deshacer){
+// Aviso con un botón de acción ("Deshacer" por defecto, 8 s)
+function toastDeshacer(msg, accion, btnTxt, ms){
   document.getElementById('undo-bar')?.remove();
   const bar = document.createElement('div');
   bar.id = 'undo-bar';
   bar.className = 'undo-bar';
-  bar.innerHTML = `<span>${msg}</span><button type="button">Deshacer</button>`;
-  bar.querySelector('button').onclick = ()=>{ bar.remove(); deshacer(); };
+  bar.innerHTML = `<span>${msg}</span><button type="button">${btnTxt||'Deshacer'}</button><button type="button" class="undo-x" title="Cerrar">✕</button>`;
+  const [b, x] = bar.querySelectorAll('button');
+  b.onclick = ()=>{ bar.remove(); accion(); };
+  x.onclick = ()=>bar.remove();
   document.body.appendChild(bar);
-  setTimeout(()=>bar.remove(), 8000);
+  setTimeout(()=>bar.remove(), ms||8000);
 }
 
 // ── RECORTES ─────────────────────────────────────────────────────────────
@@ -6922,12 +7200,8 @@ function updateDashboard(){
 }
 
 // ── RESUMEN FINAL ──────────────────────────────────────────────────────────
-// Yeso: proporcional a la superficie cubierta de la obra (kg por m², editable
-// en el Resumen). 1,35 kg/m² = las 6,75 bolsas de 40 kg que traía la planilla para 200 m².
-function yesoKg(){
-  const kgM2 = parseFloat(document.getElementById('res-yeso-kgm2')?.value);
-  return (r('sup-pb') + r('sup-pa')) * (isFinite(kgM2) && kgM2>=0 ? kgM2 : 1.35);
-}
+// Yeso: sale de los cielorrasos cargados en Revoques (m² × espesor × mezcla)
+function yesoKg(){ return state.resultados?.rev?.yesoKg || 0; }
 
 // ── RESUMEN: datos (una sola fuente para la pantalla y el PDF) ─────────────
 function datosResumen(){
@@ -7028,7 +7302,7 @@ function datosResumen(){
       U('Cemento Portland','portland', cemPortTotal*25, pct, 'H° en obra, contrapiso, mezclas'),
       ...(cemAlbKgTot>0.1 ? [U('Cemento Albañilería','cemAlb', cemAlbKgTot, pct, 'mampostería + revoques + cubierta')] : []),
       ...(calKgTot>0.1 ? [U('Cal Hidratada Especial','cal', calKgTot, pct, 'mezclas con cal')] : []),
-      ...(yesoKg()>0.1 ? [U('Yeso','yeso', yesoKg(), pct, 'según superficie de la obra')] : []),
+      ...(yesoKg()>0.1 ? [U('Yeso','yeso', yesoKg(), pct, 'cielorrasos')] : []),
     ]},
     {el:'res-horm', titulo:'Hormigones', filas:elab, vacio:'Sin H° elaborado — todo en obra (ver áridos)'},
     {el:'res-hierros', titulo:'Hierros', filas:barras},
@@ -7387,6 +7661,132 @@ async function exportCSV(){
   await iaGuardarArchivo('computo_obra.csv', blob);
 }
 
+// ── BUSCADOR GENERAL ──────────────────────────────────────────────────────
+// Busca un material o palabra en TODAS las pestañas (textos, filas de tablas,
+// valores cargados en las casillas) y lista dónde aparece. Clic → va ahí.
+const BUSQ_SEL = '.section-title, .card-title, .field-label, .dosaje-row, .mat-row, tbody tr, .stat, .rev-tipo, .rev-nivel, .rev-hidro, .techo-capa-tit, .techo-capa-cons, .edit-guide-text, .alert';
+let _busqTimer = null, _busqRes = [], _busqSel = 0;
+
+const _norm = t => String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+function _busqTexto(el){
+  let t = el.textContent || '';
+  el.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=search]), select, textarea').forEach(i=>{
+    t += ' ' + (i.tagName==='SELECT' ? (i.options[i.selectedIndex]?.text||'') : i.value);
+  });
+  return t.replace(/\s+/g,' ').trim();
+}
+
+function busqProgramar(){
+  clearTimeout(_busqTimer);
+  _busqTimer = setTimeout(busqEjecutar, 160);
+}
+
+function busqEjecutar(){
+  const inp = document.querySelector('[data-busq]');
+  const box = document.getElementById('busq-res');
+  const q = (inp?.value||'').trim();
+  if(q.length < 2){ box.classList.remove('open'); box.innerHTML=''; _busqRes=[]; return; }
+  const terminos = _norm(q).split(/\s+/).filter(Boolean);
+  // Resumen y Unidades se dibujan al entrar: se actualizan para buscar en lo vigente
+  try{ calcResumen(); renderUnidades(); }catch(e){}
+  _busqRes = [];
+  document.querySelectorAll('.page[id^="page-"]').forEach(pg=>{
+    const pid = pg.id.slice(5);
+    const vistos = new Set();
+    pg.querySelectorAll(BUSQ_SEL).forEach(el=>{
+      // Si ya coincidió un contenedor, no repetir lo de adentro (y viceversa)
+      for(const v of vistos) if(v.contains(el) || el.contains(v)) return;
+      const txt = _busqTexto(el);
+      const tn = _norm(txt);
+      if(!terminos.every(t=>tn.includes(t))) return;
+      vistos.add(el);
+      _busqRes.push({pid, el, txt});
+    });
+  });
+  _busqSel = 0;
+  busqDibujar(q, terminos);
+}
+
+function busqDibujar(q, terminos){
+  const box = document.getElementById('busq-res');
+  if(!_busqRes.length){
+    box.innerHTML = `<div class="busq-vacio">No aparece "${_escHtml(q)}" en ninguna pestaña</div>`;
+    box.classList.add('open'); return;
+  }
+  const marcar = txt => {
+    // recorte alrededor de la primera coincidencia + resaltado
+    const tn = _norm(txt); let i = tn.indexOf(terminos[0]);
+    let ini = Math.max(0, i-40), fin = Math.min(txt.length, i+80);
+    let frag = (ini>0?'…':'') + txt.slice(ini, fin) + (fin<txt.length?'…':'');
+    let h = _escHtml(frag);
+    terminos.forEach(t=>{
+      const fn = _norm(h); let out='', k=0, j;
+      while((j = fn.indexOf(t, k)) >= 0){ out += h.slice(k, j) + '<mark>' + h.slice(j, j+t.length) + '</mark>'; k = j+t.length; }
+      h = out + h.slice(k);
+    });
+    return h;
+  };
+  let html = '', pAnt = '', n = 0;
+  const porPag = {};
+  _busqRes.forEach(r=>{ porPag[r.pid] = (porPag[r.pid]||0) + 1; });
+  _busqRes.forEach((r, i)=>{
+    if(n >= 60) return;
+    if(r.pid !== pAnt){
+      pAnt = r.pid;
+      html += `<div class="busq-pag">${_escHtml(pageNames[r.pid]?.title || r.pid)} <span>${porPag[r.pid]}</span></div>`;
+    }
+    html += `<div class="busq-item${i===_busqSel?' sel':''}" data-i="${i}" onmousedown="event.preventDefault();busqIr(${i})">${marcar(r.txt)}</div>`;
+    n++;
+  });
+  if(_busqRes.length > 60) html += `<div class="busq-vacio">… y ${_busqRes.length-60} más. Afiná la búsqueda.</div>`;
+  box.innerHTML = `<div class="busq-cant">${_busqRes.length} resultado${_busqRes.length>1?'s':''}</div>` + html;
+  box.classList.add('open');
+}
+
+function busqTecla(e){
+  const box = document.getElementById('busq-res');
+  if(e.key==='Escape'){ e.target.value=''; box.classList.remove('open'); e.target.blur(); return; }
+  if(!_busqRes.length) return;
+  if(e.key==='ArrowDown' || e.key==='ArrowUp'){
+    e.preventDefault();
+    _busqSel = Math.max(0, Math.min(Math.min(_busqRes.length,60)-1, _busqSel + (e.key==='ArrowDown'?1:-1)));
+    box.querySelectorAll('.busq-item').forEach(x=>x.classList.toggle('sel', +x.dataset.i===_busqSel));
+    box.querySelector('.busq-item.sel')?.scrollIntoView({block:'nearest'});
+  }
+  if(e.key==='Enter'){ e.preventDefault(); busqIr(_busqSel); }
+}
+
+function busqIr(i){
+  const r = _busqRes[i];
+  if(!r) return;
+  document.getElementById('busq-res').classList.remove('open');
+  document.querySelector('[data-busq]')?.blur();
+  showPage(r.pid);
+  let el = r.el;
+  // Vigas: la solapa VF/VA o VD/VE/VC donde está
+  const panel = el.closest('[id^="vigas-panel-"]');
+  if(panel && panel.style.display==='none') vigaTab(panel.id.replace('vigas-panel-',''));
+  // Fila oculta por el filtro de nivel: se muestra todo
+  if(el.tagName==='TR' && el.style.display==='none'){
+    const tabla = el.closest('table')?.id;
+    const filtro = tabla==='tabla-columnas' ? 'col-nivel-filtro' : tabla==='tabla-vigas-vd' ? 'vd-nivel-filtro' : null;
+    if(filtro){
+      const denom = el.querySelector('input')?.value;
+      document.getElementById(filtro).value = '';
+      if(filtro==='col-nivel-filtro') renderColumnas(); else renderVigas('vd');
+      el = [...document.querySelectorAll(`#${tabla} tbody tr`)].find(tr=>tr.querySelector('input')?.value===denom) || el;
+    }
+  }
+  setTimeout(()=>{
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    el.classList.remove('busq-flash'); void el.offsetWidth; el.classList.add('busq-flash');
+    setTimeout(()=>el.classList.remove('busq-flash'), 2600);
+  }, 320);
+}
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest('.busq-wrap')) document.getElementById('busq-res')?.classList.remove('open');
+});
+
 // ── TOAST ──────────────────────────────────────────────────────────────────
 function showToast(msg, type='', duration=2200){
   const t=document.getElementById('toast');
@@ -7462,6 +7862,8 @@ function applySnapshot(snap, opts){
   setArr('losas_macizas'); setArr('recortes');
   if(Array.isArray(snap.vigas_vf)) state.vigas_vf = snap.vigas_vf.map(v=>{delete v.lBarra; return v;});
   if(Array.isArray(snap.vigas_vd)) state.vigas_vd = snap.vigas_vd.map(v=>{delete v.lBarra; return v;});
+  // Ganchos: el valor fijo viejo (12/14 cm) pasa a la regla automática 10Ø
+  [...state.columnas, ...state.vigas_vf, ...state.vigas_vd].forEach(normGancho);
 
   // Unidades comerciales. Obras guardadas antes de existir esta sección traían la
   // bolsa de cemento de albañilería como campo suelto del Resumen: se migra.
@@ -7558,27 +7960,35 @@ document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState=
 // de salir para que el proyecto quede guardado a propósito.
 let _projSucio = false;
 
+// El estado "sin guardar" sobrevive a un cierre por error: al volver a abrir,
+// los datos se recuperan del autoguardado y el aviso sigue ahí.
+const SUCIO_KEY = 'obracalc_sucio';
+
 function marcarSucio(){
   if(_projSucio) return;
   _projSucio = true;
+  try{ localStorage.setItem(SUCIO_KEY,'1'); }catch(_){}
   const b=document.getElementById('btnGuardar');
   if(b){
-    b.textContent='🗄 Guardar •';
+    b.textContent='💾 Guardar •';
     b.style.borderColor='var(--accent)';
     b.style.color='var(--accent)';
-    b.title='Hay cambios sin guardar como proyecto';
+    b.title='Hay cambios sin guardar (Ctrl+S)';
   }
+  actualizarChipObra();
 }
 
 function marcarGuardado(){
   _projSucio = false;
+  try{ localStorage.setItem(SUCIO_KEY,'0'); }catch(_){}
   const b=document.getElementById('btnGuardar');
   if(b){
-    b.textContent='🗄 Guardar';
+    b.textContent='💾 Guardar';
     b.style.borderColor='';
     b.style.color='';
-    b.title='Guardar como proyecto en este dispositivo';
+    b.title='Guardar la obra abierta — en este navegador y en Drive (Ctrl+S)';
   }
+  actualizarChipObra();
 }
 
 window.addEventListener('beforeunload',(e)=>{
@@ -7666,7 +8076,25 @@ document.addEventListener('DOMContentLoaded',()=>{
   // A partir de acá el autosave queda habilitado
   _bootDone = true;
   if(!restored) saveAll();   // primer guardado con los valores iniciales
-  marcarGuardado();          // recién abierto: todavía no hay cambios
+
+  // Obra abierta + cambios sin guardar de la sesión anterior (cierre por error)
+  iniciarObraActiva();
+  let sucioPrevio = false;
+  try{ sucioPrevio = localStorage.getItem(SUCIO_KEY)==='1'; }catch(_){}
+  if(restored && sucioPrevio){
+    marcarSucio();
+    setTimeout(()=>toastDeshacer(`⚠️ Se recuperaron cambios que no se habían guardado${_activa?' en "'+_activa.nombre+' · '+_activa.version+'"':''}.`,
+      ()=>guardarObra(), 'Guardar ahora', 15000), 1200);
+  } else marcarGuardado();   // recién abierto: todavía no hay cambios
+});
+
+// Ctrl+S guarda la obra (como en Word/Excel) · Ctrl+K abre el buscador
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && !e.altKey && e.key.toLowerCase()==='s'){ e.preventDefault(); guardarObra(); }
+  if((e.ctrlKey||e.metaKey) && !e.altKey && e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    const i=document.querySelector('[data-busq]'); if(i){ i.focus(); i.select(); }
+  }
 });
 
 function toggleCemAlbDesglose(){
@@ -7688,56 +8116,344 @@ function toggleHormDesglose(){
   const a2 = d.previousElementSibling?.querySelector('.mat-name');
 }
 
-// ── GESTIÓN DE PROYECTOS ──────────────────────────────────────────────────
-const PROJ_KEY = 'obracalc_projects_v1';
+// ── OBRAS Y VERSIONES (estilo Word: Guardar / Guardar como) ─────────────────
+// Cada obra guardada puede tener varias versiones ("Principal", "Con losa
+// maciza"…). La que está en pantalla es la "obra abierta" (_activa). Guardar
+// la escribe en este navegador y en Drive (con historial en el servidor).
+// El autoguardado (obracalc_v1) sigue protegiendo lo que está en pantalla aunque
+// no se haya guardado; si se cierra con cambios, al volver se recuperan y avisa.
+const PROJ_KEY    = 'obracalc_projects_v1';   // [{nombre, version, ts, data}]
+const ACTIVA_KEY  = 'obracalc_activa';        // {nombre, version}
+const V_PRINCIPAL = 'Principal';
+let _activa = null;
 
 function getProyectos(){
   try { return JSON.parse(localStorage.getItem(PROJ_KEY)||'[]'); }
   catch { return []; }
 }
 function setProyectos(list){
-  localStorage.setItem(PROJ_KEY, JSON.stringify(list));
+  try { localStorage.setItem(PROJ_KEY, JSON.stringify(list)); return true; }
+  catch(e){ showToast('⚠️ No entra en el almacenamiento del navegador — descargá un Backup','',6000); return false; }
+}
+const _ver = p => (p && p.version) || V_PRINCIPAL;
+const _esActiva = (nombre, version) => !!_activa && _activa.nombre===nombre && (_activa.version||V_PRINCIPAL)===(version||V_PRINCIPAL);
+const _q = t => String(t).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+function _entrada(nombre, version){ return getProyectos().find(p=>p.nombre===nombre && _ver(p)===(version||V_PRINCIPAL)); }
+
+function setActiva(a){
+  _activa = a ? {nombre:a.nombre, version:a.version||V_PRINCIPAL} : null;
+  try{ localStorage.setItem(ACTIVA_KEY, JSON.stringify(_activa)); }catch(_){}
+  actualizarChipObra();
+}
+function iniciarObraActiva(){
+  try{ _activa = JSON.parse(localStorage.getItem(ACTIVA_KEY)||'null'); }catch(_){ _activa = null; }
+  if(_activa && !_entrada(_activa.nombre, _activa.version)) _activa = null;
+  // Primera vez con este sistema: si la obra en pantalla ya estaba guardada con su nombre, queda abierta
+  if(!_activa){
+    const nom = (document.getElementById('obra-nombre')?.value||'').trim();
+    if(nom && _entrada(nom, V_PRINCIPAL)) _activa = {nombre:nom, version:V_PRINCIPAL};
+  }
+  setActiva(_activa);
+}
+function actualizarChipObra(){
+  const t = document.getElementById('obraChipTxt');
+  if(t) t.textContent = _activa ? (_activa.version===V_PRINCIPAL ? _activa.nombre : _activa.nombre+' · '+_activa.version) : 'Obra sin guardar';
+  const chip = document.getElementById('obraChip');
+  if(chip) chip.classList.toggle('sucio', !!_projSucio);
+  const box = document.getElementById('obraActualBox');
+  if(box) box.innerHTML = _activa
+    ? `Abierta: <b>${_escHtml(_activa.nombre)}</b> · versión <b>${_escHtml(_activa.version)}</b> ${_projSucio?'<span class="obra-sucia">● cambios sin guardar</span>':'<span class="obra-ok">✓ guardada</span>'}`
+    : `Lo que está en pantalla <b>todavía no se guardó como obra</b>. Tocá 💾 Guardar para ponerle nombre.`;
 }
 
-function openProyectos(){
+function _guardarEntrada(nombre, version, snap){
+  const list = getProyectos();
+  const i = list.findIndex(p=>p.nombre===nombre && _ver(p)===version);
+  const e = {nombre, version, ts:Date.now(), data:snap};
+  if(i>=0) list[i] = e; else list.unshift(e);
+  return setProyectos(list);
+}
+
+// 💾 Guardar (Ctrl+S): la obra abierta, acá y en Drive
+function guardarObra(){
+  if(!_activa){
+    // Primera vez: se usa el nombre de la obra si está libre, si no se pide uno
+    const nom = (document.getElementById('obra-nombre')?.value||'').trim();
+    if(nom && !getProyectos().some(p=>p.nombre===nom)) setActiva({nombre:nom, version:V_PRINCIPAL});
+    else { openProyectos(); abrirGuardarComo('nueva', true); return; }
+  }
+  const snap = captureSnapshot();
+  if(!_guardarEntrada(_activa.nombre, _activa.version, snap)) return;
+  saveAll(); marcarGuardado();
+  driveSyncAhora(_activa.nombre, _activa.version, snap, true);
+  if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
+  showToast(`💾 Guardada: ${_activa.nombre} · ${_activa.version}`,'success',2500);
+}
+function guardarEnDispositivo(){ guardarObra(); }   // nombre viejo del botón
+
+// ── Diálogo "¿Guardar los cambios?" (Guardar / No guardar / Cancelar) ────────
+function confirmarCambios(accion){
+  return new Promise(res=>{
+    const m = document.getElementById('modalCambios');
+    document.getElementById('cambiosTxt').innerHTML =
+      `Hay cambios sin guardar en <b>${_activa?_escHtml(_activa.nombre+' · '+_activa.version):'la obra en pantalla'}</b>.<br>¿Guardarlos antes de ${accion}?`;
+    const fin = r => { m.classList.remove('open'); res(r); };
+    document.getElementById('cambiosSi').onclick = ()=>fin('guardar');
+    document.getElementById('cambiosNo').onclick = ()=>fin('descartar');
+    document.getElementById('cambiosCancelar').onclick = ()=>fin('cancelar');
+    m.classList.add('open');
+  });
+}
+// Antes de reemplazar lo que está en pantalla. false = el usuario canceló
+async function _puedeCambiarDeObra(accion){
+  if(!_projSucio) return true;
+  const r = await confirmarCambios(accion);
+  if(r==='cancelar') return false;
+  if(r==='guardar'){
+    if(!_activa){ showToast('Primero poné un nombre con "Guardar como…"','',3000); abrirGuardarComo('nueva', true); return false; }
+    guardarObra();
+  }
+  return true;
+}
+
+async function abrirVersion(nombre, version){
+  if(_esActiva(nombre, version) && !_projSucio){ closeProyectos(); return; }
+  const e = _entrada(nombre, version);
+  if(!e){ showToast('⚠️ No se encontró esa versión','',2000); return; }
+  if(!(await _puedeCambiarDeObra('abrir otra'))) return;
+  saveAll();
+  applySnapshot(e.data);
+  saveAll();
+  setActiva({nombre, version});
+  marcarGuardado();
+  closeProyectos();
+  showToast(`📂 ${nombre} · ${version}`,'success',2500);
+}
+
+// Obra nueva vacía: sin elementos y con las superficies en cero; se conservan
+// las dosificaciones, espesores y porcentajes como punto de partida.
+const _CAMPOS_CANTIDAD = /^(sup-pb|sup-pa|sup-semi|mamp-sup-|rg-|rf-|cr-(pb|pa|p3)$|cp-sup-|carp-sup-|techo-sup$|cim-largo$)/;
+function snapshotVacio(nombre){
+  const s = captureSnapshot();
+  Object.keys(s.fields).forEach(id=>{
+    if(_CAMPOS_CANTIDAD.test(id)) s.fields[id] = '0';
+    if(['obra-prop','obra-ubic','obra-año'].includes(id)) s.fields[id] = '';
+  });
+  s.fields['obra-nombre'] = nombre;
+  Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
+  ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
+  return s;
+}
+
+// Formulario "Guardar como…" / "Nueva obra" dentro del modal
+function abrirGuardarComo(modo, forzarNueva){
+  const box = document.getElementById('gc-box');
+  if(!box) return;
+  if(modo==='version' && !_activa) modo = 'nueva';
+  if(modo==='version'){
+    const n = getProyectos().filter(p=>p.nombre===_activa.nombre).length + 1;
+    box.innerHTML = `
+      <div class="gc-tit">📑 Guardar como otra versión de <b>${_escHtml(_activa.nombre)}</b></div>
+      <div class="gc-ayuda">Queda guardada la versión actual tal como está en pantalla, con otro nombre, dentro de la misma obra. La versión "${_escHtml(_activa.version)}" no se toca.</div>
+      <label class="gc-campo">Nombre de la versión <input type="text" class="no-edit-hl" data-gc="version" value="Versión ${n}" maxlength="60"></label>
+      <div class="gc-acc"><button class="btn btn-secondary" onclick="cerrarGuardarComo()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarGuardarComo('version')">Guardar versión</button></div>`;
+  } else {
+    const nomPantalla = (document.getElementById('obra-nombre')?.value||'').trim();
+    const libre = nomPantalla && !getProyectos().some(p=>p.nombre===nomPantalla);
+    box.innerHTML = `
+      <div class="gc-tit">${forzarNueva?'💾 Guardar la obra':'＋ Nueva obra'}</div>
+      <label class="gc-campo">Nombre de la obra <input type="text" class="no-edit-hl" data-gc="nombre" value="${_escHtml(libre?nomPantalla:'')}" placeholder="ej: Casa López" maxlength="80"></label>
+      <div class="gc-opc">
+        <label><input type="radio" name="gc-inicio" value="actual" ${forzarNueva?'checked':''}> Con los datos que están en pantalla</label>
+        <label><input type="radio" name="gc-inicio" value="vacia" ${forzarNueva?'':'checked'}> Empezar vacía (sin elementos, superficies en 0)</label>
+      </div>
+      <div class="gc-acc"><button class="btn btn-secondary" onclick="cerrarGuardarComo()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarGuardarComo('nueva')">Crear obra</button></div>`;
+  }
+  box.style.display = 'block';
+  const inp = box.querySelector('input[type=text]');
+  if(inp){ inp.focus(); inp.select(); inp.onkeydown = e=>{ if(e.key==='Enter') confirmarGuardarComo(modo); if(e.key==='Escape') cerrarGuardarComo(); }; }
+}
+function cerrarGuardarComo(){ const b=document.getElementById('gc-box'); if(b){ b.style.display='none'; b.innerHTML=''; } }
+
+async function confirmarGuardarComo(modo){
+  const box = document.getElementById('gc-box');
+  if(modo==='version'){
+    const v = (box.querySelector('[data-gc=version]')?.value||'').trim();
+    if(!v){ showToast('⚠️ Poné un nombre para la versión','',2200); return; }
+    if(_entrada(_activa.nombre, v) && !confirm(`Ya existe la versión "${v}" de ${_activa.nombre}. ¿Reemplazarla?`)) return;
+    const snap = captureSnapshot();
+    if(!_guardarEntrada(_activa.nombre, v, snap)) return;
+    setActiva({nombre:_activa.nombre, version:v});
+    saveAll(); marcarGuardado();
+    driveSyncAhora(_activa.nombre, v, snap, true);
+    showToast(`📑 Versión "${v}" guardada — es la que queda abierta`,'success',3000);
+  } else {
+    const nom = (box.querySelector('[data-gc=nombre]')?.value||'').trim();
+    if(!nom){ showToast('⚠️ Poné un nombre para la obra','',2200); return; }
+    if(getProyectos().some(p=>p.nombre===nom)){ alert(`Ya hay una obra llamada "${nom}". Abrila desde la lista o elegí otro nombre.`); return; }
+    const vacia = box.querySelector('input[name=gc-inicio]:checked')?.value==='vacia';
+    if(vacia && !(await _puedeCambiarDeObra('empezar una obra nueva'))) return;
+    if(vacia) applySnapshot(snapshotVacio(nom));
+    else { const el=document.getElementById('obra-nombre'); if(el){ el.value=nom; updateObraDisplay(); } }
+    const snap = captureSnapshot();
+    if(!_guardarEntrada(nom, V_PRINCIPAL, snap)) return;
+    setActiva({nombre:nom, version:V_PRINCIPAL});
+    saveAll(); marcarGuardado();
+    driveSyncAhora(nom, V_PRINCIPAL, snap, true);
+    showToast(`🏗 Obra "${nom}" creada${vacia?' — vacía, lista para cargar':''}`,'success',3000);
+  }
+  cerrarGuardarComo();
   renderProjLista();
-  document.getElementById('modalProyectos').classList.add('open');
-  // Prellenar con nombre actual de la obra
-  const nombre = document.getElementById('obra-nombre')?.value||'';
-  if(nombre) document.getElementById('proj-nombre').value = nombre;
   cargarListaDrive();
 }
 
-// Muestra las obras que están en Drive pero no en la lista local (por ej.
-// guardadas desde otra computadora). No pisa nada: solo ofrece cargarlas.
+function eliminarVersion(nombre, version){
+  const extra = DRIVE_URL ? '\n\nLa copia de Google Drive NO se borra: se puede volver a traer.' : '';
+  if(!confirm(`¿Quitar "${nombre} · ${version}" de este navegador?${extra}`)) return;
+  setProyectos(getProyectos().filter(p=>!(p.nombre===nombre && _ver(p)===version)));
+  if(_esActiva(nombre, version)){ setActiva(null); marcarSucio(); }
+  renderProjLista();
+  showToast(`🗑 "${nombre} · ${version}" quitada`,'',2000);
+}
+
+async function exportarProyectoJSON(nombre, version){
+  const e = _entrada(nombre, version);
+  if(!e) return;
+  const blob = new Blob([JSON.stringify(e,null,2)],{type:'application/json'});
+  await iaGuardarArchivo(`${nombre} - ${_ver(e)}`.replace(/[^a-z0-9áéíóúñ\- ]/gi,'_').replace(/\s+/g,'_')+'_obracalc.json', blob);
+}
+
+function importarProyecto(){ document.getElementById('proj-import-input').click(); }
+function importarArchivoJSON(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const entry = JSON.parse(e.target.result);
+      const data = entry.data || entry;
+      if(!data || data.v!==1){ showToast('⚠️ Archivo inválido','',2500); return; }
+      const nombre = entry.nombre || data.fields?.['obra-nombre'] || file.name.replace(/\.json$/i,'');
+      const version = entry.version || V_PRINCIPAL;
+      if(_entrada(nombre, version) && !confirm(`"${nombre} · ${version}" ya existe en este navegador. ¿Reemplazarla por la del archivo?`)){ input.value=''; return; }
+      _guardarEntrada(nombre, version, data);
+      renderProjLista();
+      showToast(`✅ "${nombre} · ${version}" importada — abrila desde la lista`,'success',3000);
+    } catch { showToast('⚠️ Error al leer el archivo','',2500); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function openProyectos(){
+  cerrarGuardarComo();
+  document.getElementById('proj-hist').innerHTML = '';
+  actualizarChipObra();
+  renderProjLista();
+  document.getElementById('modalProyectos').classList.add('open');
+  cargarListaDrive();
+}
+function closeProyectos(){ document.getElementById('modalProyectos').classList.remove('open'); }
+
+function _fechaCorta(ts){
+  if(!ts) return '—';
+  const d = new Date(ts); if(isNaN(d)) return '—';
+  return d.toLocaleDateString('es-AR')+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// Lista agrupada por obra → versiones
+function renderProjLista(){
+  const div = document.getElementById('proj-lista');
+  if(!div) return;
+  const list = getProyectos();
+  if(!list.length){ div.innerHTML = '<div class="obras-vacio">Todavía no hay obras guardadas en este navegador.</div>'; return; }
+  const grupos = {};
+  list.forEach(p=>{ (grupos[p.nombre] ||= []).push(p); });
+  const orden = Object.keys(grupos).sort((a,b)=>Math.max(...grupos[b].map(p=>p.ts)) - Math.max(...grupos[a].map(p=>p.ts)));
+  div.innerHTML = orden.map(nom=>{
+    const vs = grupos[nom].sort((a,b)=> (_ver(a)===V_PRINCIPAL?-1:_ver(b)===V_PRINCIPAL?1:b.ts-a.ts));
+    const d0 = vs[0].data?.fields||{};
+    const cols = vs[0].data?.columnas?.length||0, vigs=(vs[0].data?.vigas_vf?.length||0)+(vs[0].data?.vigas_vd?.length||0);
+    return `<div class="obra-grupo${_activa&&_activa.nombre===nom?' act':''}">
+      <div class="obra-grupo-tit">🏗 ${_escHtml(nom)} <span>${_escHtml(d0['obra-prop']||'')}${d0['obra-prop']?' · ':''}${cols} col · ${vigs} vig</span></div>
+      ${vs.map(p=>{
+        const v = _ver(p), act = _esActiva(nom, v);
+        return `<div class="obra-ver${act?' act':''}">
+          <div class="obra-ver-info"><b>${act?'● ':''}${_escHtml(v)}</b><span>${_fechaCorta(p.ts)}${act?(_projSucio?' · <em class="obra-sucia">cambios sin guardar</em>':' · abierta'):''}</span></div>
+          <div class="proj-actions">
+            ${act?'':`<button class="proj-btn proj-btn-load" onclick="abrirVersion('${_q(nom)}','${_q(v)}')">Abrir</button>`}
+            ${DRIVE_URL?`<button class="proj-btn proj-btn-exp" onclick="verHistorial('${_q(nom)}','${_q(v)}')" title="Versiones anteriores guardadas en Drive">🕘</button>`:''}
+            <button class="proj-btn proj-btn-exp" onclick="exportarProyectoJSON('${_q(nom)}','${_q(v)}')" title="Descargar .json">⤓</button>
+            <button class="proj-btn proj-btn-del" onclick="eliminarVersion('${_q(nom)}','${_q(v)}')" title="Quitar de este navegador">🗑</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// Obras en Drive: las que no están acá o que tienen algo más nuevo
 async function cargarListaDrive(){
-  const wrap = document.getElementById('proj-drive-wrap');
-  if(!DRIVE_URL){ wrap.style.display='none'; return; }
-  const locales = new Set(getProyectos().map(p=>p.nombre));
+  const box = document.getElementById('proj-drive-lista');
+  if(!box) return;
+  if(!DRIVE_URL){ box.innerHTML = '<div class="obras-vacio">Respaldo en Drive no conectado.</div>'; return; }
+  box.innerHTML = '<div class="obras-vacio">Consultando Drive… (tarda unos segundos)</div>';
   const obras = await _driveList();
-  if(!obras){ wrap.style.display='none'; return; }
-  const soloEnDrive = obras.filter(n=>!locales.has(n));
-  if(!soloEnDrive.length){ wrap.style.display='none'; return; }
-  wrap.style.display='block';
-  document.getElementById('proj-drive-lista').innerHTML = soloEnDrive.map(nombre=>`
-    <div class="proj-item">
-      <div class="proj-info"><div class="proj-name">${nombre}</div><div class="proj-meta">Guardada en Drive</div></div>
-      <div class="proj-actions"><button class="proj-btn proj-btn-load" onclick="cargarProyectoDesdeDrive('${nombre.replace(/'/g,"\\'")}')">Cargar</button></div>
+  if(!obras){ box.innerHTML = '<div class="obras-vacio">No se pudo conectar con Drive. Revisá la conexión y volvé a abrir 🏗 Obras.</div>'; return; }
+  if(!obras.length){ box.innerHTML = '<div class="obras-vacio">Todavía no hay obras en Drive. Se suben solas al tocar 💾 Guardar.</div>'; return; }
+  box.innerHTML = obras.map(o=>`<div class="obra-grupo">
+      <div class="obra-grupo-tit">☁ ${_escHtml(o.nombre)}</div>
+      ${(o.versiones||[{nombre:V_PRINCIPAL}]).map(v=>{
+        const loc = _entrada(o.nombre, v.nombre);
+        const tsDrive = v.actualizado ? new Date(v.actualizado).getTime() : 0;
+        let estado, btn = '';
+        if(!loc){ estado = 'sólo en Drive'; btn = `<button class="proj-btn proj-btn-load" onclick="traerDeDrive('${_q(o.nombre)}','${_q(v.nombre)}')">Traer</button>`; }
+        else if(tsDrive && tsDrive > loc.ts + 60000){ estado = '<b style="color:var(--orange);">Drive tiene una versión más nueva</b>'; btn = `<button class="proj-btn proj-btn-load" onclick="traerDeDrive('${_q(o.nombre)}','${_q(v.nombre)}')">Traer</button>`; }
+        else estado = 'sincronizada ✓';
+        return `<div class="obra-ver"><div class="obra-ver-info"><b>${_escHtml(v.nombre)}</b><span>${tsDrive?_fechaCorta(tsDrive)+' · ':''}${estado}</span></div><div class="proj-actions">${btn}</div></div>`;
+      }).join('')}
     </div>`).join('');
 }
 
-async function cargarProyectoDesdeDrive(nombre){
-  if(!confirm(`¿Cargar "${nombre}" desde Drive? Se perderán los datos no guardados del proyecto actual.`)) return;
-  const data = await _driveLoad(nombre);
-  if(!data){ showToast('⚠️ No se pudo traer la obra desde Drive','',2500); return; }
-  saveAll();
-  applySnapshot(data);
-  saveAll();
-  closeProyectos();
-  showToast(`✅ "${nombre}" cargada desde Drive`,'success',2500);
+async function traerDeDrive(nombre, version){
+  if(_entrada(nombre, version) && !confirm(`¿Reemplazar "${nombre} · ${version}" de este navegador por la de Drive?`)) return;
+  showToast('☁ Trayendo de Drive…','saving',4000);
+  const data = await _driveLoad(nombre, version);
+  if(!data){ showToast('⚠️ No se pudo traer la obra de Drive','',3000); return; }
+  _guardarEntrada(nombre, version, data);
+  renderProjLista(); cargarListaDrive();
+  if(_esActiva(nombre, version) || confirm(`"${nombre} · ${version}" quedó guardada en este navegador. ¿Abrirla ahora?`)){
+    if(_esActiva(nombre, version)){ applySnapshot(data); saveAll(); marcarGuardado(); }
+    else abrirVersion(nombre, version);
+  }
 }
-function closeProyectos(){
-  document.getElementById('modalProyectos').classList.remove('open');
+
+// Historial de Drive: cada Guardar deja la versión anterior en historial/
+async function verHistorial(nombre, version){
+  const box = document.getElementById('proj-hist');
+  const tit = `<div class="obras-sec-t">🕘 Historial en Drive — ${_escHtml(nombre)} · ${_escHtml(version)}</div>`;
+  box.innerHTML = tit + '<div class="obras-vacio">Consultando Drive…</div>';
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+  const j = await _driveHist(nombre, version);
+  if(!j){ box.innerHTML = tit + '<div class="obras-vacio">No se pudo leer el historial. Revisá la conexión.</div>'; return; }
+  if(j.viejo){ box.innerHTML = tit + '<div class="obras-vacio">El script de Drive todavía es la versión anterior (sin historial). Hay que actualizarlo una vez — ver INSTALAR_BACKEND.md.</div>'; return; }
+  const filas = (j.archivos||[]).map(a=>`<div class="obra-ver"><div class="obra-ver-info"><b>${_fechaCorta(a.fecha)}</b><span>${_escHtml(a.archivo)}</span></div>
+      <div class="proj-actions"><button class="proj-btn proj-btn-load" onclick="restaurarHistorial('${_q(nombre)}','${_q(version)}','${_q(a.archivo)}')">Restaurar</button></div></div>`).join('');
+  box.innerHTML = tit + (filas || '<div class="obras-vacio">Sin versiones anteriores todavía (se crean cada vez que guardás).</div>');
+}
+async function restaurarHistorial(nombre, version, archivo){
+  if(!confirm(`¿Restaurar "${nombre} · ${version}" a como estaba en esa fecha?\n\nLo guardado ahora pasa antes al historial, así que no se pierde.`)) return;
+  const e = _entrada(nombre, version);
+  if(e) await driveSyncAhora(nombre, version, e.data, true);
+  const data = await _driveLoadHist(nombre, archivo);
+  if(!data){ showToast('⚠️ No se pudo restaurar','',3000); return; }
+  _guardarEntrada(nombre, version, data);
+  if(_esActiva(nombre, version)){ applySnapshot(data); saveAll(); marcarGuardado(); }
+  await driveSyncAhora(nombre, version, data, true);
+  renderProjLista(); verHistorial(nombre, version);
+  showToast('✅ Versión restaurada','success',2500);
 }
 
 function captureSnapshot(){
@@ -7753,107 +8469,6 @@ function captureSnapshot(){
     recortes:state.recortes, nextId:state.nextId,
     unidades: state.unidades||{},
   };
-}
-
-function guardarProyecto(){
-  const nombre = (document.getElementById('proj-nombre')?.value||'').trim();
-  if(!nombre){ showToast('⚠️ Escribí un nombre para el proyecto','',2500); return; }
-  const proyectos = getProyectos();
-  const snap = captureSnapshot();
-  const idx = proyectos.findIndex(p=>p.nombre===nombre);
-  const entry = { nombre, ts:Date.now(), data: snap };
-  if(idx>=0){
-    if(!confirm(`¿Sobreescribir "${nombre}"?`)) return;
-    proyectos[idx] = entry;
-  } else {
-    proyectos.unshift(entry);
-  }
-  setProyectos(proyectos);
-  renderProjLista();
-  saveAll(); marcarGuardado();
-  driveSyncAhora(nombre);
-  showToast(`✅ Proyecto "${nombre}" guardado`,'success',2500);
-}
-
-function cargarProyecto(nombre){
-  const proyectos = getProyectos();
-  const entry = proyectos.find(p=>p.nombre===nombre);
-  if(!entry){ showToast('⚠️ Proyecto no encontrado','',2000); return; }
-  if(!confirm(`¿Cargar "${nombre}"? Se perderán los datos no guardados del proyecto actual.`)) return;
-  saveAll();                       // resguardar lo actual antes de reemplazar
-  applySnapshot(entry.data);
-  saveAll();
-  closeProyectos();
-  showToast(`✅ Proyecto "${nombre}" cargado`,'success',2500);
-}
-
-function eliminarProyecto(nombre){
-  if(!confirm(`¿Eliminar "${nombre}"?`)) return;
-  const proyectos = getProyectos().filter(p=>p.nombre!==nombre);
-  setProyectos(proyectos);
-  renderProjLista();
-  showToast(`🗑 "${nombre}" eliminado`,'',2000);
-}
-
-async function exportarProyectoJSON(nombre){
-  const proyectos = getProyectos();
-  const entry = proyectos.find(p=>p.nombre===nombre);
-  if(!entry) return;
-  const blob = new Blob([JSON.stringify(entry,null,2)],{type:'application/json'});
-  await iaGuardarArchivo(nombre.replace(/[^a-z0-9]/gi,'_')+'_obracalc.json', blob);
-}
-
-function importarProyecto(){
-  document.getElementById('proj-import-input').click();
-}
-
-function importarArchivoJSON(input){
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const entry = JSON.parse(e.target.result);
-      if(!entry.nombre||!entry.data){ showToast('⚠️ Archivo inválido','',2500); return; }
-      const proyectos = getProyectos();
-      const idx = proyectos.findIndex(p=>p.nombre===entry.nombre);
-      if(idx>=0) proyectos[idx]=entry; else proyectos.unshift(entry);
-      setProyectos(proyectos);
-      renderProjLista();
-      showToast(`✅ Proyecto "${entry.nombre}" importado`,'success',2500);
-    } catch { showToast('⚠️ Error al leer el archivo','',2500); }
-    input.value='';
-  };
-  reader.readAsText(file);
-}
-
-function renderProjLista(){
-  const div = document.getElementById('proj-lista');
-  if(!div) return;
-  const proyectos = getProyectos();
-  if(!proyectos.length){
-    div.innerHTML='<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px 0;font-family:\'DM Mono\',monospace;">Sin proyectos guardados</div>';
-    return;
-  }
-  div.innerHTML = proyectos.map(p=>{
-    const d = new Date(p.ts);
-    const fecha = d.toLocaleDateString('es-AR')+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    const obra = p.data?.fields?.['obra-nombre']||p.nombre;
-    const prop = p.data?.fields?.['obra-prop']||'';
-    const cols = p.data?.columnas?.length||0;
-    const vigs = (p.data?.vigas_vf?.length||0)+(p.data?.vigas_vd?.length||0);
-    return `<div class="proj-item">
-      <div class="proj-info">
-        <div class="proj-name">${obra}</div>
-        <div class="proj-meta">${prop?prop+' · ':''}${cols} col · ${vigs} vig · ${fecha}</div>
-      </div>
-      <div class="proj-actions">
-        <button class="proj-btn proj-btn-load" onclick="cargarProyecto('${p.nombre.replace(/'/g,"\\'")}')">Cargar</button>
-        <button class="proj-btn proj-btn-exp" onclick="exportarProyectoJSON('${p.nombre.replace(/'/g,"\\'")}')">JSON</button>
-        <button class="proj-btn proj-btn-del" onclick="eliminarProyecto('${p.nombre.replace(/'/g,"\\'")}')">✕</button>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 // ── EXPORTACIÓN A EXCEL (CSV compatible con Excel) ────────────────────────
@@ -7898,7 +8513,7 @@ async function exportarExcel(){
   rows.push(['Denom.','Cant.','Sección (cm)','Estribo ext. (cm)','Recub. (cm)','Alt.libre (m)','L.barra CIRSOC (m)','Ø princ.','N°barras','m³ H°']);
   state.columnas.forEach(c=>{
     const calc=lBarraCIRSOC(c.alt,c.phi||12);
-    const horm=c.cantElem*colArea(c)*c.alt*0.75;
+    const horm=c.cantElem*colArea(c)*c.alt;
     const d0=estriboDimVals(c)[0]||{a:0,b:0};
     rows.push([c.denom,c.cantElem,colSeccTxt(c),`${x(d0.a,1)}×${x(d0.b,1)}`,x(recubResultante(c),1),x(c.alt),x(calc.lTramo),`Ø${c.phi}`,c.nBarras,x(horm,3)]);
   });
@@ -7940,9 +8555,8 @@ async function backupRapido(){
   const json   = JSON.stringify(entry, null, 2);
   const blob   = new Blob([json], {type:'application/json'});
   const ok = await iaGuardarArchivo(nombre + '_' + ts + '_obracalc.json', blob);
-  saveAll(); marcarGuardado();
-  driveSyncAhora(obra.trim());
-  if(ok) showToast('💾 Backup descargado', 'success', 2500);
+  saveAll();
+  if(ok) showToast('⤓ Backup descargado', 'success', 2500);
 }
 
 function restaurarBackup(){
@@ -7976,27 +8590,6 @@ function restaurarDesdeArchivo(input){
     input.value='';
   };
   reader.readAsText(file);
-}
-
-function guardarEnDispositivo(){
-  // Guarda con el nombre de obra actual directamente, sin abrir modal
-  const obra = (document.getElementById('obra-nombre')?.value||'').trim() || 'Mi obra';
-  const proyectos = getProyectos();
-  const snap  = captureSnapshot();
-  const entry = { nombre: obra, ts: Date.now(), data: snap };
-  const idx   = proyectos.findIndex(p=>p.nombre===obra);
-  if(idx>=0){
-    proyectos[idx] = entry;
-    showToast('✅ Proyecto actualizado: "' + obra + '"', 'success', 2500);
-  } else {
-    proyectos.unshift(entry);
-    showToast('✅ Proyecto guardado: "' + obra + '"', 'success', 2500);
-  }
-  setProyectos(proyectos);
-  // También actualizar el autosave local
-  saveAll();
-  marcarGuardado();
-  driveSyncAhora(obra);
 }
 
 // ── ASISTENTE IA ────────────────────────────────────────────────────────────
@@ -8469,40 +9062,75 @@ function actualizarIndicadorDrive(){
   else if(_driveStatus==='error') el.classList.add('error');
 }
 
-async function _driveSave(obraName, data){
-  if(!DRIVE_URL || !obraName) return false;
+// Versión del script de Drive: 2 = versiones + historial. Con el script viejo (1)
+// las versiones que no son "Principal" van a una carpeta aparte "Obra — Versión".
+let _driveVer = null;
+async function _driveGet(params){
+  const q = new URLSearchParams(Object.assign({secreto:DRIVE_SECRET}, params)).toString();
+  const r = await fetch(DRIVE_URL+'?'+q, {redirect:'follow'});
+  return await r.json();
+}
+async function _driveVersion(){
+  if(_driveVer!=null) return _driveVer;
+  try{ const j = await _driveGet({action:'ping'}); _driveVer = j && j.ok ? (+j.version||1) : 1; }
+  catch(e){ return 1; }
+  return _driveVer;
+}
+const _carpetaV1 = (obra, version) => (version||V_PRINCIPAL)===V_PRINCIPAL ? obra : `${obra} — ${version}`;
+
+async function _driveSave(obra, version, data, hito){
+  if(!DRIVE_URL || !obra) return false;
   try{
-    const r = await fetch(DRIVE_URL, {method:'POST', redirect:'follow', body:JSON.stringify({secreto:DRIVE_SECRET, obraName, data})});
+    const v2 = (await _driveVersion()) >= 2;
+    const body = {secreto:DRIVE_SECRET, action:'save', obraName: v2 ? obra : _carpetaV1(obra, version),
+                  version: version||V_PRINCIPAL, hito:!!hito, data};
+    const r = await fetch(DRIVE_URL, {method:'POST', redirect:'follow', body:JSON.stringify(body)});
     const j = await r.json();
     return !!j.ok;
   }catch(e){ return false; }
 }
-async function _driveLoad(obraName){
-  if(!DRIVE_URL || !obraName) return null;
+async function _driveLoad(obra, version){
+  if(!DRIVE_URL || !obra) return null;
   try{
-    const r = await fetch(`${DRIVE_URL}?action=load&obra=${encodeURIComponent(obraName)}&secreto=${DRIVE_SECRET}`);
-    const j = await r.json();
+    const v2 = (await _driveVersion()) >= 2;
+    const j = v2 ? await _driveGet({action:'load', obra, version:version||V_PRINCIPAL})
+                 : await _driveGet({action:'load', obra:_carpetaV1(obra, version)});
     return j.ok ? j.data : null;
   }catch(e){ return null; }
 }
+// [{nombre, versiones:[{nombre, actualizado}]}]
 async function _driveList(){
   if(!DRIVE_URL) return null;
   try{
-    const r = await fetch(`${DRIVE_URL}?action=list&secreto=${DRIVE_SECRET}`);
-    const j = await r.json();
-    return j.ok ? (j.obras||[]) : null;
+    const j = await _driveGet({action:'list'});
+    if(!j.ok) return null;
+    return (j.obras||[]).map(o => typeof o==='string' ? {nombre:o, versiones:[{nombre:V_PRINCIPAL}]} : o);
   }catch(e){ return null; }
 }
+async function _driveHist(obra, version){
+  try{
+    if((await _driveVersion()) < 2) return {viejo:true};
+    const j = await _driveGet({action:'historial', obra, version:version||V_PRINCIPAL});
+    return j.ok ? j : null;
+  }catch(e){ return null; }
+}
+async function _driveLoadHist(obra, archivo){
+  try{ const j = await _driveGet({action:'loadHist', obra, archivo}); return j.ok ? j.data : null; }
+  catch(e){ return null; }
+}
 
-// Sube al Drive con feedback visual — usada por las acciones EXPLÍCITAS de
-// guardado (Guardar proyecto, Guardar rápido, Backup). No hay auto-sync en
-// cada tecleo: sólo cuando el usuario efectivamente pide guardar.
-async function driveSyncAhora(obraName){
-  if(!DRIVE_URL || !obraName) return;
+// Sube al Drive con aviso visual. Sólo en guardados explícitos (💾 Guardar,
+// Guardar como, restaurar): el servidor guarda antes la anterior en historial/.
+async function driveSyncAhora(obraName, version, snap, hito){
+  obraName = obraName || _activa?.nombre;
+  if(!DRIVE_URL || !obraName) return false;
+  version = version || (_activa && _activa.nombre===obraName ? _activa.version : V_PRINCIPAL);
   _driveStatus = 'saving'; actualizarIndicadorDrive();
-  const ok = await _driveSave(obraName, captureSnapshot());
+  const ok = await _driveSave(obraName, version, snap || captureSnapshot(), hito);
   _driveStatus = ok ? 'saved' : 'error'; actualizarIndicadorDrive();
   if(ok) setTimeout(()=>{ _driveStatus='idle'; actualizarIndicadorDrive(); }, 4000);
+  else showToast('⚠️ Quedó guardada en este navegador, pero no se pudo subir a Drive','',4000);
+  return ok;
 }
 
 document.addEventListener('DOMContentLoaded', actualizarIndicadorDrive);
