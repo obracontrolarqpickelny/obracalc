@@ -1258,6 +1258,54 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
 .sec-derivado { cursor: pointer; line-height: 1.45; }
 .sec-derivado:hover { color: var(--text); text-decoration: underline dotted; }
 
+/* Revoques: desglose por tipo → nivel → (común | hidrófugo) */
+.rev-tipo {
+  margin: 14px 0 4px; padding: 5px 8px; border-radius: 5px;
+  background: var(--surface2); font-size: 11px; font-weight: 700; color: var(--text);
+}
+.rev-tipo-sup { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text3); margin: 0 4px; }
+.rev-nivel {
+  margin: 8px 0 2px 8px; font-size: 10.5px; font-weight: 700; color: var(--text2);
+  font-family: 'DM Mono', monospace;
+}
+.rev-hidro {
+  margin: 6px 0 2px 8px; padding: 3px 8px; border-left: 3px solid var(--blue);
+  background: var(--blue-dim); font-size: 10px; color: var(--blue); font-weight: 600;
+}
+.rev-vacio { margin: 2px 0 0 8px; font-size: 10px; color: var(--text3); font-style: italic; }
+#rev-resultado .dosaje-row { padding-left: 8px; }
+
+/* Unidades comerciales */
+.uc-barra {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 14px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  position: sticky; top: 64px; z-index: 5;
+}
+.uc-barra.pendiente { border-color: var(--accent); background: var(--accent-dim2); }
+.uc-pendientes { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.uc-barra.pendiente .uc-pendientes { color: var(--accent); font-weight: 700; }
+.uc-tabla { table-layout: fixed; }
+.uc-tabla td { vertical-align: middle; }
+.uc-grupo td {
+  background: var(--surface2); font-size: 10px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .08em; padding: 6px 12px;
+}
+.uc-tabla td input[type=text], .uc-tabla td input[type=number] { width: 100%; }
+.uc-cont { display: flex; align-items: center; gap: 6px; }
+.uc-cont input { width: 80px !important; }
+.uc-base { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; white-space: nowrap; }
+.uc-sug { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.uc-sug button {
+  font-size: 10px; font-family: 'DM Mono', monospace; padding: 1px 7px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--text2);
+}
+.uc-sug button:hover { border-color: var(--edit-border); background: var(--edit-bg); }
+.uc-fila-cambiada td { background: var(--accent-dim2); }
+.uc-pedir { text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; }
+.uc-pedir b { color: var(--accent); }
+.uc-pedir .antes { display: block; font-size: 10px; color: var(--text3); text-decoration: line-through; }
+
 .modal-col-box {
   padding: 12px 14px; margin-bottom: 14px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
@@ -1540,6 +1588,9 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
         <span class="nav-icon">✂</span> Recortes de Hierro
         <span class="nav-badge" id="badge-rec">—</span>
       </div>
+      <div class="nav-item" onclick="showPage('unidades')"><span class="nav-step">11</span>
+        <span class="nav-icon">⚖</span> Unidades comerciales
+      </div>
       <div class="nav-item" onclick="showPage('resumen')"><span class="nav-step">✓</span>
         <span class="nav-icon">📋</span> Resumen Total
       </div>
@@ -1640,7 +1691,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   ▸ <span id="horm-desglose-arrow">▸</span> Hormigón armado
                 </div>
                 <div class="mat-qty" id="cem-horm">—</div>
-                <div class="mat-unit">bol</div>
+                <div class="mat-unit uc-port-unit">bol</div>
               </div>
               <!-- sub-filas H° armado (ocultas por defecto) -->
               <div id="horm-desglose" style="display:none;background:var(--surface2);border-top:1px solid var(--border);">
@@ -1648,56 +1699,50 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Columnas</div>
                   <div class="mat-qty" id="cem-col" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
                 <div class="mat-row" style="padding-left:24px;">
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Vigas VF/VA</div>
                   <div class="mat-qty" id="cem-vig-vf" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
                 <div class="mat-row" style="padding-left:24px;">
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Vigas VD/VE/VC</div>
                   <div class="mat-qty" id="cem-vig-vd" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
                 <div class="mat-row" style="padding-left:24px;">
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Bases (zapatas)</div>
                   <div class="mat-qty" id="cem-bases" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
                 <div class="mat-row" style="padding-left:24px;">
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Cimientos</div>
                   <div class="mat-qty" id="cem-cim" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
                 <div class="mat-row" style="padding-left:24px;">
                   <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
                   <div class="mat-name" style="font-size:11px;color:var(--text2);">Contrapiso/Carpeta</div>
                   <div class="mat-qty" id="cem-cont" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
+                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
                 </div>
               </div>
               <div class="mat-row">
-                <div class="mat-dot" style="background:var(--orange)"></div>
-                <div class="mat-name">Mampostería</div>
-                <div class="mat-qty" id="cem-mamp">—</div>
-                <div class="mat-unit">bol alb.</div>
-              </div>
-              <div class="mat-row">
                 <div class="mat-dot" style="background:var(--green)"></div>
-                <div class="mat-name">Revoques</div>
+                <div class="mat-name">Revoques <span style="font-size:10px;color:var(--text3);">(Portland + cal · hidrófugo)</span></div>
                 <div class="mat-qty" id="cem-rev">—</div>
-                <div class="mat-unit">bol</div>
+                <div class="mat-unit uc-port-unit">bol</div>
               </div>
               <div class="mat-row" style="background:var(--surface2);">
                 <div class="mat-dot" style="background:var(--accent)"></div>
                 <div class="mat-name" style="font-weight:700;color:var(--text)">TOTAL PORTLAND</div>
                 <div class="mat-qty accent" id="cem-total-display">—</div>
-                <div class="mat-unit">bol 25 kg</div>
+                <div class="mat-unit uc-port-unit">bol 25 kg</div>
               </div>
               <!-- ── CEM. ALBAÑILERÍA ──────────────────── -->
               <div style="padding:5px 14px 3px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'Syne',sans-serif;font-weight:700;background:var(--surface2);border-top:2px solid var(--border);">Cemento Albañilería</div>
@@ -1893,10 +1938,6 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                     <option value="3">3 niveles</option>
                   </select>
                 </div>
-              </div>
-              <div class="field">
-                <div class="field-label">Alt. libre muros <span class="field-hint">m</span></div>
-                <input type="number" id="alt-libre" value="2.7" step="0.05" class="input-editable" oninput="recalcAll()">
               </div>
               <div style="margin-top:10px;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text3);line-height:1.6;">
                 Las superficies de <strong style="color:var(--text2);">contrapiso</strong> y <strong style="color:var(--text2);">revoques</strong> se cargan en sus propias secciones
@@ -2559,7 +2600,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <span class="edit-guide-step">7</span>
           <div class="edit-guide-text">
             <strong>Revoques</strong><br>
-            <span>Completá m² de revoque grueso y fino por nivel (interior y exterior). Elegí la opción de dosaje por tipo. El hidrófugo aplica solo al 30% de RG PB.</span>
+            <span>Completá m² de revoque grueso y fino por nivel (interior y exterior). Elegí la opción de dosaje por tipo. El hidrófugo aplica sólo al revoque grueso de planta baja, en el % que indiques.</span>
           </div>
           <div class="edit-guide-tip">Interior ≠ exterior</div>
         </div>
@@ -2568,7 +2609,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <div class="stat">
             <div class="stat-label">Cem. Portland</div>
             <div class="stat-value" id="rev-stat-port">—</div>
-            <div class="stat-unit">bolsas 25 kg</div>
+            <div class="stat-unit" id="rev-stat-port-unit">bolsas 25 kg</div>
           </div>
           <div class="stat green">
             <div class="stat-label">Cem. Albañilería</div>
@@ -2578,7 +2619,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <div class="stat purple" style="--purple:#8b6fcf;">
             <div class="stat-label">Cal Hidratada Esp.</div>
             <div class="stat-value" id="rev-stat-cal">—</div>
-            <div class="stat-unit">bolsas 25 kg</div>
+            <div class="stat-unit" id="rev-stat-cal-unit">bolsas 25 kg</div>
           </div>
           <div class="stat orange">
             <div class="stat-label">Hidrófugo SIKA 1</div>
@@ -2641,7 +2682,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                   <div style="font-size:9px;color:var(--text3);margin-bottom:10px;font-family:'DM Mono',monospace;">
                     <strong>Opc 1 — Portland+Cal:</strong> Grueso: 2.5kg Port.+3.75kg Cal+0.025m³/m² · Fino: 0.3kg Port.+0.71kg Cal+0.005m³/m²<br>
                     <strong>Opc 2 — Cem.Alb:</strong> Grueso: 7.5kg+0.025m³ Arena/m² · Fino: 2.5kg+0.01m³ Arena fina/m²<br>
-                    <strong>Opc 3 — Texturado:</strong> Solo para exteriores · Portland 0.3 kg/m² + Arena fina 0.005 m³/m² · El hidrófugo aplica al 30% de R. Grueso PB (int+ext)
+                    <strong>Opc 3 — Texturado:</strong> Solo para exteriores · Portland 0.3 kg/m² + Arena fina 0.005 m³/m²
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div>
@@ -2676,6 +2717,23 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
                     </div>
                   </div>
                 </div>
+
+                <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                  <div class="field-label" style="margin-bottom:6px;">Revoque grueso hidrófugo — sólo planta baja</div>
+                  <div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.5;">
+                    La parte con hidrófugo se hace con <b>cemento Portland + arena</b> (sin cal ni cemento de albañilería) y reemplaza a la mezcla común en ese % del revoque grueso de PB.
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div class="field" style="margin:0;"><div class="field-label">% del grueso int. PB <span class="field-hint">%</span></div>
+                      <input type="number" id="rev-hid-int" value="30" step="5" min="0" max="100" oninput="calcRevoques()"></div>
+                    <div class="field" style="margin:0;"><div class="field-label">% del grueso ext. PB <span class="field-hint">%</span></div>
+                      <input type="number" id="rev-hid-ext" value="30" step="5" min="0" max="100" oninput="calcRevoques()"></div>
+                    <div class="field" style="margin:0;"><div class="field-label">Mezcla cemento : arena <span class="field-hint">1 : …</span></div>
+                      <input type="number" id="rev-hid-prop" value="3" step="0.5" min="1" oninput="calcRevoques()"></div>
+                    <div class="field" style="margin:0;"><div class="field-label">Hidrófugo <span class="field-hint">litros / m²</span></div>
+                      <input type="number" id="rev-hid-lts" value="0.5" step="0.05" min="0" oninput="calcRevoques()"></div>
+                  </div>
+                </div>
               </div>
               <div id="rev-resultado"><!-- JS --></div>
             </div>
@@ -2695,7 +2753,7 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
           <div class="stat">
             <div class="stat-label">Cemento total CP+Carp</div>
             <div class="stat-value" id="cont-stat-cem">—</div>
-            <div class="stat-unit">bol 25 kg</div>
+            <div class="stat-unit uc-port-unit">bol 25 kg</div>
           </div>
           <div class="stat orange">
             <div class="stat-label">Arena gruesa</div>
@@ -3077,6 +3135,50 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
       </div>
 
       <!-- ══════════════ RESUMEN TOTAL ══════════════ -->
+      <!-- ══════════════ UNIDADES COMERCIALES ══════════════ -->
+      <div class="page" id="page-unidades">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Unidades comerciales</div>
+            <div class="section-desc">Cómo se compra cada material del cómputo</div>
+          </div>
+          <span class="tag tag-accent">Editable</span>
+        </div>
+        <div class="edit-guide-banner">
+          <span class="edit-guide-step">11</span>
+          <div class="edit-guide-text">
+            <strong>Unidades comerciales</strong><br>
+            <span>Cada material se calcula en su unidad (kg, m, m³…) y se compra en una presentación. Cambiá la presentación o su contenido y tocá <b>Aplicar</b>: se actualizan todas las pestañas, el resumen y el PDF.</span>
+          </div>
+          <div class="edit-guide-tip">Se guarda con la obra</div>
+        </div>
+
+        <div class="uc-barra" id="uc-barra">
+          <div id="uc-pendientes" class="uc-pendientes">Sin cambios pendientes</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="ucRestablecer()" title="Volver a las presentaciones habituales">↺ Valores habituales</button>
+            <button class="btn btn-secondary" id="uc-btn-descartar" onclick="ucDescartar()" disabled>Descartar cambios</button>
+            <button class="btn btn-primary" id="uc-btn-aplicar" onclick="ucAplicar()" disabled>✓ Aplicar a todo el cómputo</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap" style="border:none;">
+            <table class="uc-tabla">
+              <colgroup><col style="width:24%"><col style="width:11%"><col style="width:20%"><col style="width:17%"><col style="width:28%"></colgroup>
+              <thead><tr>
+                <th>Material</th>
+                <th data-tip="Unidad en la que la app hace el cálculo">Se calcula en</th>
+                <th>Presentación</th>
+                <th>Contenido</th>
+                <th class="right" data-tip="Cantidad a pedir (con incremento) con la presentación de esta fila">A pedir</th>
+              </tr></thead>
+              <tbody id="uc-tbody"><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="page" id="page-resumen" data-print-header="CÓMPUTO DE MATERIALES">
         <div class="section-header">
           <div>
@@ -3109,18 +3211,11 @@ td input[type=text]:focus, td input[type=number]:focus, td input:not([type]):foc
             <div class="field-label">Incremento por imprevistos <span class="field-hint">%</span></div>
             <input type="number" id="res-pct" value="12" step="1" class="input-editable" oninput="calcResumen()">
           </div>
-          <div class="field">
-            <div class="field-label">Largo comercial barra <span class="field-hint">m</span></div>
-            <input type="number" id="res-barra" value="12" step="1" class="input-editable" oninput="calcResumen()">
-          </div>
-          <div class="field">
-            <div class="field-label">Bolsa Cem. Albañilería <span class="field-hint">kg</span>
-              <span style="font-size:9px;color:var(--text3);display:block;">Impacta en todos los módulos</span>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <div style="font-size:11px;color:var(--text3);line-height:1.5;padding-bottom:8px;">
+              Bolsas, barras y demás presentaciones se configuran en
+              <a href="#" onclick="showPage('unidades');return false;" style="color:var(--accent);font-weight:600;">⚖ Unidades comerciales</a>.
             </div>
-            <select id="res-cemAlb-kg" class="input-editable" onchange="recalcAll()">
-              <option value="25" selected>25 kg (estándar)</option>
-              <option value="20">20 kg (bolsa chica)</option>
-            </select>
           </div>
         </div>
 
@@ -3266,7 +3361,64 @@ const state = {
 
 // ── PESO POR ML (kg/m) ─────────────────────────────────────────────────────
 const PESO_HIERRO = {4.2:0.109, 6:0.222, 8:0.395, 10:0.617, 12:0.888, 16:1.578, 20:2.466};
-const BARRA_COMERCIAL = 12;
+// Largo de barra comercial (m). Se toma de Unidades comerciales al aplicar/cargar
+// — ver ucAplicarGlobales(). Es "let" para que todo el cálculo lo lea actualizado.
+let BARRA_COMERCIAL = 12;
+
+// ── UNIDADES COMERCIALES ──────────────────────────────────────────────────
+// Cada material se CALCULA en una unidad base (kg, m, m², m³, litros, unidad)
+// y se COMPRA en una presentación comercial (bolsa de 25 kg, barra de 12 m…).
+// "cont" = cuántas unidades base trae una presentación. Cambiar la presentación
+// no cambia el cálculo técnico, sólo cuántas presentaciones hay que pedir.
+const UC_DEF = [
+  {k:'portland',  grupo:'Aglomerantes', mat:'Cemento Portland',        base:'kg',     pres:'bolsa', cont:25,   sug:[25,50]},
+  {k:'cemAlb',    grupo:'Aglomerantes', mat:'Cemento de albañilería',  base:'kg',     pres:'bolsa', cont:25,   sug:[20,25,40]},
+  {k:'cal',       grupo:'Aglomerantes', mat:'Cal hidratada especial',  base:'kg',     pres:'bolsa', cont:25,   sug:[20,25,30]},
+  {k:'yeso',      grupo:'Aglomerantes', mat:'Yeso',                    base:'kg',     pres:'bolsa', cont:40,   sug:[25,30,40]},
+  {k:'hormElab',  grupo:'Hormigones',   mat:'Hormigón elaborado',      base:'m³',     pres:'m³',    cont:1},
+  {k:'hierro',    grupo:'Hierros',      mat:'Hierro (todos los Ø)',    base:'m',      pres:'barra', cont:12,   sug:[12]},
+  {k:'arenaG',    grupo:'Áridos',       mat:'Arena gruesa',            base:'m³',     pres:'m³',    cont:1,    sug:[1,6]},
+  {k:'arenaF',    grupo:'Áridos',       mat:'Arena fina',              base:'m³',     pres:'m³',    cont:1,    sug:[1,6]},
+  {k:'ripio',     grupo:'Áridos',       mat:'Ripio clasificado',       base:'m³',     pres:'m³',    cont:1,    sug:[1,6]},
+  {k:'piedra',    grupo:'Áridos',       mat:'Piedra bola',             base:'m³',     pres:'m³',    cont:1},
+  {k:'ladrillon', grupo:'Losas y varios', mat:'Ladrillones',           base:'unidad', pres:'unidad',cont:1},
+  {k:'loseta',    grupo:'Losas y varios', mat:'Losetas 12 cm',         base:'unidad', pres:'unidad',cont:1},
+  {k:'malla',     grupo:'Losas y varios', mat:'Malla de losa',         base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
+  {k:'membrana',  grupo:'Losas y varios', mat:'Membrana asfáltica',    base:'m²',     pres:'rollo', cont:10},
+  {k:'emulsion',  grupo:'Losas y varios', mat:'Emulsión asfáltica',    base:'litros', pres:'litros',cont:1,    sug:[1,4,18,20]},
+  {k:'pomeca',    grupo:'Losas y varios', mat:'Pomeca',                base:'m³',     pres:'m³',    cont:1},
+  {k:'perlita',   grupo:'Losas y varios', mat:'Perlita',               base:'m³',     pres:'bolsa', cont:0.25},
+  {k:'hidrofugo', grupo:'Losas y varios', mat:'Hidrófugo SIKA 1',      base:'litros', pres:'litros',cont:1,    sug:[1,4,10,20]},
+  {k:'hidroMasa', grupo:'Losas y varios', mat:'Hidrófugo de masa',     base:'litros', pres:'litros',cont:1,    sug:[1,4,10,20]},
+  {k:'alambre',   grupo:'Losas y varios', mat:'Alambre N°14 y N°17',   base:'kg',     pres:'kg',    cont:1},
+  {k:'clavos',    grupo:'Losas y varios', mat:'Clavos punta París',    base:'kg',     pres:'kg',    cont:1},
+];
+const UC_IDX = Object.fromEntries(UC_DEF.map(u=>[u.k,u]));
+
+// Unidades vigentes = las de fábrica pisadas por las que el usuario aplicó
+function uc(k){
+  const d = UC_IDX[k] || {base:'', pres:'', cont:1};
+  const s = (typeof state!=='undefined' && state.unidades && state.unidades[k]) || {};
+  const cont = +s.cont > 0 ? +s.cont : d.cont;
+  return {...d, pres: (s.pres||d.pres), cont};
+}
+const _fmtCont = v => String(Math.round(v*1000)/1000).replace('.',',');
+// Etiqueta de compra: "bolsa 50 kg", "barra 12 m", "bolsa 0,25 m³"; si se compra en la
+// misma unidad en que se calcula (m³, kg, litros) queda sólo esa unidad.
+function _ucLabel(pres, cont, base){
+  return (+cont===1 && (pres===base || !pres)) ? base : `${pres} ${_fmtCont(+cont)} ${base}`;
+}
+// Se compra por pieza (bolsa, barra, rollo, unidad) → cantidad entera hacia arriba
+function _ucEntero(pres, base){ return base==='unidad' || pres!==base; }
+function ucLabel(k){ const u = uc(k); return _ucLabel(u.pres, u.cont, u.base); }
+function ucEntero(k){ const u = uc(k); return _ucEntero(u.pres, u.base); }
+// Cantidad en presentaciones comerciales a partir de la cantidad en unidad base
+function ucDesdeBase(k, qBase){ return (qBase||0) / uc(k).cont; }
+// Portland y cal se calculan internamente en "bolsas de 25 kg"
+function ucDesdeB25(k, bolsas25){ return ucDesdeBase(k, (bolsas25||0)*25); }
+
+// Valores globales que dependen de las unidades (barra de hierro)
+function ucAplicarGlobales(){ BARRA_COMERCIAL = uc('hierro').cont; }
 
 // Contenido de cemento Portland por m³ según tipo de hormigón
 const HORM_TIPOS = {
@@ -4402,6 +4554,7 @@ const pageNames = {
   contrapiso: {title:'Contrapiso / Carpeta', sub:'Cemento, arena gruesa y ripio'},
   losas: {title:'Losas y Techos', sub:'Pretensadas · Macizas · Cubierta'},
   recortes: {title:'Recortes de Hierro', sub:'Stock y optimización de sobrantes'},
+  unidades: {title:'Unidades comerciales', sub:'Cómo se compra cada material'},
   resumen: {title:'Resumen Total', sub:'Cómputo final consolidado'},
 };
 
@@ -4420,6 +4573,7 @@ function showPage(id) {
   document.querySelector('.content')?.scrollTo({top:0});
   document.querySelector('.main')?.scrollTo({top:0});
   if(id==='resumen') calcResumen();
+  if(id==='unidades') renderUnidades();
 }
 
 function toggleSidebar() {
@@ -4440,7 +4594,7 @@ function phiClass(phi){return 'phi'+phi;}
 
 // Retorna el peso en kg de la bolsa de Cem. Albañilería según configuración global
 function getCemAlbKg(){
-  return parseInt(document.getElementById('res-cemAlb-kg')?.value||25)||25;
+  return uc('cemAlb').cont;   // bolsa de cemento de albañilería: Unidades comerciales
 }
 // Convierte kg de Cem. Alb. a bolsas según configuración
 function kgToBolCemAlb(kg){ return kg / getCemAlbKg(); }
@@ -4619,7 +4773,7 @@ function calcHorm(){
         </tr>
       </thead>
       <tbody>
-        ${filaMat('Cemento portland', null, cemKg, `${cemBol.toFixed(2)} bol 25kg · ${(cemKg/50).toFixed(2)} bol 50kg`, null, cemKg*k)}
+        ${filaMat('Cemento portland', null, cemKg, `${n(ucDesdeBase('portland',cemKg),2)} ${ucLabel('portland')}`, null, cemKg*k)}
         ${filaMat('Arena gruesa',  arenaM3,  arenaKg, null, arenaM3*k,  arenaKg*k)}
         ${filaMat('Ripio clasificado', piedraM3, ripioKg, null, piedraM3*k, ripioKg*k)}
         ${filaMat('Agua', null, aguaL, `${aguaL.toFixed(0)} litros`, null, aguaL*k)}
@@ -5412,149 +5566,112 @@ function calcMamposteria(){
 
 // ── REVOQUES ──────────────────────────────────────────────────────────────
 function calcRevoques(){
-  // Superficies por nivel
-  const rgipb=r('rg-int-pb'), rgipa=r('rg-int-pa'), rgip3=r('rg-int-p3');
-  const rgepb=r('rg-ext-pb'), rgepa=r('rg-ext-pa'), rgep3=r('rg-ext-p3');
-  const rfipb=r('rf-int-pb'), rfipa=r('rf-int-pa'), rfip3=r('rf-int-p3');
-  const rfepb=r('rf-ext-pb'), rfepa=r('rf-ext-pa'), rfep3=r('rf-ext-p3');
+  // ─── Dosajes por m² (según Excel, hoja 6. REVOQUES) ──────────────────
+  // R. Grueso (2,5 cm):  Opc 1: 2,5 kg Portland + 3,75 kg Cal + 0,025 m³ arena gruesa
+  //                      Opc 2: 7,5 kg Cem. Alb. + 0,025 m³ arena gruesa
+  // R. Fino (0,5 cm):    Opc 1: 0,3 kg Portland + 0,71 kg Cal + 0,005 m³ arena fina
+  //                      Opc 2: 2,5 kg Cem. Alb. + 0,010 m³ arena fina
+  //                      Opc 3: texturado → 0,3 kg Portland + 0,005 m³ arena fina
+  // R. Grueso HIDRÓFUGO (sólo PB, en el % indicado del grueso int./ext.):
+  //   cemento Portland + arena 1:n (sin cal ni cem. alb.) + hidrófugo en litros/m²
+  const ARENA_GRUESO = 0.025;
+  const NIV = [{k:'pb', lbl:'Planta baja'}, {k:'pa', lbl:'Planta alta'}, {k:'p3', lbl:'3° nivel'}];
+  const TIPOS = [
+    {k:'gi', lbl:'R. Grueso Int.', grueso:true,  pre:'rg-int', opcId:'rev-opc-gi', pctId:'rev-hid-int'},
+    {k:'ge', lbl:'R. Grueso Ext.', grueso:true,  pre:'rg-ext', opcId:'rev-opc-ge', pctId:'rev-hid-ext'},
+    {k:'fi', lbl:'R. Fino Int.',   grueso:false, pre:'rf-int', opcId:'rev-opc-fi'},
+    {k:'fe', lbl:'R. Fino Ext.',   grueso:false, pre:'rf-ext', opcId:'rev-opc-fe'},
+  ];
 
-  const supGI = rgipb+rgipa+rgip3;   // Grueso Interior
-  const supGE = rgepb+rgepa+rgep3;   // Grueso Exterior
-  const supFI = rfipb+rfipa+rfip3;   // Fino Interior
-  const supFE = rfepb+rfepa+rfep3;   // Fino Exterior
+  const bagKg  = getCemAlbKg();
+  const propH  = Math.max(r('rev-hid-prop') || 3, 0.5);
+  const hidLm2 = Math.max(r('rev-hid-lts'), 0);
+  const cemHKg = ARENA_GRUESO / propH * DENS_AP.cemento;   // kg de cemento por m² de grueso hidrófugo
 
-  // Opciones por tipo (4 selectores independientes)
-  const opcGI = document.getElementById('rev-opc-gi')?.value || '2';
-  const opcGE = document.getElementById('rev-opc-ge')?.value || '2';
-  const opcFI = document.getElementById('rev-opc-fi')?.value || '2';
-  const opcFE = document.getElementById('rev-opc-fe')?.value || '2';
-
-  const bagKg   = getCemAlbKg();   // 20 o 25 kg según config global
-  const lbCA    = labelCemAlb();
-
-  // ─── Dosajes exactos según Excel (hoja 6. REVOQUES) ──────────────────
-  // R. Grueso (2.5 cm/m²):
-  //   Opc 1: 2.5 kg Portland/m² + 3.75 kg Cal/m² + 0.025 m³ Arena gruesa/m²
-  //   Opc 2: 7.5 kg CemAlb/m²   + 0.025 m³ Arena gruesa/m²
-  //   Opc 3: texturado (no usa estos materiales)
-  // R. Fino (0.5 cm/m²):
-  //   Opc 1: 0.3 kg Portland/m² + 0.71 kg Cal/m² + 0.005 m³ Arena fina/m²
-  //   Opc 2: 2.5 kg CemAlb/m²   + 0.010 m³ Arena fina/m²
-  //   Opc 3: texturado → hidrófugo 0.2 lts/m²
-
-  // ── Dosajes exactos según Excel ──────────────────────────────────────────
-  // HIDRÓFUGO: se aplica a TODOS los revoques GRUESOS (int y ext) → 0.5 lts/m²
-  // TEXTURADO (Opc 3, solo exteriores): cemento portland + arena fina
-  //   R.Grueso: no aplica (grueso es base, no lleva texturado)
-  //   R.Fino ext texturado: 0.3 kg Portland/m² + 0.005 m³ Arena fina/m²
-
-  const dosGrueso = (sup, opc) => {
-    // Opc 3 en grueso no aplica (texturado es para fino)
-    if(opc==='1') return {portKg: sup*2.5, calKg: sup*3.75, cemAlbKg: 0, arenaGr: sup*0.025};
-    return {portKg: 0, calKg: 0, cemAlbKg: sup*7.5, arenaGr: sup*0.025};
-  };
+  const dosGrueso = (sup, opc) => opc==='1'
+    ? {portKg: sup*2.5, calKg: sup*3.75, cemAlbKg: 0, arenaGr: sup*ARENA_GRUESO}
+    : {portKg: 0, calKg: 0, cemAlbKg: sup*7.5, arenaGr: sup*ARENA_GRUESO};
   const dosFino = (sup, opc) => {
     if(opc==='1') return {portKg: sup*0.3, calKg: sup*0.71, cemAlbKg: 0, arenaFi: sup*0.005};
-    // Opc 3: texturado planchado — portland + arena fina (sin cal, sin cem.alb)
     if(opc==='3') return {portKg: sup*0.3, calKg: 0, cemAlbKg: 0, arenaFi: sup*0.005};
     return {portKg: 0, calKg: 0, cemAlbKg: sup*2.5, arenaFi: sup*0.010};
   };
+  const dosHidro = sup => ({portKg: sup*cemHKg, calKg: 0, cemAlbKg: 0, arenaGr: sup*ARENA_GRUESO, hidroL: sup*hidLm2});
 
-  const dGI = dosGrueso(supGI, opcGI);
-  const dGE = dosGrueso(supGE, opcGE);
-  const dFI = dosFino(supFI, opcFI);
-  const dFE = dosFino(supFE, opcFE);
+  const tot = {portKg:0, calKg:0, cemAlbKg:0, arenaGr:0, arenaFi:0, hidroL:0};
+  const sumar = d => Object.keys(tot).forEach(k=>{ tot[k] += d[k]||0; });
 
-  // ── Totales ────────────────────────────────────────────────────────────
-  const totalCemAlbKg  = dGI.cemAlbKg + dGE.cemAlbKg + dFI.cemAlbKg + dFE.cemAlbKg;
-  const totalPortKg    = dGI.portKg   + dGE.portKg   + dFI.portKg   + dFE.portKg;
-  const totalCalKg     = dGI.calKg    + dGE.calKg    + dFI.calKg    + dFE.calKg;
-  const totalArenaGr   = dGI.arenaGr  + dGE.arenaGr;
-  const totalArenaFi   = dFI.arenaFi  + dFE.arenaFi;
-  // Hidrófugo SIKA 1: 0.5 lts/m² sobre el 30% de los gruesos de PB solamente
-  // (primeras hiladas de mampostería, según Excel: "5 hiladas con hidrófugo")
-  const supGruesoPB = rgipb + rgepb;   // grueso int PB + grueso ext PB
-  const totalHidro  = supGruesoPB * 0.30 * 0.5;
+  // Filas de materiales, en la presentación comercial vigente
+  const dr = (mat, val, unit, fuerte) =>
+    `<div class="dosaje-row"><div class="dosaje-material">${fuerte?'<strong>'+mat+'</strong>':mat}</div><div class="dosaje-value">${n(val,2)}</div><div class="dosaje-unit">${unit}</div></div>`;
+  const filas = (d, fuerte) =>
+      (d.portKg  >0.001 ? dr('Cem. Portland',      ucDesdeBase('portland', d.portKg), ucLabel('portland'), fuerte) : '')
+    + (d.cemAlbKg>0.001 ? dr('Cem. Albañilería',   ucDesdeBase('cemAlb', d.cemAlbKg), ucLabel('cemAlb'),   fuerte) : '')
+    + (d.calKg   >0.001 ? dr('Cal Hidr. Especial', ucDesdeBase('cal', d.calKg),       ucLabel('cal'),      fuerte) : '')
+    + (d.arenaGr >0.0001? dr('Arena gruesa',       ucDesdeBase('arenaG', d.arenaGr),  ucLabel('arenaG'),   fuerte) : '')
+    + (d.arenaFi >0.0001? dr('Arena fina',         ucDesdeBase('arenaF', d.arenaFi),  ucLabel('arenaF'),   fuerte) : '')
+    + (d.hidroL  >0.001 ? dr('Hidrófugo SIKA 1',   ucDesdeBase('hidrofugo', d.hidroL),ucLabel('hidrofugo'),fuerte) : '');
 
-  const totalCemAlbBol = totalCemAlbKg / bagKg;
-  const totalPortBol25 = totalPortKg / 25;
-  const totalCalBol25  = totalCalKg / 25;
+  const tag = (opc, grueso) => opc==='1'
+    ? '<span style="color:var(--accent);font-size:9px;">Portland+Cal</span>'
+    : (opc==='3' && !grueso)
+      ? '<span style="color:var(--blue);font-size:9px;">Texturado</span>'
+      : '<span style="color:var(--green);font-size:9px;">Cem.Alb</span>';
 
-  // ── Stats individuales ─────────────────────────────────────────────────
-  setTxt('rev-stat-port',      n(totalPortBol25, 1));
-  setTxt('rev-stat-cemAlb',    n(totalCemAlbBol, 1));
-  setTxt('rev-stat-cemAlb-unit', lbCA);
-  setTxt('rev-stat-cal',       n(totalCalBol25, 1));
-  setTxt('rev-stat-sika',      n(totalHidro, 1));
+  let html = '<div class="field-label" style="margin-bottom:6px;">Desglose por revoque y por nivel</div>';
 
-  // Función helper fila
-  const dr = (mat, val, unit) =>
-    `<div class="dosaje-row"><div class="dosaje-material">${mat}</div><div class="dosaje-value">${n(val,2)}</div><div class="dosaje-unit">${unit}</div></div>`;
+  TIPOS.forEach(t=>{
+    const opc = document.getElementById(t.opcId)?.value || '2';
+    const niveles = NIV.map(nv=>({...nv, sup: r(`${t.pre}-${nv.k}`)})).filter(nv=>nv.sup>0);
+    const supTot = niveles.reduce((s,nv)=>s+nv.sup, 0);
+    html += `<div class="rev-tipo">${t.lbl} <span class="rev-tipo-sup">${n(supTot,1)} m²</span> ${tag(opc, t.grueso)}</div>`;
+    if(!niveles.length){ html += '<div class="rev-vacio">Sin superficie cargada</div>'; return; }
 
-  const secLabel = (tipo, sup, opc) => {
-    const tag = opc==='1'
-      ? '<span style="color:var(--accent);font-size:9px;">Portland+Cal</span>'
-      : opc==='3'
-        ? '<span style="color:var(--blue);font-size:9px;">Texturado</span>'
-        : '<span style="color:var(--green);font-size:9px;">Cem.Alb</span>';
-    return '<div style="font-size:10px;font-weight:600;color:var(--text2);margin:8px 0 4px;">'
-      + tipo + ' (' + n(sup,1) + ' m²) ' + tag + '</div>';
-  };
+    niveles.forEach(nv=>{
+      const pctH = (t.grueso && nv.k==='pb') ? Math.min(Math.max(r(t.pctId),0),100)/100 : 0;
+      const supH = nv.sup * pctH;
+      const supN = nv.sup - supH;
+      const dN = t.grueso ? dosGrueso(supN, opc) : dosFino(supN, opc);
+      sumar(dN);
+      html += `<div class="rev-nivel">${nv.lbl} · ${n(nv.sup,2)} m²`
+        + (supH>0 ? ` <span style="color:var(--text3);">(${n(supN,2)} común + ${n(supH,2)} hidrófugo)</span>` : '')
+        + `</div>` + filas(dN);
+      if(supH>0){
+        const dH = dosHidro(supH);
+        sumar(dH);
+        html += `<div class="rev-hidro">Con hidrófugo · ${n(pctH*100,0)} % · cemento + arena 1:${String(propH).replace('.',',')}</div>` + filas(dH);
+      }
+    });
+  });
 
-  document.getElementById('rev-resultado').innerHTML=`
-    <div class="field-label" style="margin-bottom:6px;">Desglose por tipo</div>
-
-    ${secLabel('R. Grueso Int.', supGI, opcGI)}
-    ${supGI>0 ? dr(opcGI==='1'?'Portland':'Cem.Alb (grueso)',
-                   opcGI==='1'?dGI.portKg/25:dGI.cemAlbKg/bagKg,
-                   opcGI==='1'?'bol 25 kg':lbCA) : ''}
-    ${opcGI==='1'&&supGI>0 ? dr('Cal Hidr. Especial', dGI.calKg/25, 'bol 25 kg') : ''}
-    ${supGI>0&&dGI.arenaGr>0 ? dr('Arena gruesa', dGI.arenaGr, 'm³') : ''}
-    ${rgipb>0 ? dr('Hidrófugo SIKA 1 (30% RG PB int.)', rgipb*0.30*0.5, 'lts') : ''}
-
-    ${secLabel('R. Grueso Ext.', supGE, opcGE)}
-    ${supGE>0 ? dr(opcGE==='1'?'Portland':'Cem.Alb (grueso)',
-                   opcGE==='1'?dGE.portKg/25:dGE.cemAlbKg/bagKg,
-                   opcGE==='1'?'bol 25 kg':lbCA) : ''}
-    ${opcGE==='1'&&supGE>0 ? dr('Cal Hidr. Especial', dGE.calKg/25, 'bol 25 kg') : ''}
-    ${supGE>0&&dGE.arenaGr>0 ? dr('Arena gruesa', dGE.arenaGr, 'm³') : ''}
-    ${rgepb>0 ? dr('Hidrófugo SIKA 1 (30% RG PB ext.)', rgepb*0.30*0.5, 'lts') : ''}
-
-    ${secLabel('R. Fino Int.', supFI, opcFI)}
-    ${supFI>0 ? dr(opcFI==='1'?'Portland':'Cem.Alb (fino)',
-                   opcFI==='1'?dFI.portKg/25:dFI.cemAlbKg/bagKg,
-                   opcFI==='1'?'bol 25 kg':lbCA) : ''}
-    ${opcFI==='1'&&supFI>0 ? dr('Cal Hidr. Especial', dFI.calKg/25, 'bol 25 kg') : ''}
-    ${supFI>0&&dFI.arenaFi>0 ? dr('Arena fina', dFI.arenaFi, 'm³') : ''}
-
-    ${secLabel('R. Fino Ext.', supFE, opcFE)}
-    ${supFE>0 ? dr(opcFE==='1'||opcFE==='3' ? 'Portland' : 'Cem.Alb (fino)',
-                   opcFE==='1'||opcFE==='3' ? dFE.portKg/25 : dFE.cemAlbKg/bagKg,
-                   opcFE==='1'||opcFE==='3' ? 'bol 25 kg' : lbCA) : ''}
-    ${opcFE==='1'&&supFE>0 ? dr('Cal Hidr. Especial', dFE.calKg/25, 'bol 25 kg') : ''}
-    ${supFE>0&&dFE.arenaFi>0 ? dr('Arena fina', dFE.arenaFi, 'm³') : ''}
-    ${opcFE==='3'&&supFE>0 ? '<div style="font-size:9px;color:var(--blue);padding:2px 0;">✓ Texturado planchado: portland + arena fina</div>' : ''}
-
-    <div style="border-top:2px solid var(--border);padding-top:10px;margin-top:10px;">
+  html += `<div style="border-top:2px solid var(--border);padding-top:10px;margin-top:12px;">
       <div class="field-label" style="margin-bottom:8px;">TOTALES REVOQUES</div>
-      ${totalPortBol25>0.01 ? dr('<strong>Cem. Portland</strong>', totalPortBol25, 'bol 25 kg') : ''}
-      ${totalCemAlbBol>0.01 ? dr('<strong>Cem. Albañilería</strong>', totalCemAlbBol, lbCA) : ''}
-      ${totalCalBol25>0.01 ? dr('<strong>Cal Hidr. Especial</strong>', totalCalBol25, 'bol 25 kg') : ''}
-      ${dr('<strong>Arena gruesa</strong>', totalArenaGr, 'm³')}
-      ${dr('<strong>Arena fina</strong>', totalArenaFi, 'm³')}
-      ${dr('<strong>Hidrófugo SIKA 1</strong>', totalHidro, 'litros')}
+      ${filas(tot, true)}
     </div>`;
+  document.getElementById('rev-resultado').innerHTML = html;
 
+  // ── Stats ──────────────────────────────────────────────────────────────
+  setTxt('rev-stat-port',        n(ucDesdeBase('portland', tot.portKg), 1));
+  setTxt('rev-stat-port-unit',   ucLabel('portland'));
+  setTxt('rev-stat-cemAlb',      n(tot.cemAlbKg/bagKg, 1));
+  setTxt('rev-stat-cemAlb-unit', labelCemAlb());
+  setTxt('rev-stat-cal',         n(ucDesdeBase('cal', tot.calKg), 1));
+  setTxt('rev-stat-cal-unit',    ucLabel('cal'));
+  setTxt('rev-stat-sika',        n(tot.hidroL, 1));
+
+  // Internamente Portland y cal viajan en "bolsas de 25 kg" (así los leen el
+  // dashboard y el resumen); la presentación comercial se aplica al mostrar.
   state.resultados = state.resultados||{};
   state.resultados.rev = {
-    cemAlb:    totalCemAlbBol,    // bolsas CemAlb
-    cemAlbKg:  totalCemAlbKg,
-    cemPort25: totalPortBol25,    // bolsas Portland 25 kg
-    calKg:     totalCalKg,
-    calBol25:  totalCalBol25,     // bolsas Cal Hidr. Esp. 25 kg
-    arenaGr:   totalArenaGr,
-    arenaFi:   totalArenaFi,
-    sika:      totalHidro,        // lts hidrófugo en gruesos
+    cemAlb:    tot.cemAlbKg / bagKg,   // bolsas de cem. alb. (bolsa vigente)
+    cemAlbKg:  tot.cemAlbKg,
+    portKg:    tot.portKg,
+    cemPort25: tot.portKg / 25,
+    calKg:     tot.calKg,
+    calBol25:  tot.calKg / 25,
+    arenaGr:   tot.arenaGr,
+    arenaFi:   tot.arenaFi,
+    sika:      tot.hidroL,             // litros de hidrófugo (sólo grueso PB)
     bagKg
   };
   updateDashboard();
@@ -5597,13 +5714,13 @@ function calcContrapiso(){
     <div class="field-label" style="margin-bottom:10px;">Contrapiso (${n(volCP,3)} m³) + Carpeta (${n(volCarp,3)} m³)</div>
     ${htmlExtra}
     ${contTipo==='obra'?`
-    <div class="dosaje-row"><div class="dosaje-material">Cemento CP (obra)</div><div class="dosaje-value">${n(cemCp,1)}</div><div class="dosaje-unit">bol 25 kg</div></div>
+    <div class="dosaje-row"><div class="dosaje-material">Cemento CP (obra)</div><div class="dosaje-value">${n(ucDesdeB25('portland',cemCp),1)}</div><div class="dosaje-unit">${ucLabel('portland')}</div></div>
     <div class="dosaje-row"><div class="dosaje-material">Arena gruesa CP</div><div class="dosaje-value">${n(arCp,2)}</div><div class="dosaje-unit">m³</div></div>
     <div class="dosaje-row"><div class="dosaje-material">Ripio clasificado</div><div class="dosaje-value">${n(ripCp,2)}</div><div class="dosaje-unit">m³</div></div>`:''}
     <div class="dosaje-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;">
       <div class="dosaje-material">Cemento Carpeta</div>
-      <div class="dosaje-value">${n(cemCarp,1)}</div>
-      <div class="dosaje-unit">bol 25 kg</div>
+      <div class="dosaje-value">${n(ucDesdeB25('portland',cemCarp),1)}</div>
+      <div class="dosaje-unit">${ucLabel('portland')}</div>
     </div>
     <div class="dosaje-row"><div class="dosaje-material">Arena Carpeta</div><div class="dosaje-value">${n(arCarp,2)}</div><div class="dosaje-unit">m³</div></div>
     <div class="dosaje-row" style="border-top:1px solid var(--border2);padding-top:10px;background:var(--accent-dim2);border-radius:6px;padding:8px;">
@@ -5611,9 +5728,9 @@ function calcContrapiso(){
         ${contTipo!=='obra'?'H° '+contTipo+' total CP':'Cemento TOTAL CP+CARP'}
       </div>
       <div class="dosaje-value accent">
-        ${contTipo!=='obra'?n(volCP,2):n(cemCp+cemCarp,1)}
+        ${contTipo!=='obra'?n(volCP,2):n(ucDesdeB25('portland',cemCp+cemCarp),1)}
       </div>
-      <div class="dosaje-unit">${contTipo!=='obra'?'m³':'bol 25 kg'}</div>
+      <div class="dosaje-unit">${contTipo!=='obra'?'m³':ucLabel('portland')}</div>
     </div>`;
   state.resultados=state.resultados||{};
   const contCemTotal = contTipo==='obra' ? cemCp+cemCarp : cemCarp;
@@ -5626,7 +5743,8 @@ function calcContrapiso(){
   };
   // Stats superiores contrapiso
   setTxt('cont-stat-elab',  contTipo!=='obra' ? n(volCP,2)+' m³ '+contTipo : '—');
-  setTxt('cont-stat-cem',   n(contCemTotal,1));
+  setTxt('cont-stat-cem',   n(ucDesdeB25('portland', contCemTotal),1));
+  document.querySelectorAll('.uc-port-unit').forEach(e=>{ e.textContent = ucLabel('portland'); });
   setTxt('cont-stat-arena', n(contArena,2));
   setTxt('cont-stat-ripio', n(ripCp,2));
   updateDashboard();
@@ -5820,22 +5938,25 @@ function calcTecho(){
   const membra = Math.ceil(sup/9)*1.1;
   const emulsión = sup*0.9;
   // Aislación: mismo volumen (espesor medio 13 cm) para las dos opciones; cambia
-  // cómo se compra. Pomeca → m³. Perlita → bolsas de ¼ m³ (4 bolsas por m³).
+  // cómo se compra (Unidades comerciales): Pomeca en m³, Perlita en bolsas de ¼ m³.
   const volAisl = sup*0.13;
-  let insul='', insulVal=0, insulUnit='';
-  if(tipo==='1'){insul='Pomeca';  insulVal=volAisl;                insulUnit='m³';}
-  else if(tipo==='2'){insul='Perlita'; insulVal=Math.ceil(volAisl*4); insulUnit='bolsa ¼ m³';}
+  let insul='', ucK='';
+  if(tipo==='1'){insul='Pomeca'; ucK='pomeca';}
+  else if(tipo==='2'){insul='Perlita'; ucK='perlita';}
+  const insulVal  = ucK ? (ucEntero(ucK) ? Math.ceil(ucDesdeBase(ucK, volAisl)) : ucDesdeBase(ucK, volAisl)) : 0;
+  const insulUnit = ucK ? ucLabel(ucK) : '';
+  const membraUC  = ucDesdeBase('membrana', membra*10);   // membra está en rollos de 10 m²
   document.getElementById('techo-resultado').innerHTML=`
     <div class="dosaje-row"><div class="dosaje-material">Carpeta niv. cem. alb.</div><div class="dosaje-value">${n(sup*5/getCemAlbKg(),1)}</div><div class="dosaje-unit">${labelCemAlb()}</div></div>
-    ${insul?`<div class="dosaje-row"><div class="dosaje-material">${insul}</div><div class="dosaje-value">${insulUnit==='m³'?n(insulVal,2):insulVal}</div><div class="dosaje-unit">${insulUnit==='m³'?'m³':'bolsas ¼ m³ ('+n(volAisl,2)+' m³)'}</div></div>`:''}
-    <div class="dosaje-row"><div class="dosaje-material">Membrana asfáltica</div><div class="dosaje-value">${n(membra,1)}</div><div class="dosaje-unit">rollos 10 m²</div></div>
+    ${insul?`<div class="dosaje-row"><div class="dosaje-material">${insul}</div><div class="dosaje-value">${ucEntero(ucK)?insulVal:n(insulVal,2)}</div><div class="dosaje-unit">${insulUnit}${ucEntero(ucK)?' ('+n(volAisl,2)+' m³)':''}</div></div>`:''}
+    <div class="dosaje-row"><div class="dosaje-material">Membrana asfáltica</div><div class="dosaje-value">${n(membraUC,1)}</div><div class="dosaje-unit">${ucLabel('membrana')}</div></div>
     <div class="dosaje-row"><div class="dosaje-material">Emulsión asfáltica</div><div class="dosaje-value">${n(emulsión,1)}</div><div class="dosaje-unit">litros</div></div>`;
   state.resultados=state.resultados||{};
   state.resultados.techo={
     horm: hormTecho,
     membra,
     emulsion: emulsión,
-    insul, insulVal, insulUnit
+    insul, insulVal, insulUnit, volAisl: insul ? volAisl : 0
   };
   setTxt('losa-stat-membra', n(membra,1));
   setTxt('ld-horm', n(hormTecho,2));
@@ -6141,23 +6262,26 @@ function updateDashboard(){
 
   const cemHormTotal = cemCol + cemVigTotal + cemBas + cemCim2 + cemCont2;
 
-  setTxt('cem-horm', n(cemHormTotal,0));
-  setTxt('cem-col',     n(cemCol,0));
-  setTxt('cem-vig-vf',  n(cemVF,0));
-  setTxt('cem-vig-vd',  n(cemVD,0));
-  setTxt('cem-bases',   n(cemBas,0));
-  setTxt('cem-cim',     n(cemCim2,1));
-  setTxt('cem-cont',    n(cemCont2,1));
+  // Todo lo de este bloque es cemento PORTLAND (internamente en bolsas de 25 kg),
+  // mostrado en la presentación elegida en Unidades comerciales.
+  const P = b25 => ucDesdeB25('portland', b25);
+  setTxt('cem-horm',    n(P(cemHormTotal),0));
+  setTxt('cem-col',     n(P(cemCol),0));
+  setTxt('cem-vig-vf',  n(P(cemVF),0));
+  setTxt('cem-vig-vd',  n(P(cemVD),0));
+  setTxt('cem-bases',   n(P(cemBas),0));
+  setTxt('cem-cim',     n(P(cemCim2),1));
+  setTxt('cem-cont',    n(P(cemCont2),1));
 
-  const cemCont=res.cont?.cemPb25||0;
-  const cemMamp=(res.mamp?.cemAlb||0);
-  const cemRev=(res.rev?.cemAlb||0);
-  setTxt('cem-mamp', n(cemMamp,1));
-  setTxt('cem-rev',  n(cemRev,1));
+  // Revoques: Portland de la opción Portland+cal y de la parte hidrófuga.
+  // (El cemento de albañilería de mampostería y revoques va en su propio bloque.)
+  const cemRevPort = res.rev?.cemPort25||0;
+  setTxt('cem-rev', n(P(cemRevPort),1));
 
-  const cemTotal = cemHormTotal + cemMamp + cemRev;
-  setTxt('cem-total-display', n(cemTotal,0));
-  setTxt('dash-cemento', n(cemTotal,0));
+  const cemTotal = cemHormTotal + cemRevPort;
+  setTxt('cem-total-display', n(P(cemTotal),0));
+  setTxt('dash-cemento', n(P(cemTotal),0));
+  document.querySelectorAll('.uc-port-unit').forEach(e=>{ e.textContent = ucLabel('portland'); });
 
   // Cemento Albañilería por rubro
   const cemAlbMampDash = res.mamp?.cemAlb||0;
@@ -6341,8 +6465,8 @@ function updateDashboard(){
     const portRev   = res.rev?.cemPort25||0;
     if(calBol25>0.1||portRev>0.1||arenaFina>0.05){
       rows += msec('Revoques · materiales adicionales','🖼');
-      if(portRev>0.1)  rows += mrow('Portland (opc.1/texturado)', n(portRev,1), 'bol 25 kg', 'var(--text2)');
-      if(calBol25>0.1) rows += mrow('Cal Hidratada Especial', n(calBol25,1), 'bol 25 kg', 'var(--purple)');
+      if(portRev>0.1)  rows += mrow('Portland (opc.1 / texturado / hidrófugo)', n(ucDesdeB25('portland',portRev),1), ucLabel('portland'), 'var(--text2)');
+      if(calBol25>0.1) rows += mrow('Cal Hidratada Especial', n(ucDesdeB25('cal',calBol25),1), ucLabel('cal'), 'var(--purple)');
       if(arenaFina>0.05) rows += mrow('Arena fina (revoques)', n(arenaFina,2), 'm³', 'var(--amber)');
     }
 
@@ -6423,53 +6547,58 @@ function datosResumen(){
   const membrana = Math.ceil(supTecho/9)*1.1;
   const techo    = res.techo || {};  // aislación según lo elegido en Cubierta de techos
 
-  // Fila: neto y cantidad a pedir (neto × incremento). "entero" = se compra por unidad.
-  const F = (mat, unidad, neto, f, nota='', entero) => ({
-    mat, unidad, neto, cant: neto*(f||1), nota,
-    entero: entero ?? (unidad==='unidad' || /barra|rollo|bolsa ¼/.test(unidad)),
+  // Fila: la cantidad entra en la UNIDAD BASE del material (kg, m, m³…) y sale en
+  // presentaciones comerciales según Unidades comerciales. f = incremento.
+  //   k = clave de unidad comercial · qBase = cantidad neta en unidad base
+  const U = (mat, k, qBase, f, nota='') => ({
+    mat, k, nota, unidad: ucLabel(k), entero: ucEntero(k),
+    base: (qBase||0)*(f||1),                       // a pedir, en unidad base
+    neto: ucDesdeBase(k, qBase),
+    cant: ucDesdeBase(k, (qBase||0)*(f||1)),
   });
 
   // Sólo hormigón ELABORADO — el H° en obra se refleja en cemento, ripio y arena
   const elab = Object.entries(hormByTipo)
     .filter(([t,v])=>t!=='obra'&&t!=='mano'&&v>0.01)
     .sort((a,b)=>a[0].localeCompare(b[0]))
-    .map(([t,v])=>F((HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')+' elaborado','m³',v,1,'pedir exacto'));
+    .map(([t,v])=>U((HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')+' elaborado','hormElab',v,1,'pedir exacto'));
 
-  // Hierros: se piden por barra — sin metros lineales
-  const barras = [6,8,10,12,16,20].filter(p=>(hierros[p]||0)>0.1).map(p=>({
-    mat:`Hierro Ø${p}`, unidad:`barra ${BARRA_COMERCIAL} m`, entero:true, nota:'',
-    neto: Math.ceil((hierros[p]||0)/BARRA_COMERCIAL),
-    cant: Math.ceil((hierros[p]||0)*pct/BARRA_COMERCIAL),
-  }));
+  // Hierros: se piden por barra — sin metros lineales (base = metros)
+  const barras = [6,8,10,12,16,20].filter(p=>(hierros[p]||0)>0.1)
+    .map(p=>U(`Hierro Ø${p}`, 'hierro', hierros[p]||0, pct));
+
+  // Aislación del techo: cantidad base en m³, presentación según Pomeca o Perlita
+  const aisl = (techo.insul && techo.volAisl>0)
+    ? [U(`Aislación (${techo.insul})`, techo.insul==='Perlita'?'perlita':'pomeca', techo.volAisl, 1.05)] : [];
 
   const secciones = [
     {el:'res-aglomerantes', titulo:'Aglomerantes', filas:[
-      F('Cemento Portland','bolsa 25 kg', cemPortTotal, pct, 'H° en obra, revoques'),
-      ...(cemAlbMamp>0.01||cemAlbRev>0.01 ? [F('Cemento Albañilería',lbCA, cemAlbMamp+cemAlbRev, pct, 'mampostería + revoques')] : []),
-      ...(calBol25>0.01 ? [F('Cal Hidratada Especial','bolsa 25 kg', calBol25, pct, 'revoques opc. 1')] : []),
-      F('Yeso','bolsa 40 kg', 6.75, pct, 'cielorrasos'),
+      U('Cemento Portland','portland', cemPortTotal*25, pct, 'H° en obra, revoques'),
+      ...(cemAlbMamp>0.01||cemAlbRev>0.01 ? [U('Cemento Albañilería','cemAlb', (cemAlbMamp+cemAlbRev)*getCemAlbKg(), pct, 'mampostería + revoques')] : []),
+      ...(calBol25>0.01 ? [U('Cal Hidratada Especial','cal', calBol25*25, pct, 'revoques opc. 1')] : []),
+      U('Yeso','yeso', 6.75*40, pct, 'cielorrasos'),
     ]},
     {el:'res-horm', titulo:'Hormigones', filas:elab, vacio:'Sin H° elaborado — todo en obra (ver áridos)'},
     {el:'res-hierros', titulo:'Hierros', filas:barras},
     {el:'res-aridos', titulo:'Áridos', filas:[
-      F('Arena Gruesa','m³', arenaTotal, pct),
-      F('Arena Fina','m³', res.rev?.arenaFi||0, pct),
-      F('Ripio Clasificado','m³', ripioTotal, pct),
-      F('Piedra Bola','m³', piedraTotal, pct),
+      U('Arena Gruesa','arenaG', arenaTotal, pct),
+      U('Arena Fina','arenaF', res.rev?.arenaFi||0, pct),
+      U('Ripio Clasificado','ripio', ripioTotal, pct),
+      U('Piedra Bola','piedra', piedraTotal, pct),
     ]},
     {el:'res-losas', titulo:'Losas y Varios', filas:[
-      F('Ladrillones','unidad', res.mamp?.ladrillones||0, pct),
-      F('Losetas 12 cm','unidad', res.losa?.losetas12||0, 1.12),
-      F('Malla 6','rollo 2.4×6', res.losa?.malla6||0, 1.10),
-      F('Membrana Asfáltica','rollo 10 m²', membrana, 1.05),
-      F('Emulsión Asfáltica','litros', emulsion, 1.05),
-      ...(techo.insul && techo.insulVal>0 ? [F(`Aislación (${techo.insul})`, techo.insulUnit, techo.insulVal, 1.05)] : []),
-      F('Hidrófugo SIKA 1','litros', hidrTotal, 1.05, 'rev. + bases + cim.'),
-      F('Hidrófugo de masa','litros', hidrBases+hidrCim, 1, 'bases + cim.'),
-      F('Alambre N°14','kg', acc.al14, 1.05, '2 kg/m³ H° armado'),
-      F('Alambre N°17','kg', acc.al17, 1.05, '2 kg/m³ H° armado'),
-      F('Clavos punta París 2"','kg', acc.cl2, 1.05, '1 kg/m³ H° armado'),
-      F('Clavos punta París 2½"','kg', acc.cl25, 1.05, '1 kg/m³ H° armado'),
+      U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct),
+      U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
+      U('Malla de losa','malla', (res.losa?.malla6||0)*14.4, 1.10),
+      U('Membrana Asfáltica','membrana', membrana*10, 1.05),
+      U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
+      ...aisl,
+      U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoque grueso hidrófugo PB'),
+      U('Hidrófugo de masa','hidroMasa', hidrBases+hidrCim, 1, 'bases + cim.'),
+      U('Alambre N°14','alambre', acc.al14, 1.05, '2 kg/m³ H° armado'),
+      U('Alambre N°17','alambre', acc.al17, 1.05, '2 kg/m³ H° armado'),
+      U('Clavos punta París 2"','clavos', acc.cl2, 1.05, '1 kg/m³ H° armado'),
+      U('Clavos punta París 2½"','clavos', acc.cl25, 1.05, '1 kg/m³ H° armado'),
     ]},
   ];
   return {pct, supTotal, mlRec, secciones};
@@ -6516,29 +6645,146 @@ function calcResumen(){
   });
 }
 
+// ── UNIDADES COMERCIALES: página ──────────────────────────────────────────
+// Lo que se edita queda en un BORRADOR y no cambia nada hasta "Aplicar".
+let _ucBorrador = null;   // {k: {pres, cont}}
+
+function ucVigente(k){ const u = uc(k); return {pres:u.pres, cont:u.cont}; }
+function ucBorr(k){ return (_ucBorrador && _ucBorrador[k]) || ucVigente(k); }
+function ucCambios(){
+  if(!_ucBorrador) return [];
+  return Object.keys(_ucBorrador).filter(k=>{
+    const b = _ucBorrador[k], v = ucVigente(k);
+    return b.pres!==v.pres || +b.cont!==+v.cont;
+  });
+}
+
+// Cantidad a pedir de cada material, en su unidad base (con incremento)
+function ucCantidadesBase(){
+  const acc = {};
+  try{
+    datosResumen().secciones.forEach(s=>s.filas.forEach(f=>{ if(f.k) acc[f.k] = (acc[f.k]||0) + (f.base||0); }));
+  }catch(e){}
+  return acc;
+}
+
+function ucPedirHTML(k, qBase){
+  if(!(qBase>0)) return '<span style="color:var(--text3);">no se usa en esta obra</span>';
+  const d = UC_IDX[k];
+  const txt = (pres, cont) => {
+    const x = qBase / cont;
+    return (_ucEntero(pres, d.base) ? Math.ceil(x).toLocaleString('es-AR') : fmtRes(x,false))
+      + ' ' + _ucLabel(pres, cont, d.base);
+  };
+  const b = ucBorr(k), v = ucVigente(k);
+  const nuevo = txt(b.pres, +b.cont), antes = txt(v.pres, v.cont);
+  return (nuevo!==antes ? `<span class="antes">${antes}</span>` : '') + `<b>${nuevo}</b>`;
+}
+
+function renderUnidades(){
+  const tb = document.getElementById('uc-tbody');
+  if(!tb) return;
+  const cant = ucCantidadesBase();
+  let grupo = '';
+  tb.innerHTML = UC_DEF.map(d=>{
+    const b = ucBorr(d.k);
+    let html = '';
+    if(d.grupo!==grupo){ grupo = d.grupo; html += `<tr class="uc-grupo"><td colspan="5">${grupo}</td></tr>`; }
+    html += `<tr id="uc-row-${d.k}">
+      <td><b>${d.mat}</b></td>
+      <td class="uc-base">${d.base}</td>
+      <td><input type="text" value="${_escHtml(b.pres)}" onchange="ucEditar('${d.k}','pres',this.value)" title="Nombre de la presentación: bolsa, barra, rollo, balde…"></td>
+      <td>
+        <div class="uc-cont"><input type="number" value="${b.cont}" step="any" min="0" onchange="ucEditar('${d.k}','cont',+this.value)" title="Cuántos ${d.base} trae una presentación"><span class="uc-base">${d.base}</span></div>
+        ${d.sug ? `<div class="uc-sug">${d.sug.map(v=>`<button type="button" onclick="ucEditar('${d.k}','cont',${v},true)">${_fmtCont(v)} ${d.base}</button>`).join('')}</div>` : ''}
+      </td>
+      <td class="uc-pedir" id="uc-pedir-${d.k}">${ucPedirHTML(d.k, cant[d.k])}</td>
+    </tr>`;
+    return html;
+  }).join('');
+  ucActualizarBarra();
+}
+
+function ucEditar(k, campo, val, redibujar){
+  if(campo==='cont' && !(+val>0)){
+    showToast('⚠️ El contenido tiene que ser mayor a 0','',2500);
+    renderUnidades();
+    return;
+  }
+  _ucBorrador = _ucBorrador || {};
+  const v = campo==='pres' ? (String(val).trim() || UC_IDX[k].pres) : +val;
+  _ucBorrador[k] = {...ucBorr(k), [campo]: v};
+  if(redibujar) renderUnidades();   // los botones sugeridos cambian el valor de la casilla
+  else {
+    const td = document.getElementById('uc-pedir-'+k);
+    if(td) td.innerHTML = ucPedirHTML(k, ucCantidadesBase()[k]);
+    ucActualizarBarra();
+  }
+}
+
+function ucActualizarBarra(){
+  const cambios = ucCambios();
+  const n = cambios.length;
+  document.getElementById('uc-barra')?.classList.toggle('pendiente', n>0);
+  setTxt('uc-pendientes', n ? `${n} cambio${n>1?'s':''} sin aplicar — todavía no afectan el cómputo` : 'Sin cambios pendientes');
+  const bA = document.getElementById('uc-btn-aplicar'), bD = document.getElementById('uc-btn-descartar');
+  if(bA) bA.disabled = !n;
+  if(bD) bD.disabled = !n;
+  const set = new Set(cambios);
+  UC_DEF.forEach(d=>document.getElementById('uc-row-'+d.k)?.classList.toggle('uc-fila-cambiada', set.has(d.k)));
+}
+
+function ucAplicar(){
+  const cambios = ucCambios();
+  if(!cambios.length) return;
+  state.unidades = state.unidades || {};
+  cambios.forEach(k=>{
+    const b = _ucBorrador[k], d = UC_IDX[k], e = {};
+    if(b.pres!==d.pres) e.pres = b.pres;        // se guarda sólo lo que difiere de lo habitual
+    if(+b.cont!==d.cont) e.cont = +b.cont;
+    if(Object.keys(e).length) state.unidades[k] = e; else delete state.unidades[k];
+  });
+  _ucBorrador = null;
+  ucAplicarGlobales();
+  renderAll();
+  calcResumen();
+  renderUnidades();
+  scheduleAutosave();
+  showToast(`✓ ${cambios.length} cambio${cambios.length>1?'s':''} aplicado${cambios.length>1?'s':''} a todo el cómputo`,'success',2600);
+}
+
+function ucDescartar(){ _ucBorrador = null; renderUnidades(); }
+
+function ucRestablecer(){
+  _ucBorrador = {};
+  UC_DEF.forEach(d=>{ _ucBorrador[d.k] = {pres:d.pres, cont:d.cont}; });
+  if(!ucCambios().length){ _ucBorrador = null; showToast('Ya están los valores habituales','',1800); }
+  renderUnidades();
+}
+
 // ── EXPORT / PRINT ────────────────────────────────────────────────────────
 function exportResumen(){
-  const res=state.resultados||{};
-  const pct=r('res-pct')/100+1;
-  const H=state._hierros||{};
-  let txt=`CÓMPUTO DE MATERIALES\n`;
-  txt+=`Obra: ${document.getElementById('obra-nombre')?.value||'—'}\n`;
-  txt+=`Propietario: ${document.getElementById('obra-prop')?.value||'—'}\n`;
-  txt+=`Superficie: ${r('sup-pb')+r('sup-pa')} m²\n\n`;
-  txt+=`AGLOMERANTES\n`;
-  txt+=`Cemento Portland 25kg: ${Math.ceil(((res.cont?.cemPb25||0)+12)*pct)} bolsas\n`;
-  txt+=`Cemento Albañilería (${labelCemAlb()}): ${Math.ceil(((res.mamp?.cemAlb||0)+(res.rev?.cemAlb||0))*pct)} bolsas\n\n`;
-  txt+=`HIERROS\n`;
-  [6,8,10,12,16,20].forEach(p=>{if((H[p]||0)>0.1)txt+=`Hierro Ø${p}: ${Math.ceil((H[p]||0)*pct/12)} barras\n`;});
-  txt+=`\nÁRIDOS\n`;
-  txt+=`Arena Gruesa: ${n(((res.cont?.arena||0)+(res.mamp?.arena||0)+(res.rev?.arenaGr||0))*pct,1)} m³\n`;
-  txt+=`Ripio Clasificado: ${n((res.cont?.ripio||0)*pct,1)} m³\n`;
-  txt+=`Piedra Bola: ${n((res.cim?.piedra||0)*pct,1)} m³\n\n`;
-  txt+=`LOSAS\nLosetas 12 cm: ${Math.ceil((res.losa?.losetas12||0)*1.12)} unidades\n`;
-  txt+=`H° Elaborado: ${n((res.col?.horm||0)+(res.vig?.horm||0)+(res.bases?.horm||0)+(res.cim?.hormElab||0),1)} m³\n`;
-  navigator.clipboard?.writeText(txt).then(()=>alert('✅ Resumen copiado al portapapeles')).catch(()=>{
-    const w=window.open('','_blank');w.document.write('<pre>'+txt+'</pre>');
+  const d = datosResumen();
+  const v = id => (document.getElementById(id)?.value||'').trim() || '—';
+  let txt = `CÓMPUTO DE MATERIALES\n`;
+  txt += `Obra: ${v('obra-nombre')}\nPropietario: ${v('obra-prop')}\nSuperficie: ${d.supTotal} m²\n`;
+  txt += `(cantidades a pedir, con incremento por imprevistos)\n`;
+  d.secciones.forEach(s=>{
+    if(!s.filas.length) return;
+    txt += `\n${s.titulo.toUpperCase()}\n`;
+    s.filas.forEach(f=>{ txt += `${f.mat}: ${fmtRes(f.cant, f.entero)} ${f.unidad}\n`; });
   });
+  txt += `\nNOTAS\n` + NOTAS_RESUMEN.map(t=>'· '+t).join('\n') + '\n';
+  // Sin portapapeles (o si el navegador lo niega): se muestra el texto para copiarlo a mano
+  const mostrar = ()=>{
+    const w = window.open('','_blank');
+    if(w) w.document.write('<pre style="font:13px/1.5 monospace;white-space:pre-wrap;">'+_escHtml(txt)+'</pre>');
+    else showToast('⚠️ No se pudo copiar el resumen','',3000);
+  };
+  if(navigator.clipboard?.writeText)
+    navigator.clipboard.writeText(txt).then(()=>showToast('✅ Resumen copiado al portapapeles','success',2500), mostrar);
+  else mostrar();
+  return txt;
 }
 
 // ── PDF DEL RESUMEN (mismo formato que los PDF de ObraControl) ────────────
@@ -6670,16 +6916,15 @@ function printPage(){
 }
 
 async function exportCSV(){
-  const res=state.resultados||{};
-  const H=state._hierros||{};
-  const pct=r('res-pct')/100+1;
-  let csv='Material,Unidad,Cantidad neta,Con incremento\n';
-  csv+=`Cemento Portland,bolsa 25kg,${n((res.cont?.cemPb25||0),2)},${n((res.cont?.cemPb25||0)*pct,2)}\n`;
-  csv+=`Cemento Albañilería,${labelCemAlb()},${n((res.mamp?.cemAlb||0)+(res.rev?.cemAlb||0),2)},${n(((res.mamp?.cemAlb||0)+(res.rev?.cemAlb||0))*pct,2)}\n`;
-  [6,8,10,12,16,20].forEach(p=>{if((H[p]||0)>0.1)csv+=`Hierro Ø${p},barra 12m,${n(H[p]/12,2)},${Math.ceil(H[p]*pct/12)}\n`;});
-  csv+=`Arena Gruesa,m3,${n((res.cont?.arena||0)+(res.mamp?.arena||0)+(res.rev?.arenaGr||0),2)},${n(((res.cont?.arena||0)+(res.mamp?.arena||0)+(res.rev?.arenaGr||0))*pct,2)}\n`;
-  csv+=`Ripio Clasificado,m3,${n(res.cont?.ripio||0,2)},${n((res.cont?.ripio||0)*pct,2)}\n`;
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  // ; como separador y coma decimal (Excel en español), igual que exportarExcel
+  const q = c => `"${String(c).replace(/"/g,'""')}"`;
+  const num = (v, entero) => entero ? String(Math.ceil(v)) : (Math.round(v*100)/100).toFixed(2).replace('.',',');
+  const filas = [['Sección','Material','Unidad','Cantidad neta','Con incremento']];
+  datosResumen().secciones.forEach(s=>s.filas.forEach(f=>{
+    filas.push([s.titulo, f.mat, f.unidad, num(f.neto,f.entero), num(f.cant,f.entero)]);
+  }));
+  const csv = '﻿' + filas.map(fi=>fi.map(q).join(';')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
   await iaGuardarArchivo('computo_obra.csv', blob);
 }
 
@@ -6758,6 +7003,16 @@ function applySnapshot(snap, opts){
   setArr('losas_macizas'); setArr('recortes');
   if(Array.isArray(snap.vigas_vf)) state.vigas_vf = snap.vigas_vf.map(v=>{delete v.lBarra; return v;});
   if(Array.isArray(snap.vigas_vd)) state.vigas_vd = snap.vigas_vd.map(v=>{delete v.lBarra; return v;});
+
+  // Unidades comerciales. Obras guardadas antes de existir esta sección traían la
+  // bolsa de cemento de albañilería como campo suelto del Resumen: se migra.
+  if(snap.unidades && typeof snap.unidades==='object') state.unidades = snap.unidades;
+  else {
+    state.unidades = {};
+    const kgVieja = parseInt(snap.fields?.['res-cemAlb-kg']);
+    if(kgVieja && kgVieja!==25) state.unidades.cemAlb = {cont:kgVieja};
+  }
+  ucAplicarGlobales();
 
   if(snap.nextId) state.nextId = Object.assign({}, state.nextId, snap.nextId);
   // Blindaje: el contador nunca puede quedar por debajo del mayor id existente
@@ -7034,6 +7289,7 @@ function captureSnapshot(){
     columnas:state.columnas, vigas_vf:state.vigas_vf, vigas_vd:state.vigas_vd,
     bases:state.bases, losas:state.losas, losas_macizas:state.losas_macizas||[],
     recortes:state.recortes, nextId:state.nextId,
+    unidades: state.unidades||{},
   };
 }
 
@@ -7163,77 +7419,17 @@ async function exportarExcel(){
   rows.push([`Superficie: ${r('sup-pb')+r('sup-pa')} m² · Incremento: ${r('res-pct')}%`,'','','']);
   sep(); hdr(); sep();
 
-  // AGLOMERANTES
-  h1('AGLOMERANTES');
-  const hf_cem = ((res.col?.horm||0)+(res.vig?.horm||0))*(hf.cemBol25||9.4);
-  const cemPort = hf_cem + (res.cim?.cemBol25||0) + (res.vig?.obraCem||0) + (res.rev?.cemPort25||0);
-  row('Cemento Portland', 'bolsa 25 kg', cemPort, cemPort*pct);
-  const cemAlb = (res.mamp?.cemAlb||0)+(res.rev?.cemAlb||0);
-  if(cemAlb>0.01) row(`Cemento Albañilería (${lbCA})`, lbCA, cemAlb, cemAlb*pct);
-  const cal = res.rev?.calBol25||0;
-  if(cal>0.01) row('Cal Hidratada Especial','bolsa 25 kg',cal,cal*pct);
-  row('Yeso','bolsa 40 kg',6.75,6.75*pct);
-  sep();
-
-  // HORMIGONES
-  h1('HORMIGONES ELABORADOS / EN OBRA');
-  // Por tipo
-  const byTipo = {...(res.bases?.byTipo||{}), ...(res.vig?.byTipo||{})};
-  const colTipo = document.getElementById('col-horm-tipo')?.value||'H17';
-  byTipo[colTipo] = (byTipo[colTipo]||0)+(res.col?.horm||0);
-  if(res.cont?.elaborado>0) byTipo['H17']=(byTipo['H17']||0)+res.cont.elaborado;
-  const cimT = res.cim?.hormTipo||'obra';
-  byTipo[cimT]=(byTipo[cimT]||0)+(res.cim?.volHorm||0);
-  Object.entries(byTipo).filter(([,v])=>v>0.01).forEach(([tipo,vol])=>{
-    const label = HORM_TIPOS[tipo]?.label||tipo;
-    row(label,'m³',vol,vol); // sin incremento para H°
+  // MATERIALES — misma fuente que el Resumen y el PDF (datosResumen), así el
+  // Excel nunca da números distintos a la pantalla. Unidades comerciales vigentes.
+  datosResumen().secciones.forEach(sec=>{
+    h1(sec.titulo.toUpperCase());
+    if(!sec.filas.length) rows.push([sec.vacio||'—','','','']);
+    sec.filas.forEach(fi=>{
+      const fmt = v => fi.entero ? String(Math.ceil(v)) : x(v);
+      rows.push([fi.mat, fi.unidad, fmt(fi.neto), fmt(fi.cant)]);
+    });
+    sep();
   });
-  sep();
-
-  // HIERROS
-  h1('HIERROS');
-  hdr();
-  [6,8,10,12,16,20].forEach(p=>{
-    if((H[p]||0)>0.1){
-      row(`Hierro Ø${p}`,'metros lineales (ml)',H[p],H[p]*pct);
-      row(`Hierro Ø${p}`,'barras 12m',Math.ceil(H[p]/12),Math.ceil(H[p]*pct/12));
-    }
-  });
-  sep();
-
-  // ÁRIDOS
-  h1('ÁRIDOS');
-  const arenaTotal=(res.cont?.arena||0)+(res.mamp?.arena||0)+(res.rev?.arenaGr||0)+(res.vig?.obraArena||0)+(res.bases?.arenaObra||0)+(res.cim?.arenaM3||0);
-  const ripioTotal=(res.cont?.ripio||0)+(res.vig?.obraRipio||0)+(res.bases?.ripioObra||0)+(res.cim?.ripioM3||0);
-  row('Arena Gruesa','m³',arenaTotal,arenaTotal*pct);
-  row('Arena Fina','m³',res.rev?.arenaFi||0,(res.rev?.arenaFi||0)*pct);
-  row('Ripio Clasificado','m³',ripioTotal,ripioTotal*pct);
-  row('Piedra Bola','m³',res.cim?.piedra||0,(res.cim?.piedra||0)*pct);
-  sep();
-
-  // LOSAS
-  h1('LOSAS Y CUBIERTA');
-  row('Losetas 12 cm','unidades',res.losa?.losetas12||0,Math.ceil((res.losa?.losetas12||0)*1.12));
-  row('Malla 6 (2.4×6m)','rollos',res.losa?.malla6||0,(res.losa?.malla6||0)*1.10);
-  row('Ladrillones','unidades',res.mamp?.ladrillones||0,res.mamp?.ladrillones*pct||0);
-  const supT=r('techo-sup');
-  row('Membrana Asfáltica','rollos 10m²',Math.ceil(supT/9)*1.1,Math.ceil(supT/9)*1.1*1.05);
-  row('Emulsión Asfáltica','litros',supT*0.9,supT*0.9*1.05);
-  const tch = res.techo || {};
-  if(tch.insul && tch.insulVal>0) row(`Aislación (${tch.insul})`, tch.insulUnit, tch.insulVal, tch.insulVal*1.05);
-  sep();
-
-  // VARIOS
-  h1('VARIOS');
-  const supTotal=r('sup-pb')+r('sup-pa');
-  const volHarm=(res.col?.horm||0)+(res.vig?.horm||0)+(res.bases?.horm||0);
-  row('Hidrófugo SIKA 1','litros',(res.rev?.sika||0),(res.rev?.sika||0)*1.05);
-  row('Hidrófugo de masa (bases+cim)','litros',(res.bases?.hidro||0)+(res.cim?.hidro||0),((res.bases?.hidro||0)+(res.cim?.hidro||0))*1.05);
-  row('Alambre N°14','kg',volHarm*2,volHarm*2*1.05);
-  row('Alambre N°17','kg',volHarm*2,volHarm*2*1.05);
-  row('Clavos punta París 2\"','kg',volHarm*1,volHarm*1*1.05);
-  row('Clavos punta París 2½\"','kg',volHarm*1,volHarm*1*1.05);
-  sep();
 
   // COLUMNAS DETALLE
   h1('DETALLE DE COLUMNAS');
