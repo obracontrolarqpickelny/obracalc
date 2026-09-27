@@ -4265,7 +4265,7 @@ function vigaPerim(v){ return estriboPerim(vigaCol(v)); }
 function zapataViga(v){
   if(!v || !v.zapata) return null;
   const L = +v.longLibre || 0, A = +v.zAncho || 60, H = +v.zAlto || 25;
-  const phiT = +v.zPhiT || 8, phiL = +v.zPhiL || 8;
+  const phiT = +v.zPhiT || 6, phiL = +v.zPhiL || 8;   // parrilla Ø6 por defecto
   const manual = x => x!=null && x!=='' && isFinite(+x);
   // Parrilla: tramo recto = ancho de la zapata − 8 cm; gancho por lado = 10 × Ø
   // (Ø6 → 6 cm, Ø8 → 8 cm). Los dos se pueden cambiar; vacío vuelve al automático.
