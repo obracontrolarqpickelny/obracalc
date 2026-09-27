@@ -1667,6 +1667,18 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
 .rec-det { margin-top: 6px; }
 @media (max-width: 768px) { .plan-nums { grid-template-columns: 1fr; } }
 
+/* Zapata corrida en vigas de fundación */
+.zap-row > td { background: var(--accent-dim2); padding-top: 0 !important; }
+.zap-box { border-left: 4px solid var(--accent); padding: 8px 12px; font-size: 11.5px; color: var(--text2); }
+.zap-tit { font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.zap-tit span { font-weight: 400; color: var(--text3); }
+.zap-grid { display: flex; flex-direction: column; gap: 6px; }
+.zap-g { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.zap-l { min-width: 150px; font-weight: 600; color: var(--text); }
+.zap-g input, .zap-g select { font-size: 12px !important; padding: 3px 5px !important; }
+.zap-res { margin-top: 8px; font-family: 'DM Mono', monospace; font-size: 11px; }
+.zap-res b { color: var(--accent); }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2453,7 +2465,7 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
             <option value="H17" selected>H° Elaborado H17</option>
             <option value="H21">H° Elaborado H21</option>
             <option value="H25">H° Elaborado H25</option>
-            <option value="obra">H° en obra (dosaje madre)</option>
+            <option value="obra">H° hecho en obra (dosaje de Dosificaciones)</option>
           </select>
           <div id="col-horm-result" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);text-align:right;min-width:160px;">—</div>
         </div>
@@ -2800,11 +2812,10 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
                 <div class="field" style="grid-column:1/-1;">
                   <div class="field-label">Tipo de hormigón cimiento</div>
                   <select id="cim-horm-tipo" onchange="calcCimientos()" style="width:100%;">
-                    <option value="obra" selected>H° en obra (dosaje general)</option>
+                    <option value="obra" selected>H° hecho en obra (dosaje de Dosificaciones)</option>
                     <option value="H8">H° H8 elaborado</option>
                     <option value="H13">H° H13 elaborado</option>
                     <option value="H17">H° H17 elaborado</option>
-                    <option value="mano">Llenado a mano (sin H°)</option>
                   </select>
                   <div id="cim-horm-result" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);margin-top:6px;">—</div>
                 </div>
@@ -3253,7 +3264,7 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
                 <div class="cp-horm">
                   <span class="cp-horm-lbl">🪨 Hormigón del contrapiso</span>
                   <select id="cont-horm-tipo" onchange="recalcSection('cont')">
-                    <option value="obra" selected>En obra (dosaje de Dosificaciones)</option>
+                    <option value="obra" selected>H° hecho en obra (dosaje de Dosificaciones)</option>
                     <option value="H8">Elaborado H8</option>
                     <option value="H13">Elaborado H13</option>
                     <option value="H17">Elaborado H17</option>
@@ -3712,7 +3723,7 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
           </div>
         </div>
 
-        <div class="grid-3" style="margin-bottom:20px;">
+        <div class="grid-4" style="margin-bottom:20px;">
           <div class="export-card" onclick="exportResumen()">
             <div class="export-icon">📄</div>
             <div class="export-title">Exportar Texto</div>
@@ -3722,6 +3733,11 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
             <div class="export-icon">🖨</div>
             <div class="export-title">Imprimir / PDF</div>
             <div class="export-desc">Listado imprimible para obra o cliente</div>
+          </div>
+          <div class="export-card" onclick="printPagePorItem()">
+            <div class="export-icon">📑</div>
+            <div class="export-title">PDF por ítem</div>
+            <div class="export-desc">Materiales de columnas, vigas, bases… por nivel</div>
           </div>
           <div class="export-card" onclick="exportCSV()">
             <div class="export-icon">📊</div>
@@ -3889,7 +3905,7 @@ const HORM_TIPOS = {
   'H17': {label:'H° H17 (elab.)', portKgM3:300, arenaM3:0.50, ripioM3:0.80},
   'H21': {label:'H° H21 (elab.)', portKgM3:330, arenaM3:0.48, ripioM3:0.78},
   'H25': {label:'H° H25 (elab.)', portKgM3:380, arenaM3:0.46, ripioM3:0.76},
-  'obra':{label:'H° en obra',      portKgM3:0,   arenaM3:0,    ripioM3:0},
+  'obra':{label:'H° hecho en obra', portKgM3:0,   arenaM3:0,    ripioM3:0},
   'mano':{label:'Llenado a mano (sin H°)', portKgM3:0, arenaM3:0, ripioM3:0},
 };
 // Datos de alambre y clavos por m³ H armado (todos los rubros)
@@ -4348,6 +4364,59 @@ function vigaCol(v){
           estriboManual:v.estriboManual, dimVals:v.dimVals, estribType:v.estribType||1, phiEstr:v.phiEstr};
 }
 function vigaPerim(v){ return estriboPerim(vigaCol(v)); }
+
+// Viga de fundación con ZAPATA CORRIDA: el hierro de la viga no cambia; se
+// suma una parrilla transversal (barra con pata a cada lado, cada X cm) y
+// barras longitudinales en la zapata (1 o 2 por lado). El hormigón pasa a ser
+// viga + zapata (T invertida) o sólo la sección de la zapata (viga incluida).
+function zapataViga(v){
+  if(!v || !v.zapata) return null;
+  const L = +v.longLibre || 0, A = +v.zAncho || 60, H = +v.zAlto || 25;
+  const rec = v.recub ?? REC_DEFAULT;
+  const lTauto = Math.max(A - 2*rec, 1)/100 + 2*((+v.zPata||15)/100);
+  const lT = (+v.zLT > 0) ? +v.zLT/100 : lTauto;           // largo según plano, si se cargó
+  const nT = Math.ceil(L*100 / Math.max(+v.zSepT||20, 5)) + 1;
+  const phiT = +v.zPhiT || 8, phiL = +v.zPhiL || 8, nL = 2*(+v.zNL || 1);
+  const lL = lBarraCIRSOC_viga(L, phiL).lTramo;
+  return {vol: A/100*H/100*L, suma: (v.zHorm||'suma')==='suma', lT, lTauto, nT, phiT, phiL, nL, lL,
+    piezas: [{phi:phiT, L:lT, N:nT, parte:'zapata · parrilla'}, {phi:phiL, L:lL, N:nL, parte:'zapata · longitudinales'}]};
+}
+// Hormigón de la viga (m³): ancho × alto × luz libre, más la zapata si tiene
+function vigaHorm(v){
+  const base = (+v.ancho||20)/100 * (+v.alto||20)/100 * (+v.longLibre||0);
+  const z = zapataViga(v);
+  return !z ? base : (z.suma ? base + z.vol : z.vol);
+}
+// Fila extra debajo de la viga con los datos de la zapata
+function zapataRowHTML(v){
+  const z = zapataViga(v);
+  const inp = (campo, val, step, tit, w) => `<input type="number" value="${val ?? ''}" step="${step}" min="0" data-k="vf-${v.id}-${campo}"
+      onchange="vigaCambio('vf',${v.id},'${campo}',this.value===''?null:+this.value)" title="${tit}" style="width:${w||62}px;">`;
+  const phiSel = (campo, val) => `<select onchange="vigaCambio('vf',${v.id},'${campo}',+this.value)" style="width:62px;">${[6,8,10,12,16].map(p=>`<option value="${p}" ${p==val?'selected':''}>Ø${p}</option>`).join('')}</select>`;
+  return `<tr class="zap-row"><td></td><td colspan="10">
+    <div class="zap-box">
+      <div class="zap-tit">⤓ Zapata corrida de ${_escHtml(v.denom)} <span>— el hierro de la viga no cambia</span></div>
+      <div class="zap-grid">
+        <div class="zap-g"><span class="zap-l">Hormigón de la zapata</span>
+          ${inp('zAncho', v.zAncho ?? 60, 5, 'Ancho de la zapata (cm)')}<span class="sec-x">×</span>${inp('zAlto', v.zAlto ?? 25, 5, 'Alto de la zapata (cm)')} cm
+          <select onchange="vigaCambio('vf',${v.id},'zHorm',this.value)" style="width:auto;">
+            <option value="suma" ${(v.zHorm||'suma')==='suma'?'selected':''}>viga encima (se suman)</option>
+            <option value="zapata" ${v.zHorm==='zapata'?'selected':''}>viga incluida (sólo la zapata)</option>
+          </select></div>
+        <div class="zap-g"><span class="zap-l">Parrilla transversal</span>
+          ${phiSel('zPhiT', z.phiT)} c/ ${inp('zSepT', v.zSepT ?? 20, 1, 'Separación (cm)')} cm · pata por lado ${inp('zPata', v.zPata ?? 15, 1, 'Pata / gancho de cada lado (cm)')} cm
+          · largo ${inp('zLT', v.zLT ?? '', 1, 'Largo de cada barra según plano (cm). Vacío = automático', 70)} cm <span class="muted">(auto ${n(z.lTauto*100,0)})</span></div>
+        <div class="zap-g"><span class="zap-l">Longitudinales</span>
+          <select onchange="vigaCambio('vf',${v.id},'zNL',+this.value)" style="width:auto;"><option value="1" ${(+v.zNL||1)===1?'selected':''}>1 por lado</option><option value="2" ${+v.zNL===2?'selected':''}>2 por lado</option></select>
+          ${phiSel('zPhiL', z.phiL)}</div>
+      </div>
+      <div class="zap-res">
+        H° zapata <b>${n(z.vol,3)} m³</b> → H° total de la viga <b>${n(vigaHorm(v),3)} m³</b> ·
+        parrilla <b>${z.nT} × ${n(z.lT,2)} m</b> Ø${z.phiT} (${n(z.nT*z.lT,1)} m) ·
+        longitudinales <b>${z.nL} × ${n(z.lL,2)} m</b> Ø${z.phiL} (${n(z.nL*z.lL,1)} m)
+      </div>
+    </div></td></tr>`;
+}
 
 // Recubrimiento que resulta de sección vs estribo exterior (el menor de los dos lados)
 function recubResultante(c, dv){
@@ -5751,7 +5820,7 @@ function renderVigas(tipo){
     const ml3 = (v.phi3&&v.n3) ? v.n3 * lBarraCIRSOC_viga(v.longLibre, v.phi3||v.phi).lTramo : 0;
     const mlPpal = ml1 + ml2 + ml3;
 
-    const horm = (a/100)*(b/100)*(+v.longLibre||0);
+    const horm = vigaHorm(v);
     const tipoInfo = ESTRIBO_TIPOS.find(t=>t.id===(v.estribType||1));
     const src = tipo==='vf'?'vf':'vd';
 
@@ -5812,12 +5881,15 @@ function renderVigas(tipo){
           <option value="H17" ${(v.hormTipo||'H17')==='H17'?'selected':''}>H17 elaborado</option>
           <option value="H21" ${v.hormTipo==='H21'?'selected':''}>H21 elaborado</option>
           <option value="H25" ${v.hormTipo==='H25'?'selected':''}>H25 elaborado</option>
-          <option value="obra" ${v.hormTipo==='obra'?'selected':''}>En obra</option>
+          <option value="obra" ${v.hormTipo==='obra'?'selected':''}>H° hecho en obra</option>
         </select>
         <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);cursor:pointer;">
           <input type="checkbox" ${v.techoLiviano?'checked':''} onchange="updateViga('${tipo}',${v.id},'techoLiviano',this.checked);calcVigaTotals()">
           <span style="color:${v.techoLiviano?'var(--orange)':'var(--text3)'};">Techo liviano</span>
         </label>
+        ${tipo==='vf' ? `<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" ${v.zapata?'checked':''} onchange="updateViga('vf',${v.id},'zapata',this.checked)">
+          <span style="color:${v.zapata?'var(--accent)':'var(--text3)'};font-weight:${v.zapata?700:400};">Zapata corrida</span></label>` : ''}
         <div style="font-size:10px;font-family:'DM Mono',monospace;color:${v.techoLiviano?'var(--orange)':'var(--green)'};margin-top:3px;">
           ${v.techoLiviano
             ? `H° obra ×1.5 = ${n(horm*1.5,3)} m³`
@@ -5827,7 +5899,7 @@ function renderVigas(tipo){
         </div>
       </td>
       <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button onclick="duplicarViga('${tipo}',${v.id})" title="Duplicar fila" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeViga('${tipo}',${v.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
-    </tr>`;
+    </tr>${tipo==='vf' && v.zapata ? zapataRowHTML(v) : ''}`;
   }).join('');
   if(foco){
     const el = tbody.querySelector(`[data-k="${foco}"]`);
@@ -5901,6 +5973,8 @@ function calcHierrosPhi(arr){
     const mlEstr = nE*perim;
     if(!phi[v.phiEstr]) phi[v.phiEstr]={ml:0,barras:0};
     phi[v.phiEstr].ml += mlEstr;
+    const z = zapataViga(v);
+    if(z) z.piezas.forEach(pz=>addPhi(pz.phi, pz.N, pz.L));
   });
   Object.entries(phi).forEach(([p,d])=>{
     d.barrasComerciales = Math.ceil(d.ml/BARRA_COMERCIAL);
@@ -5947,7 +6021,7 @@ function calcVigaTotals(){
       const lV2 = v.phi2 ? lBarraCIRSOC_viga(v.longLibre, v.phi2).lTramo : lV1;
       const lV3 = v.phi3 ? lBarraCIRSOC_viga(v.longLibre, v.phi3).lTramo : lV1;
       ml += v.nBarras*lV1 + (v.phi2&&v.n2?v.n2*lV2:0) + (v.phi3&&v.n3?v.n3*lV3:0);
-      const volBase = (a/100)*(b/100)*(+v.longLibre||0);
+      const volBase = vigaHorm(v);
       const tipo = v.techoLiviano ? 'obra' : (v.hormTipo||'H17');
       const vol  = v.techoLiviano ? volBase*1.5 : volBase;
       byTipo[tipo] = (byTipo[tipo]||0) + vol;
@@ -6074,7 +6148,7 @@ function renderBases(){
       <td style="min-width:95px;">
         <select onchange="updateBase(${b.id},'hormTipo',this.value);calcBases()"
           style="width:100%;font-size:10px;padding:2px 3px;border-color:var(--blue);">
-          ${Object.entries(HORM_TIPOS).map(([k,v])=>`<option value="${k}" ${k===bHormTipo?'selected':''}>${v.label}</option>`).join('')}
+          ${Object.entries(HORM_TIPOS).filter(([k])=>k!=='mano').map(([k,v])=>`<option value="${k}" ${k===bHormTipo?'selected':''}>${v.label}</option>`).join('')}
         </select>
         <div style="font-size:9px;color:var(--text3);margin-top:2px;">${n(volHorm,3)} m³</div>
       </td>
@@ -6448,6 +6522,7 @@ function calcMamposteria(){
   if(portKg>0.01) cols.push({lbl:'Cemento',    v:d=>d.port, fmt:fmtUC('portland')});
   if(calKg>0.01)  cols.push({lbl:'Cal',        v:d=>d.cal,  fmt:fmtUC('cal')});
   cols.push({lbl:'Arena gruesa (m³)', v:d=>d.arena, fmt:fmtN(2)});
+  state.resultados.mamp.porNivel = porNivel;
   const pn = document.getElementById('mamp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('mamp', porNivel, cols);
   updateDashboard();
@@ -6597,6 +6672,7 @@ function calcRevoques(){
     arenaFi:   tot.arenaFi,
     sika:      tot.hidroL,             // litros de hidrófugo (sólo grueso PB)
     yesoKg:    tot.yesoKg,             // cielorrasos de yeso
+    porNivel,                          // parciales por nivel (PDF por ítem)
     bagKg
   };
   updateDashboard();
@@ -6655,7 +6731,7 @@ function calcContrapiso(){
   state.resultados=state.resultados||{};
   const contCemTotal = cemCp + cemCarp;
   const contArena    = arCp + arCarp;
-  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elab ? volCP : 0, tipo: elab ? contTipo : 'obra', porPhi: porPhiCp};
+  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elab ? volCP : 0, tipo: elab ? contTipo : 'obra', porPhi: porPhiCp, niveles};
 
   setTxt('cont-stat-elab',  elab ? n(volCP,2)+' m³ '+contTipo : '—');
   setTxt('cont-stat-cem',   n(ucDesdeB25('portland', contCemTotal),1));
@@ -7168,6 +7244,7 @@ function piezasObra(){
         if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p).lTramo, nb);
       });
       if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, vigaPerim(v), Math.ceil((v.longLibre*100)/v.sepEstr));
+      zapataViga(v)?.piezas.forEach(pz=>add({...b, phi:pz.phi, parte:pz.parte}, pz.L, pz.N));
     });
   });
   state.bases.forEach(bs=>{
@@ -7203,10 +7280,10 @@ const _etiq = g => `${g.item} ${g.denom}`;
 // sobrantes: se cortan primero las piezas más largas y, antes de abrir una
 // barra nueva, cada pieza busca un sobrante donde entre (el más chico que
 // alcance). Queda registrado cada traspaso y lo que no se pudo ubicar.
-function planCortes(){
+function planCortes(lista){
   const B = BARRA_COMERCIAL;
   const porPhi = {};
-  piezasObra().forEach(g=>{ (porPhi[g.phi] ||= []).push(g); });
+  (lista || piezasObra()).forEach(g=>{ (porPhi[g.phi] ||= []).push(g); });
   const plan = {};
   Object.entries(porPhi).forEach(([phi, gs])=>{
     let barrasSin = 0, barrasCon = 0, ml = 0, piezas = 0;
@@ -7324,6 +7401,7 @@ function recortesObra(){
         if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p), nb);
       });
       if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, _cortesBarra(vigaPerim(v), Math.ceil((v.longLibre*100)/v.sepEstr)));
+      zapataViga(v)?.piezas.forEach(pz=>add({...b, phi:pz.phi, parte:pz.parte}, _cortesBarra(pz.L, pz.N)));
     });
   });
   state.bases.forEach(bs=>{
@@ -7673,7 +7751,7 @@ function updateDashboard(){
   // We need per-group: use state directly
   const calcVigCem = (arr) => arr.reduce((s,v)=>{
     const lV = lBarraCIRSOC_viga(v.longLibre, v.phi||10).lTramo;
-    const vol = (v.ancho||20)/100*(v.alto||20)/100*(+v.longLibre||0)*(v.techoLiviano?1.5:1);
+    const vol = vigaHorm(v)*(v.techoLiviano?1.5:1);
     return s + vol * hf2.cemBol25;
   }, 0);
   const cemVF = calcVigCem(state.vigas_vf);
@@ -7789,6 +7867,7 @@ function updateDashboard(){
     byTipoAll[cimT] = (byTipoAll[cimT]||0) + (res.cim?.volHorm||0);
     if(res.cont?.elaborado>0){ const ct=res.cont.tipo||'H17'; byTipoAll[ct]=(byTipoAll[ct]||0)+res.cont.elaborado; }
   Object.entries(res.losa?.byTipo||{}).forEach(([t,v])=>{byTipoAll[t]=(byTipoAll[t]||0)+v;});
+    if(res.losaMac?.horm>0) byTipoAll['H17']=(byTipoAll['H17']||0)+res.losaMac.horm;
     const colors2 = {H8:'var(--text3)',H13:'var(--green)',H17:'var(--blue)',H21:'var(--accent)',H25:'var(--orange)',obra:'var(--purple)',mano:'var(--red)'};
     hormDiv.innerHTML = Object.entries(byTipoAll).filter(([,v])=>v>0.05).sort((a,b)=>a[0].localeCompare(b[0])).map(([t,v])=>`
       <div class="mat-row">
@@ -7951,6 +8030,8 @@ function datosResumen(){
   if(res.cont?.elaborado>0){ const ct=res.cont.tipo||'H17'; hormByTipo[ct] = (hormByTipo[ct]||0) + res.cont.elaborado; }
   // Capa de compresión de losas — sumar por tipo
   Object.entries(res.losa?.byTipo||{}).forEach(([t,v])=>{hormByTipo[t]=(hormByTipo[t]||0)+v;});
+  // Losas macizas (H17)
+  if(res.losaMac?.horm>0) hormByTipo['H17'] = (hormByTipo['H17']||0) + res.losaMac.horm;
 
   const volTotalHormElab = Object.entries(hormByTipo).filter(([t])=>t!=='obra'&&t!=='mano').reduce((s,[,v])=>s+v,0);
   const volTotalHormObra = hormByTipo['obra']||0;
@@ -8290,8 +8371,150 @@ function _escHtml(s){
   return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-function htmlPdfResumen(){
-  const d = datosResumen();
+// ── MATERIALES POR ÍTEM (para el PDF por ítem) ────────────────────────────
+// Cada ítem de la obra (columnas por nivel, vigas VF/VA, vigas VD/VE/VC por
+// nivel, bases, cimientos, mampostería, revoques y contrapiso por nivel, losas
+// por nivel, cubierta) con sus materiales en la presentación comercial y el
+// mismo incremento que el Resumen. Los hierros de cada ítem salen de su propio
+// plan de corte; el Resumen general además aprovecha sobrantes ENTRE ítems.
+const ITEM_MAT = [
+  ['portland','Cemento Portland','portland'], ['cemAlb','Cemento Albañilería','cemAlb'], ['cal','Cal Hidratada Especial','cal'],
+  ['yeso','Yeso','yeso'], ['H:','H° elaborado','hormElab'], ['hierro:','Hierro','hierro'],
+  ['arenaG','Arena Gruesa','arenaG'], ['arenaF','Arena Fina','arenaF'], ['ripio','Ripio Clasificado','ripio'], ['piedra','Piedra Bola','piedra'],
+  ['ladrillon','Ladrillones','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'],
+  ['membrana','Membrana Asfáltica','membrana'], ['emulsion','Emulsión Asfáltica','emulsion'], ['pomeca','Aislación (Pomeca)','pomeca'], ['perlita','Aislación (Perlita)','perlita'],
+  ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
+  ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
+];
+const ITEM_INCR_FIJO = {loseta:1.12, loseta16:1.12, malla:1.10, membrana:1.05, emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
+
+function materialesPorItem(){
+  const pct = r('res-pct')/100 + 1, B = BARRA_COMERCIAL;
+  const res = state.resultados || {};
+  const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
+  const piezas = piezasObra();
+  const items = [];
+  const nuevo = titulo => { const it = {titulo, m:{}}; items.push(it); return it; };
+  const add = (it, key, q) => { if(q > 1e-9) it.m[key] = (it.m[key]||0) + q; };
+  const horm = (it, tipo, vol) => {
+    if(!(vol > 0)) return;
+    if(tipo==='obra' || tipo==='mano'){ add(it,'portland',vol*hf.cemBol25*25); add(it,'arenaG',vol*hf.arena); add(it,'ripio',vol*hf.piedra); }
+    else add(it, 'H:'+tipo, vol);
+  };
+  const hierro = (it, filtro) => {
+    const pl = planCortes(piezas.filter(filtro));
+    Object.values(pl).forEach(d=>add(it, 'hierro:'+d.phi, d.barrasCon*B));
+  };
+  const acc = (it, vol) => { add(it,'al14',vol*ACCESORIOS_M3.al14); add(it,'al17',vol*ACCESORIOS_M3.al17); add(it,'cl2',vol*ACCESORIOS_M3.cl2); add(it,'cl25',vol*ACCESORIOS_M3.cl25); };
+  const grupos = arr => { const g = {}; arr.forEach(o=>{ (g[o.nivel||''] ||= []).push(o); }); return _ordenNiv(Object.keys(g)).map(k=>[k, g[k]]); };
+  const tit = (base, k, varios) => (varios || k) ? `${base} · ${nivelInfo(k).largo}` : base;
+  const mismoNiv = k => p => (p.nivel||'')===k;
+
+  // Columnas (por nivel)
+  const colTipo = document.getElementById('col-horm-tipo')?.value || 'H17';
+  const gc = grupos(state.columnas);
+  gc.forEach(([k, arr])=>{
+    const it = nuevo(tit('Columnas', k, gc.length>1));
+    const vol = arr.reduce((s,c)=>s + c.cantElem*colArea(c)*c.alt, 0);
+    horm(it, colTipo, vol); hierro(it, p=>p.item==='Columna' && mismoNiv(k)(p)); acc(it, vol);
+  });
+  // Vigas de fundación y arriostramiento
+  if(state.vigas_vf.length){
+    const it = nuevo('Vigas de fundación y arriostramiento (VF/VA)');
+    let vol = 0;
+    state.vigas_vf.forEach(v=>{ const t = v.techoLiviano ? 'obra' : (v.hormTipo||'H17'); const vv = vigaHorm(v)*(v.techoLiviano?1.5:1); vol += vv; horm(it, t, vv); });
+    hierro(it, p=>p.item==='Viga' && p.tab==='vf'); acc(it, vol);
+  }
+  // Vigas de dintel, encadenado y carga (por nivel)
+  const gv = grupos(state.vigas_vd);
+  gv.forEach(([k, arr])=>{
+    const it = nuevo(tit('Vigas de descarga, encadenado y carga (VD/VE/VC)', k, gv.length>1));
+    let vol = 0;
+    arr.forEach(v=>{ const t = v.techoLiviano ? 'obra' : (v.hormTipo||'H17'); const vv = vigaHorm(v)*(v.techoLiviano?1.5:1); vol += vv; horm(it, t, vv); });
+    hierro(it, p=>p.item==='Viga' && p.tab==='vd' && mismoNiv(k)(p)); acc(it, vol);
+  });
+  // Bases
+  if(state.bases.length){
+    const it = nuevo('Bases');
+    let vol = 0;
+    state.bases.forEach(b=>{ const vv = b.cant*b.ancho*b.largo*b.alto; vol += vv; horm(it, b.hormTipo||'H17', vv); });
+    hierro(it, p=>p.item==='Base'); acc(it, vol);
+    add(it, 'hidroMasa', res.bases?.hidro||0);
+  }
+  // Cimientos
+  if(res.cim && res.cim.vol > 0){
+    const it = nuevo('Cimientos');
+    horm(it, res.cim.hormTipo||'obra', res.cim.volHorm||0);
+    add(it, 'piedra', res.cim.piedra||0);
+    add(it, 'hidroMasa', res.cim.hidro||0);
+  }
+  // Mampostería (por nivel)
+  Object.entries(res.mamp?.porNivel||{}).forEach(([k, d], i, all)=>{
+    const it = nuevo(tit('Mampostería', k, all.length>1));
+    add(it,'ladrillon',d.lad); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena);
+  });
+  // Revoques y cielorrasos (por nivel)
+  Object.entries(res.rev?.porNivel||{}).forEach(([k, d], i, all)=>{
+    const it = nuevo(tit('Revoques y cielorrasos', k, all.length>1));
+    add(it,'portland',d.portKg); add(it,'cemAlb',d.cemAlbKg); add(it,'cal',d.calKg); add(it,'yeso',d.yesoKg);
+    add(it,'arenaG',d.arenaGr); add(it,'arenaF',d.arenaFi); add(it,'hidrofugo',d.hidroL);
+  });
+  // Contrapiso y carpeta (por nivel)
+  const cpN = (res.cont?.niveles||[]).filter(x=>x.sup>0 || x.supC>0);
+  cpN.forEach(x=>{
+    const it = nuevo(tit('Contrapiso y carpeta', x.nv.k, cpN.length>1));
+    add(it,'portland',x.cemB25*25); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
+    if(x.elab>0) add(it,'H:'+(res.cont.tipo||'H17'), x.elab);
+    if(x.mlArm>0) add(it,'hierro:'+x.phi, Math.ceil(x.mlArm/B)*B);
+  });
+  // Losas (por nivel)
+  const gl = grupos([...state.losas.map(l=>({...l, _t:'p'})), ...(state.losas_macizas||[]).map(l=>({...l, _t:'m'}))]);
+  gl.forEach(([k, arr])=>{
+    const it = nuevo(tit('Losas', k, gl.length>1));
+    arr.forEach(l=>{
+      if(l._t==='p'){
+        add(it, +l.alt===16 ? 'loseta16' : 'loseta', Math.ceil(l.cant*l.sup*Math.ceil(1000/l.sep)*1.05));
+        add(it, 'malla', l.cant*l.sup*1.05);
+        horm(it, l.hormTipo||'H17', l.cant*l.sup*((l.capComp||7)/100));
+      } else horm(it, 'H17', l.cant*l.ancho*l.largo*(l.alto/100));
+    });
+    hierro(it, p=>p.item==='Losa maciza' && mismoNiv(k)(p));
+  });
+  // Cubierta de techos
+  const t = res.techo;
+  if(t && (t.membra>0 || t.portKg>0 || t.albKg>0)){
+    const it = nuevo('Cubierta de techos');
+    add(it,'portland',t.portKg); add(it,'cemAlb',t.albKg); add(it,'arenaG',t.arena);
+    if(t.insul && t.volAisl>0) add(it, t.insul==='Perlita' ? 'perlita' : 'pomeca', t.volAisl);
+    add(it,'membrana',(t.membra||0)*10); add(it,'emulsion',t.emulsion||0);
+  }
+
+  // A filas con presentación comercial (mismo formato que el Resumen)
+  const secciones = items.map(it=>{
+    const filas = [];
+    ITEM_MAT.forEach(([key, lbl, k])=>{
+      const claves = Object.keys(it.m).filter(x=> key.endsWith(':') ? x.startsWith(key) : x===key)
+        .sort((a,b)=> (parseFloat(a.split(':')[1])||0) - (parseFloat(b.split(':')[1])||0) || a.localeCompare(b));
+      claves.forEach(x=>{
+        const q = it.m[x];
+        const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pct);
+        const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
+                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : lbl;
+        filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f)});
+      });
+    });
+    return {titulo:it.titulo, filas};
+  }).filter(sc=>sc.filas.length);
+  return {pct, supTotal: r('sup-pb')+r('sup-pa'), secciones};
+}
+
+function printPagePorItem(){
+  printPage(htmlPdfResumen(materialesPorItem(), 'Materiales por ítem',
+    ['Los hierros de cada ítem salen de su propio plan de corte. El Resumen general además aprovecha sobrantes entre ítems, por eso su total de barras puede ser menor que la suma de los ítems.']));
+}
+
+function htmlPdfResumen(datos, subtitulo, notasExtra){
+  const d = datos || datosResumen();
   const v = id => (document.getElementById(id)?.value||'').trim();
   const obra = v('obra-nombre') || 'Obra';
   const meta = [
@@ -8320,7 +8543,7 @@ function htmlPdfResumen(){
     +'h1{font-size:14px;border-bottom:3px solid #D97706;padding-bottom:6px;margin:0 0 8px;letter-spacing:.2px}'
     +'h1 span{color:#D97706}'
     +'.meta{color:#555;font-size:9px;margin-bottom:4px;line-height:1.6}'
-    +'.aclara{color:#888;font-size:8px;margin-bottom:10px}'
+    +'.sub{font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.8px;margin:-2px 0 6px}'
     +'table.mat{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}'
     +'table.mat th{font-size:7.5pt;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px;text-align:left;padding:4px 8px;border-bottom:1.5px solid #D97706}'
     +'table.mat th.c{text-align:right}'
@@ -8339,11 +8562,12 @@ function htmlPdfResumen(){
     +'@media print{.no-print{display:none!important}}'
     +'</style></head><body>'
     +`<h1>CÓMPUTO DE MATERIALES <span>—</span> ${_escHtml(obra.toUpperCase())}</h1>`
+    +(subtitulo ? `<div class="sub">${_escHtml(subtitulo)}</div>` : '')
     +`<div class="meta">${meta}</div>`
     +secciones
     +'<div class="cierre">'
     +'<div class="notas"><div class="t">NOTAS</div>'
-    +NOTAS_RESUMEN.map(t=>`<p>· ${_escHtml(t)}</p>`).join('')
+    +[...(notasExtra||[]), ...NOTAS_RESUMEN].map(t=>`<p>· ${_escHtml(t)}</p>`).join('')
     +'</div>'
     +'<div style="margin-top:28px;border-top:2px solid #eee;padding-top:12px;font-size:10px;color:#999;text-align:center">ObraCalc — Cómputo de Obra</div>'
     +'<div class="page-footer" style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;border-top:2px solid #D97706;padding-top:12px">'
@@ -8353,8 +8577,8 @@ function htmlPdfResumen(){
     +'</body></html>';
 }
 
-function printPage(){
-  const doc = _pdfSinEncabezado(htmlPdfResumen());
+function printPage(html){
+  const doc = _pdfSinEncabezado(typeof html==='string' ? html : htmlPdfResumen());
   const w = window.open('', '_blank');
   if(w && w.document){
     w.document.write(doc);
@@ -8595,6 +8819,8 @@ function applySnapshot(snap, opts){
   setArr('losas_macizas'); setArr('recortes');
   if(Array.isArray(snap.vigas_vf)) state.vigas_vf = snap.vigas_vf.map(v=>{delete v.lBarra; return v;});
   if(Array.isArray(snap.vigas_vd)) state.vigas_vd = snap.vigas_vd.map(v=>{delete v.lBarra; return v;});
+  // 'Llenado a mano (sin H°)' se quitó (era lo mismo que H° hecho en obra)
+  state.bases.forEach(b=>{ if(b.hormTipo==='mano') b.hormTipo='obra'; });
   // Ganchos: el valor fijo viejo (12/14 cm) pasa a la regla automática 10Ø
   [...state.columnas, ...state.vigas_vf, ...state.vigas_vd].forEach(normGancho);
 
@@ -8633,6 +8859,7 @@ function applySnapshot(snap, opts){
     if(el.type==='checkbox' || el.type==='radio') return;  // ver bloque siguiente
     el.value=val;
   });
+  if(snap.fields && snap.fields['cim-horm-tipo']==='mano'){ const el=document.getElementById('cim-horm-tipo'); if(el) el.value='obra'; }
   // Obras de antes: la mezcla del hidrófugo era un solo número (1 : n)
   if(snap.fields && snap.fields['rev-hid-prop']!=null && snap.fields['rev-hid-are']==null){
     const el=document.getElementById('rev-hid-are'); if(el) el.value = snap.fields['rev-hid-prop'];
@@ -9280,7 +9507,7 @@ async function exportarExcel(){
   [...state.vigas_vf,...state.vigas_vd].forEach(v=>{
     const calc=lBarraCIRSOC_viga(v.longLibre,v.phi||10);
     const a=v.ancho||20, b=v.alto||20;
-    const horm=(a/100)*(b/100)*(+v.longLibre||0);
+    const horm=vigaHorm(v);
     rows.push([v.denom,x(v.longLibre),x(calc.lTramo),`Ø${v.phi}`,v.nBarras,v.hormTipo||'H17',x(horm,3)]);
   });
 
