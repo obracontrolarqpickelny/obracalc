@@ -1638,6 +1638,35 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
   .table-wrap table th { white-space: normal; }
 }
 
+/* Plan de corte */
+.plan-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; background: var(--surface); }
+.plan-head { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+.plan-head b { color: var(--text); }
+.plan-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.plan-nums > div { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface2); font-size: 12px; color: var(--text2); }
+.plan-nums span { display: block; font-size: 10.5px; color: var(--text3); margin-bottom: 2px; }
+.plan-nums b { font-size: 20px; color: var(--text); font-family: 'DM Mono', monospace; }
+.plan-ok { border-color: var(--green) !important; }
+.plan-ok b { color: var(--green) !important; }
+.plan-ahorro { border-color: var(--accent) !important; background: var(--accent-dim2) !important; }
+.plan-ahorro b { color: var(--accent) !important; }
+.plan-ahorro.cero { border-color: var(--border) !important; background: var(--surface2) !important; }
+.plan-ahorro.cero b { color: var(--text3) !important; }
+.plan-tit { font-size: 11px; font-weight: 700; color: var(--text); margin: 10px 0 6px; }
+.plan-tras { width: 100%; border-collapse: collapse; font-size: 12px; }
+.plan-tras td { padding: 6px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+.plan-tras td div { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.plan-de b { color: var(--orange); font-family: 'DM Mono', monospace; }
+.plan-a b { color: var(--green); font-family: 'DM Mono', monospace; }
+.plan-flecha { width: 30px; text-align: center; font-size: 18px; color: var(--text3); }
+.plan-ver { color: var(--accent); font-weight: 700; text-decoration: none; }
+.plan-ver:hover { text-decoration: underline; }
+.plan-mas summary, .rec-det summary { cursor: pointer; font-size: 11.5px; color: var(--accent); font-weight: 600; margin: 6px 0; }
+.plan-nada { font-size: 12px; color: var(--text3); }
+.rec-med-item.chico { opacity: .6; }
+.rec-det { margin-top: 6px; }
+@media (max-width: 768px) { .plan-nums { grid-template-columns: 1fr; } }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -3458,29 +3487,29 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
 
         <div class="alert alert-green">
           <span class="alert-icon">✅</span>
-          <div>Los recortes se <b>calculan solos</b> a partir de columnas (barras y estribos), vigas, bases y losas macizas: el sobrante de cortar cada barra comercial y el redondeo del largo a 0,50 m. Cada uno dice de qué pieza sale — tocá <b>Ver →</b> para ir a ella. Abajo podés cargar sobrantes reales de obra.</div>
+          <div>Para cada diámetro: cuántas barras hacen falta cortando cada pieza por separado, cuántas aprovechando los sobrantes, <b>qué sobrante va a qué pieza</b> y qué recortes quedan sin lugar. El Resumen pide las barras del plan aprovechado. Tocá el nombre de una pieza para ir a ella.</div>
         </div>
 
         <div class="grid-4" style="margin-bottom:16px;">
           <div class="stat">
-            <div class="stat-label">Recortes de la obra</div>
+            <div class="stat-label">Barras ahorradas</div>
             <div class="stat-value" id="rec-stat-disp">0</div>
-            <div class="stat-unit">piezas (todos los Ø)</div>
+            <div class="stat-unit">aprovechando sobrantes</div>
           </div>
           <div class="stat green">
-            <div class="stat-label">Largo total de recortes</div>
+            <div class="stat-label">Metros ahorrados</div>
             <div class="stat-value" id="rec-stat-ml">0</div>
             <div class="stat-unit">metros lineales</div>
           </div>
           <div class="stat blue">
-            <div class="stat-label">Aprovechables (≥ 0,50 m)</div>
+            <div class="stat-label">Recortes sin ubicar</div>
             <div class="stat-value" id="rec-stat-reut">0</div>
-            <div class="stat-unit">piezas</div>
+            <div class="stat-unit" id="rec-stat-reut-unit">piezas</div>
           </div>
           <div class="stat orange">
             <div class="stat-label">Desperdicio</div>
             <div class="stat-value" id="rec-stat-ahorro">—</div>
-            <div class="stat-unit">% del hierro comprado</div>
+            <div class="stat-unit">del hierro comprado</div>
           </div>
         </div>
 
@@ -3544,10 +3573,13 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
             </div>
           </div>
           <div style="padding:12px;">
-            <div class="rec-sub">Por diámetro · medidas y cantidades</div>
-            <div id="recortes-resumen"></div>
-            <div class="rec-sub">Detalle · de qué pieza sale cada uno</div>
-            <div id="recortes-lista"></div>
+            <div class="rec-sub">Plan de corte por diámetro</div>
+            <div id="recortes-plan"></div>
+            <details class="rec-det">
+              <summary>Ver el detalle pieza por pieza, cortando cada elemento por separado (sin aprovechar sobrantes)</summary>
+              <div id="recortes-resumen"></div>
+              <div id="recortes-lista" style="margin-top:10px;"></div>
+            </details>
             <div class="rec-sub">Cargados a mano · sobrantes reales de obra</div>
             <div id="recortes-manual"></div>
           </div>
@@ -7113,6 +7145,160 @@ function _cortesBarra(L, N){
   return out;
 }
 
+// ── PLAN DE CORTE Y APROVECHAMIENTO ───────────────────────────────────────
+// Todas las piezas de hierro de la obra, agrupadas por elemento:
+// {phi, L (m), N (piezas), item, denom, parte, pag, tabla, tab, nivel}
+function piezasObra(){
+  const P = [];
+  const add = (g, L, N) => { if(g.phi>0 && L>0.01 && N>0) P.push({...g, L:Math.round(L*1000)/1000, N}); };
+  state.columnas.forEach(c=>{
+    const b = {item:'Columna', pag:'columnas', tabla:'tabla-columnas', denom:c.denom, nivel:c.nivel};
+    [[c.phi,c.nBarras,'Ø1'],[c.phi2,c.n2,'Ø2'],[c.phi3,c.n3,'Ø3']].forEach(([p,nb,et])=>{
+      if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(c.alt, p).lTramo, c.cantElem*nb);
+    });
+    if(c.phiEstr){
+      const nE = Math.ceil((lBarraCIRSOC(c.alt, c.phi||12).lTramo*1000)/c.sepEstr);
+      add({...b, phi:+c.phiEstr, parte:'estribos'}, estriboPerim(c), c.cantElem*nE);
+    }
+  });
+  [['vf','Viga'],['vd','Viga']].forEach(([t,lbl])=>{
+    (t==='vf'?state.vigas_vf:state.vigas_vd).forEach(v=>{
+      const b = {item:lbl, pag:'vigas', tab:t, tabla:'tabla-vigas-'+t, denom:v.denom, nivel:t==='vd'?v.nivel:''};
+      [[v.phi,v.nBarras,'Ø1'],[v.phi2,v.n2,'Ø2'],[v.phi3,v.n3,'Ø3']].forEach(([p,nb,et])=>{
+        if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p).lTramo, nb);
+      });
+      if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, vigaPerim(v), Math.ceil((v.longLibre*100)/v.sepEstr));
+    });
+  });
+  state.bases.forEach(bs=>{
+    const b = {item:'Base', pag:'bases', tabla:'tabla-bases', denom:bs.denom};
+    if(bs.phi){
+      const n1 = Math.ceil(bs.ancho/(bs.sep/1000))+1;
+      add({...b, phi:+bs.phi, parte:'Ø1'}, bs.largo, 2*n1*bs.cant);
+      add({...b, phi:+bs.phi, parte:'Ø1'}, bs.ancho, 2*n1*bs.cant);
+    }
+    if(bs.phi2){
+      const n2 = Math.ceil(bs.largo/(bs.sep2/1000))+1;
+      add({...b, phi:+bs.phi2, parte:'Ø2'}, bs.ancho, 2*n2*bs.cant);
+      add({...b, phi:+bs.phi2, parte:'Ø2'}, bs.largo, 2*n2*bs.cant);
+    }
+  });
+  (state.losas_macizas||[]).forEach(l=>{
+    const b = {item:'Losa maciza', pag:'losas', tabla:'tabla-losas-macizas', denom:l.denom, nivel:l.nivel};
+    const nBX = Math.ceil(l.largo/(l.sepX/1000))+1, nBY = Math.ceil(l.ancho/(l.sepY/1000))+1;
+    if(+l.phiX) add({...b, phi:+l.phiX, parte:'malla X'}, l.ancho, Math.round(l.cant*nBX*l.factor));
+    if(+l.phiY) add({...b, phi:+l.phiY, parte:'malla Y'}, l.largo, Math.round(l.cant*nBY*l.factor));
+  });
+  // Contrapiso armado: malla por m², se compra en barras enteras
+  Object.entries(state.resultados?.cont?.porPhi||{}).forEach(([p, ml])=>{
+    if(ml>0) P.push({phi:+p, L:BARRA_COMERCIAL, N:Math.ceil(ml/BARRA_COMERCIAL), entera:true,
+      item:'Contrapiso', denom:'malla', parte:'barras enteras', pag:'contrapiso'});
+  });
+  return P;
+}
+
+const _etiq = g => `${g.item} ${g.denom}`;
+
+// Plan por Ø: (1) cortando cada elemento por separado; (2) aprovechando los
+// sobrantes: se cortan primero las piezas más largas y, antes de abrir una
+// barra nueva, cada pieza busca un sobrante donde entre (el más chico que
+// alcance). Queda registrado cada traspaso y lo que no se pudo ubicar.
+function planCortes(){
+  const B = BARRA_COMERCIAL;
+  const porPhi = {};
+  piezasObra().forEach(g=>{ (porPhi[g.phi] ||= []).push(g); });
+  const plan = {};
+  Object.entries(porPhi).forEach(([phi, gs])=>{
+    let barrasSin = 0, barrasCon = 0, ml = 0, piezas = 0;
+    const stock = [];                  // sobrantes disponibles {len, cnt, de}
+    state.recortes.filter(r=>r.phi==phi && r.estado==='disponible' && +r.long>0)
+      .forEach(r=>stock.push({len:+r.long, cnt:+r.cant||1, de:{item:'Recorte', denom:'cargado a mano', parte:r.origen||''}}));
+    const tras = {};
+    const items = [];
+    gs.forEach(g=>{
+      ml += g.L*g.N; piezas += g.N;
+      if(g.entera){ barrasSin += g.N; barrasCon += g.N; return; }
+      let L = g.L;
+      if(L > B + 1e-9){                // más larga que la barra: barras enteras + el tramo que resta
+        const llenas = Math.floor(L/B + 1e-9);
+        barrasSin += llenas*g.N; barrasCon += llenas*g.N;
+        L = Math.round((L - llenas*B)*1000)/1000;
+        if(L < 0.01) return;
+      }
+      barrasSin += Math.ceil(g.N / Math.floor(B/L + 1e-9));
+      items.push({...g, Lc:L});
+    });
+    const sobra = (len, cnt, de) => { if(len>0.01 && cnt>0) stock.push({len:Math.round(len*1000)/1000, cnt, de}); };
+    items.sort((a,b)=>b.Lc-a.Lc).forEach(g=>{
+      let falta = g.N;
+      // 1) de los sobrantes
+      stock.filter(s=>s.cnt>0 && s.len >= g.Lc-1e-9).sort((a,b)=>a.len-b.len).forEach(s=>{
+        if(falta<=0 || s.cnt<=0) return;
+        const porSob = Math.floor(s.len/g.Lc + 1e-9);
+        const salen  = Math.min(falta, porSob*s.cnt);
+        const llenos = Math.floor(salen/porSob), parcial = salen - llenos*porSob;
+        const usados = llenos + (parcial>0?1:0);
+        s.cnt -= usados;
+        sobra(s.len - porSob*g.Lc, llenos, s.de);
+        if(parcial>0) sobra(s.len - parcial*g.Lc, 1, s.de);
+        falta -= salen;
+        const k = _etiq(s.de)+'|'+s.de.parte+'|'+s.len+'|'+_etiq(g)+'|'+g.parte;
+        const t = tras[k] || (tras[k] = {de:s.de, deLen:s.len, a:g, aLen:g.Lc, sobrantes:0, piezas:0});
+        t.sobrantes += usados; t.piezas += salen;
+      });
+      // 2) lo que falta, de barras nuevas
+      if(falta>0){
+        const k = Math.floor(B/g.Lc + 1e-9);
+        const llenas = Math.floor(falta/k), resto = falta - llenas*k;
+        barrasCon += llenas + (resto>0?1:0);
+        sobra(B - k*g.Lc, llenas, g);
+        if(resto>0) sobra(B - resto*g.Lc, 1, g);
+      }
+    });
+    const quedan = {};
+    stock.filter(s=>s.cnt>0).forEach(s=>{ const l = Math.round(s.len*100)/100; if(l>=0.01) quedan[l] = (quedan[l]||0) + s.cnt; });
+    plan[phi] = {phi:+phi, ml, piezas, barrasSin, barrasCon, traspasos:Object.values(tras).sort((a,b)=>b.piezas-a.piezas), quedan};
+  });
+  return plan;
+}
+
+function renderPlanCortes(plan, filtPhi){
+  const el = document.getElementById('recortes-plan');
+  if(!el) return;
+  const phis = Object.keys(plan).filter(p=>filtPhi==='all' || p==filtPhi).sort((a,b)=>+a-+b);
+  if(!phis.length){ el.innerHTML = '<div class="obras-vacio">Sin hierros cargados.</div>'; return; }
+  const B = BARRA_COMERCIAL;
+  const ver = g => g.tabla ? `<a href="#" class="plan-ver" onclick="irAPieza('${g.pag}','${g.tabla}','${_q(g.denom)}','${g.tab||''}');return false;" title="Ir a la pieza">${_escHtml(_etiq(g))}</a>`
+                           : `<b>${_escHtml(_etiq(g))}</b>`;
+  el.innerHTML = phis.map(p=>{
+    const d = plan[p];
+    const ahorro = d.barrasSin - d.barrasCon;
+    const quedan = Object.entries(d.quedan).sort((a,b)=>+b[0]-+a[0]);
+    const mlQ = quedan.reduce((s,[l,c])=>s+l*c, 0);
+    const MAX = 10;
+    const filaT = t => `<tr>
+        <td class="plan-de"><b>${t.sobrantes.toLocaleString('es-AR')} × ${_fm(t.deLen)} m</b><div>sobrante de ${ver(t.de)} <span class="muted">· ${_escHtml(t.de.parte)}</span></div></td>
+        <td class="plan-flecha">→</td>
+        <td class="plan-a"><b>${t.piezas.toLocaleString('es-AR')} × ${_fm(t.aLen)} m</b><div>para ${ver(t.a)} <span class="muted">· ${_escHtml(t.a.parte)}</span></div></td>
+      </tr>`;
+    return `<div class="plan-card">
+      <div class="plan-head"><span class="recorte-phi ${phiClass(p)}">Ø${String(p).replace('.',',')}</span>
+        <span><b>${n(d.ml,0)} m</b> de hierro · ${d.piezas.toLocaleString('es-AR')} piezas</span></div>
+      <div class="plan-nums">
+        <div><span>Cortando cada pieza por separado</span><b>${d.barrasSin}</b> barras</div>
+        <div class="plan-ok"><span>Aprovechando los sobrantes</span><b>${d.barrasCon}</b> barras</div>
+        <div class="plan-ahorro ${ahorro>0?'':'cero'}"><span>Ahorro</span><b>${ahorro}</b> barra${ahorro===1?'':'s'}${ahorro>0?` · ${n(ahorro*B,0)} m`:''}</div>
+      </div>
+      ${d.traspasos.length ? `<div class="plan-tit">↪ Qué sobrante se usa y en qué pieza</div>
+        <table class="plan-tras"><tbody>${d.traspasos.slice(0,MAX).map(filaT).join('')}</tbody></table>
+        ${d.traspasos.length>MAX ? `<details class="plan-mas"><summary>Ver ${d.traspasos.length-MAX} traspasos más</summary><table class="plan-tras"><tbody>${d.traspasos.slice(MAX).map(filaT).join('')}</tbody></table></details>` : ''}`
+        : `<div class="plan-nada">Los sobrantes de este diámetro no alcanzan para ninguna otra pieza.</div>`}
+      <div class="plan-tit">🗑 Quedan sin ubicar <span class="muted">— ${quedan.reduce((s,[,c])=>s+c,0).toLocaleString('es-AR')} recortes · ${n(mlQ,1)} m · ${n((PESO_HIERRO[p]||0.617)*mlQ,1)} kg</span></div>
+      <div class="rec-med">${quedan.length ? quedan.map(([l,c])=>`<span class="rec-med-item${+l<0.3?' chico':''}"><b>${c.toLocaleString('es-AR')}</b> × ${_fm(+l)} m</span>`).join('') : '<span class="muted">Ninguno 👍</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
 function recortesObra(){
   const R = [];
   const add = (base, lista) => lista.forEach(x=>R.push({...base, ...x}));
@@ -7195,6 +7381,8 @@ function agregarRecorte(){
 function renderRecortes(){
   const filtPhi = document.getElementById('rec-filtro-phi')?.value||'all';
   const filtEst = document.getElementById('rec-filtro-estado')?.value||'all';
+  const plan = planCortes();
+  renderPlanCortes(plan, filtPhi);
   const todos = recortesObra();
   const lista = todos.filter(x=>filtPhi==='all' || x.phi==filtPhi);
   const peso = (phi, ml) => (PESO_HIERRO[phi]||0.617)*ml;
@@ -7255,7 +7443,7 @@ function renderRecortes(){
       </select>
       <button onclick="eliminarRecorte(${r.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button>
     </div>`).join('') : '<div class="obras-vacio">No cargaste recortes a mano.</div>';
-  updateRecortesStats(todos);
+  updateRecortesStats(plan);
 }
 
 function updateRecorteEstado(id,est){
@@ -7266,21 +7454,22 @@ function eliminarRecorte(id){
   state.recortes=state.recortes.filter(x=>x.id!==id);
   renderRecortes(); scheduleAutosave();
 }
-function updateRecortesStats(todos){
-  todos = todos || recortesObra();
-  const cant = todos.reduce((s,x)=>s+x.cant,0);
-  const ml   = todos.reduce((s,x)=>s+x.cant*x.largo,0);
-  const aprovechables = todos.filter(x=>x.largo>=0.5).reduce((s,x)=>s+x.cant,0);
-  const usados = state.recortes.filter(r=>r.estado==='usado');
-  setTxt('rec-stat-disp', cant.toLocaleString('es-AR'));
-  setTxt('rec-stat-ml', n(ml,1));
-  setTxt('rec-stat-reut', aprovechables.toLocaleString('es-AR'));
-  const compradoMl = Object.values(state._hierros||{}).reduce((s,v)=>s+v,0);
-  setTxt('rec-stat-ahorro', compradoMl>0 ? n(ml/(compradoMl+ml)*100,1)+'%' : '—');
-  setTxt('badge-rec', cant ? cant.toLocaleString('es-AR') : '—');
+function updateRecortesStats(plan){
+  plan = plan || planCortes();
+  const P = Object.values(plan);
+  const ahorro = P.reduce((t,d)=>t + d.barrasSin - d.barrasCon, 0);
+  let cant = 0, ml = 0;
+  P.forEach(d=>Object.entries(d.quedan).forEach(([l,c])=>{ cant += c; ml += l*c; }));
+  const comprado = P.reduce((t,d)=>t + d.barrasCon*BARRA_COMERCIAL, 0);
+  setTxt('rec-stat-disp', ahorro.toLocaleString('es-AR'));
+  setTxt('rec-stat-ml', n(ahorro*BARRA_COMERCIAL,0));
+  setTxt('rec-stat-reut', cant.toLocaleString('es-AR'));
+  setTxt('rec-stat-reut-unit', n(ml,1)+' m sin ubicar');
+  setTxt('rec-stat-ahorro', comprado>0 ? n(ml/comprado*100,1)+'%' : '—');
+  setTxt('badge-rec', ahorro>0 ? '−'+ahorro : '—');
   const al = document.getElementById('alert-recortes');
-  if(al) al.style.display = aprovechables>0 ? 'flex' : 'none';
-  setTxt('alert-rec-count', aprovechables);
+  if(al) al.style.display = ahorro>0 ? 'flex' : 'none';
+  setTxt('alert-rec-count', ahorro);
 }
 
 // ── OPTIMIZACIÓN DE CORTE ─────────────────────────────────────────────────
@@ -7439,8 +7628,10 @@ function updateDashboard(){
   const phisOrden = Object.keys(hierros).sort((a,b)=>+a-+b);
   const barrasPorPhi={};
   let totalBarras=0;
+  const plan = planCortes();
+  state._planCortes = plan;
   phisOrden.forEach(phi=>{
-    const barras=Math.ceil(hierros[phi]/BARRA_COMERCIAL);
+    const barras = plan[phi] ? plan[phi].barrasCon : Math.ceil(hierros[phi]/BARRA_COMERCIAL);
     barrasPorPhi[phi]=barras;
     totalBarras+=barras;
   });
@@ -7824,7 +8015,8 @@ function datosResumen(){
 
   // Hierros: se piden por barra — sin metros lineales (base = metros)
   const barras = Object.keys(hierros).filter(p=>(hierros[p]||0)>0.1).sort((a,b)=>+a-+b)
-    .map(p=>U(`Hierro Ø${String(p).replace('.',',')}`, 'hierro', hierros[p]||0, pct));
+    .map(p=>U(`Hierro Ø${String(p).replace('.',',')}`, 'hierro', (state._barrasPorPhi?.[p] ?? Math.ceil((hierros[p]||0)/BARRA_COMERCIAL))*BARRA_COMERCIAL, pct,
+      'barras según el plan de corte (aprovechando sobrantes)'));
 
   // Aislación del techo: cantidad base en m³, presentación según Pomeca o Perlita
   const aisl = (techo.insul && techo.volAisl>0)
@@ -8148,7 +8340,6 @@ function htmlPdfResumen(){
     +'</style></head><body>'
     +`<h1>CÓMPUTO DE MATERIALES <span>—</span> ${_escHtml(obra.toUpperCase())}</h1>`
     +`<div class="meta">${meta}</div>`
-    +'<div class="aclara">Cantidades a pedir, con incremento por imprevistos incluido.</div>'
     +secciones
     +'<div class="cierre">'
     +'<div class="notas"><div class="t">NOTAS</div>'
