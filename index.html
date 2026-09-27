@@ -1687,6 +1687,27 @@ td select[onchange*="'hormTipo'"] { min-width: 118px; }
 /* Misma tipografía que ObraControl: DM Sans en todo, también en casillas y botones */
 input, select, textarea, button { font-family: inherit; }
 
+/* Mampostería: hiladas hidrófugas */
+.hid-mamp { margin-top: 14px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; }
+
+/* Dashboard por ítem */
+.dash-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.dash-barra-txt { font-size: 12.5px; color: var(--text2); max-width: 720px; }
+.dash-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
+.dash-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.dash-item-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 12px;
+  background: var(--surface2); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 13px; color: var(--text); cursor: pointer; }
+.dash-item-tit:hover { background: var(--accent-dim2); }
+.dash-item-niv { font-weight: 600; font-size: 11px; color: var(--accent); margin-left: 4px; }
+.dash-item-ir { color: var(--text3); font-size: 16px; }
+.dash-item-t { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dash-item-t td { padding: 5px 12px; border-top: 1px solid var(--border); }
+.dash-item-t tr:first-child td { border-top: none; }
+.dash-item-t td.right { text-align: right; white-space: nowrap; }
+.dash-item-t td.right b { color: var(--accent); }
+.dash-item-t td.muted { color: var(--text3); font-size: 11px; white-space: nowrap; width: 1%; }
+@media (max-width: 768px) { .dash-items { grid-template-columns: 1fr; } }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2000,189 +2021,29 @@ input, select, textarea, button { font-family: inherit; }
         <span id="dash-hierro"  style="display:none;"></span>
         <span id="dash-horm"    style="display:none;"></span>
 
-        <!-- ── FILA 1: Cemento por rubro + Hierros ─────────────────────── -->
-        <div class="grid-2" style="margin-bottom:16px;">
-
-          <!-- CEMENTO POR RUBRO con desglose H° Armado -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">🏭</span>
-              <span class="card-title">Cemento Portland · por rubro</span>
-            </div>
-            <div class="card-body" style="padding:0;" id="cemento-por-rubro">
-              <!-- H° ARMADO expandible -->
-              <div class="mat-row" style="cursor:pointer;user-select:none;" onclick="toggleHormDesglose()">
-                <div class="mat-dot" style="background:var(--blue)"></div>
-                <div class="mat-name" style="font-weight:600;">
-                  ▸ <span id="horm-desglose-arrow">▸</span> Hormigón armado
-                </div>
-                <div class="mat-qty" id="cem-horm">—</div>
-                <div class="mat-unit uc-port-unit">bol</div>
-              </div>
-              <!-- sub-filas H° armado (ocultas por defecto) -->
-              <div id="horm-desglose" style="display:none;background:var(--surface2);border-top:1px solid var(--border);">
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Columnas</div>
-                  <div class="mat-qty" id="cem-col" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Vigas VF/VA</div>
-                  <div class="mat-qty" id="cem-vig-vf" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Vigas VD/VE/VC</div>
-                  <div class="mat-qty" id="cem-vig-vd" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Bases (zapatas)</div>
-                  <div class="mat-qty" id="cem-bases" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Cimientos</div>
-                  <div class="mat-qty" id="cem-cim" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--blue);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Contrapiso/Carpeta</div>
-                  <div class="mat-qty" id="cem-cont" style="font-size:12px;">—</div>
-                  <div class="mat-unit uc-port-unit" style="font-size:10px;">bol</div>
-                </div>
-              </div>
-              <div class="mat-row">
-                <div class="mat-dot" style="background:var(--green)"></div>
-                <div class="mat-name">Revoques <span style="font-size:10px;color:var(--text3);">(Portland + cal · hidrófugo)</span></div>
-                <div class="mat-qty" id="cem-rev">—</div>
-                <div class="mat-unit uc-port-unit">bol</div>
-              </div>
-              <div class="mat-row" id="cem-mezclas-row">
-                <div class="mat-dot" style="background:var(--green)"></div>
-                <div class="mat-name">Mampostería y cubierta <span style="font-size:10px;color:var(--text3);">(según su mezcla)</span></div>
-                <div class="mat-qty" id="cem-mezclas">—</div>
-                <div class="mat-unit uc-port-unit">bol</div>
-              </div>
-              <div class="mat-row" style="background:var(--surface2);">
-                <div class="mat-dot" style="background:var(--accent)"></div>
-                <div class="mat-name" style="font-weight:700;color:var(--text)">TOTAL PORTLAND</div>
-                <div class="mat-qty accent" id="cem-total-display">—</div>
-                <div class="mat-unit uc-port-unit">bol 25 kg</div>
-              </div>
-              <!-- ── CEM. ALBAÑILERÍA ──────────────────── -->
-              <div style="padding:5px 14px 3px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'DM Sans',sans-serif;font-weight:700;background:var(--surface2);border-top:2px solid var(--border);">Cemento Albañilería</div>
-              <div class="mat-row" style="cursor:pointer;user-select:none;" onclick="toggleCemAlbDesglose()">
-                <div class="mat-dot" style="background:var(--orange)"></div>
-                <div class="mat-name" style="font-weight:600;">▸ <span id="cemalb-arrow">▸</span> Total Cem. Alb.</div>
-                <div class="mat-qty" id="cemalb-total">—</div>
-                <div class="mat-unit" id="cemalb-unit">bol</div>
-              </div>
-              <div id="cemalb-desglose" style="display:none;background:var(--surface2);border-top:1px solid var(--border);">
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--orange);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Mampostería</div>
-                  <div class="mat-qty" id="cemalb-mamp" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--orange);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Revoques</div>
-                  <div class="mat-qty" id="cemalb-rev" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
-                </div>
-                <div class="mat-row" style="padding-left:24px;">
-                  <div class="mat-dot" style="background:var(--orange);opacity:.6;width:6px;height:6px;"></div>
-                  <div class="mat-name" style="font-size:11px;color:var(--text2);">Cubierta de techos</div>
-                  <div class="mat-qty" id="cemalb-techo" style="font-size:12px;">—</div>
-                  <div class="mat-unit" style="font-size:10px;">bol</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- HIERROS POR DIÁMETRO -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">🔩</span>
-              <span class="card-title">Hierros por diámetro</span>
-              <span class="tag tag-accent" style="margin-left:auto;">ml / barras</span>
-            </div>
-            <div class="card-body" style="padding:0;" id="hierro-dash-rows">
-              <!-- populated by JS -->
-            </div>
+        <!-- ── Materiales por ítem (lo mismo que el PDF por ítem) ─────────── -->
+        <div class="dash-barra">
+          <div class="dash-barra-txt">Materiales <b>por ítem</b> y por nivel, a pedir (con el incremento por imprevistos) — lo mismo que el PDF por ítem. Tocá un ítem para ir a su pestaña.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="printPagePorItem()">📑 PDF por ítem</button>
+            <button class="btn btn-primary" onclick="showPage('resumen')">📋 Resumen total</button>
           </div>
         </div>
 
-        <!-- ── FILA 2: Áridos + H°elabo + Losas + Accesos ───────────────── -->
-        <div class="grid-2" style="margin-bottom:16px;">
-
-          <!-- ÁRIDOS POR RUBRO -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">⛰</span>
-              <span class="card-title">Áridos · por rubro</span>
-            </div>
-            <div class="card-body" style="padding:0;" id="aridos-dash-rows">
-              <!-- populated by JS -->
-            </div>
-          </div>
-
-          <!-- H° POR TIPO + LOSAS -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">🪨</span>
-              <span class="card-title">Hormigones</span>
-            </div>
-            <div class="card-body" style="padding:0;" id="horm-tipos-dash">
-              <!-- populated by JS -->
-            </div>
-          </div>
+        <div class="alert alert-green" id="alert-recortes" style="display:none;">
+          <span class="alert-icon">♻️</span>
+          <div>Aprovechando sobrantes el plan de corte ahorra <strong id="alert-rec-count">0</strong> barras. <a href="#" onclick="showPage('recortes');return false;" style="color:inherit;">Ver plan de corte →</a></div>
         </div>
 
-        <!-- Alert recortes -->
-        <div class="alert alert-orange" id="alert-recortes" style="display:none;">
-          <span class="alert-icon">⚠️</span>
-          <div>Hay <strong id="alert-rec-count">0</strong> recortes de hierro disponibles sin reutilizar. <a href="#" onclick="showPage('recortes');return false;" style="color:inherit;">Revisar →</a></div>
-        </div>
+        <div id="dash-items" class="dash-items"></div>
 
-        <!-- ── FILA 3: Materiales varios + Acceso rápido ───────────────── -->
-        <div class="grid-2">
-          <!-- TODOS LOS MATERIALES RESTANTES — poblado dinámicamente -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">📦</span>
-              <span class="card-title">Materiales · losas y varios</span>
-              <span style="margin-left:auto;font-size:10px;color:var(--text3);">todo lo demás</span>
-            </div>
-            <div class="card-body" style="padding:0;overflow-y:auto;max-height:520px;" id="losas-dash">
-              <!-- JS renderiza TODAS las filas de materiales que no son cemento, hierros ni áridos -->
-            </div>
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <span class="card-icon">📋</span>
+            <span class="card-title">Total de la obra</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text3);">igual al Resumen · los hierros aprovechan sobrantes entre ítems</span>
           </div>
-
-          <!-- Acceso rápido -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-icon">⚡</span>
-              <span class="card-title">Acceso rápido</span>
-            </div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('columnas')">▮ Columnas</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('vigas')">━ Vigas</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('bases')">◾ Bases y cimientos</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('mamposteria')">🧱 Mampostería</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('revoques')">🖼 Revoques</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('losas')">⬜ Losas</button>
-              <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;" onclick="showPage('recortes')">✂ Recortes</button>
-              <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="showPage('resumen')">📋 Ver Resumen Final</button>
-            </div>
-          </div>
+          <div id="dash-total"></div>
         </div>
       </div>
       <!-- ids ocultos para retro-compatibilidad con setTxt calls ya existentes -->
@@ -2957,6 +2818,27 @@ input, select, textarea, button { font-family: inherit; }
               <div style="font-size:11px;color:var(--text3);line-height:1.5;">
                 Mezcla del mortero: <b id="mamp-mezcla-lbl" style="color:var(--text2);">—</b> ·
                 <a href="#" onclick="irAMorteros();return false;" style="color:var(--accent);font-weight:600;">cambiar en 🧪 Dosificaciones</a>
+              </div>
+
+              <div class="hid-mamp">
+                <div class="field-label" style="margin-bottom:4px;">Hiladas con hidrófugo — sólo planta baja</div>
+                <div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-bottom:8px;">
+                  Las primeras hiladas se asientan con <b>cemento + arena</b> e hidrófugo tipo SIKA 1 en el agua de amasado (en vez del mortero común).
+                </div>
+                <div class="field-row">
+                  <div class="field"><div class="field-label">Hiladas <span class="field-hint">desde abajo</span></div>
+                    <input type="number" id="mamp-hid-hil" value="3" step="1" min="0" class="input-editable" oninput="calcMamposteria()"></div>
+                  <div class="field"><div class="field-label">Largo total de muros PB <span class="field-hint">m</span></div>
+                    <input type="number" id="mamp-hid-largo" value="0" step="1" min="0" class="input-editable" oninput="calcMamposteria()"></div>
+                </div>
+                <div class="field-label" style="margin:2px 0 6px;">Mezcla · partes en volumen</div>
+                <div class="mort-partes">
+                  <label class="mort-parte"><input type="number" id="mamp-hid-cem" value="1" step="0.25" min="0.1" oninput="calcMamposteria()"><span>Cemento</span></label><span class="mort-dos">:</span>
+                  <label class="mort-parte"><input type="number" id="mamp-hid-are" value="3" step="0.25" min="0" oninput="calcMamposteria()"><span>Arena</span></label>
+                  <span class="mort-dos" style="margin-left:14px;">Hidrófugo 1 :</span>
+                  <label class="mort-parte"><input type="number" id="mamp-hid-dil" value="10" step="1" min="1" oninput="calcMamposteria()"><span>partes de agua</span></label>
+                </div>
+                <div class="hid-calc" id="mamp-hid-res">—</div>
               </div>
             </div>
           </div>
@@ -5328,6 +5210,7 @@ function showPage(id) {
   if(id==='resumen') calcResumen();
   if(id==='unidades') renderUnidades();
   if(id==='recortes') renderRecortes();
+  if(id==='dashboard') renderDashItems();
 }
 
 function toggleSidebar() {
@@ -6420,10 +6303,26 @@ function calcMamposteria(){
   const mortM3   = totSup * mortM2;
   // Materiales según la mezcla de Dosificaciones
   const mz       = mortero('mamp');
-  const albKg    = mortM3 * mz.rend.albKg;
-  const portKg   = mortM3 * mz.rend.portKg;
-  const calKg    = mortM3 * mz.rend.calKg;
-  const arenaM3  = mortM3 * mz.rend.arenaM3;
+  // Primeras hiladas de PB con hidrófugo: cemento + arena, SIKA 1 en el agua de amasado
+  const hil    = Math.max(Math.floor(r('mamp-hid-hil')), 0);
+  const lMuros = Math.max(r('mamp-hid-largo'), 0);
+  const supH   = Math.min(r('mamp-sup-pb'), hil * (alto + junta) * lMuros);
+  const mzH    = rendMezcla({cem: r('mamp-hid-cem') || 1, are: r('mamp-hid-are')});
+  const mortH  = supH * mortM2;
+  const portH  = mortH * mzH.portKg, arenaH = mortH * mzH.arenaM3;
+  const hidroH = portH * aguaCemento() / (Math.max(r('mamp-hid-dil'), 0.1) || 10);
+  const mortComun = Math.max(mortM3 - mortH, 0);
+  const albKg    = mortComun * mz.rend.albKg;
+  const portKg   = mortComun * mz.rend.portKg + portH;
+  const calKg    = mortComun * mz.rend.calKg;
+  const arenaM3  = mortComun * mz.rend.arenaM3 + arenaH;
+  const hidRes = document.getElementById('mamp-hid-res');
+  if(hidRes) hidRes.innerHTML = !hil ? 'Sin hiladas con hidrófugo.'
+    : !lMuros ? 'Cargá el largo total de muros de planta baja para calcular las hiladas.'
+    : `${hil} hiladas × ${n(alto+junta,2)} m × ${n(lMuros,1)} m = <b>${n(supH,1)} m²</b> de muro →
+       ${n(ucDesdeBase('portland',portH),1)} ${ucLabel('portland')} de cemento · ${n(arenaH,2)} m³ de arena ·
+       <b style="color:var(--accent);">${n(hidroH,1)} L de hidrófugo</b>
+       <div style="color:var(--text3);">Agua = cemento × a/c ${String(aguaCemento()).replace('.',',')} (Dosificaciones), hidrófugo 1 : ${r('mamp-hid-dil')||10}.</div>`;
   const cemAlbBol = albKg / getCemAlbKg();
   setTxt('mamp-mezcla-lbl', mz.label);
 
@@ -6515,13 +6414,15 @@ function calcMamposteria(){
 
   state.resultados = state.resultados || {};
   state.resultados.mamp = {ladrillones: ladConDesp, ladNetos, cemAlb: cemAlbBol, cemAlbKg: albKg,
-    portKg, calKg, arena: arenaM3, mortM3};
+    portKg, calKg, arena: arenaM3, mortM3, hidroL: hidroH, supH};
 
   // Parciales por nivel
   const porNivel = {};
   nivelesData.forEach(x=>{
-    const m3 = x.sup * mortM2;
-    porNivel[x.k] = {sup:x.sup, lad: x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg, cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3};
+    const h = x.k==='PB' ? mortH : 0;               // la parte hidrófuga es de PB
+    const m3 = Math.max(x.sup * mortM2 - h, 0);
+    porNivel[x.k] = {sup:x.sup, lad: x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
+      cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0};
   });
   const cols = [
     {lbl:'m²', v:d=>d.sup, fmt:fmtN(1)},
@@ -6531,6 +6432,7 @@ function calcMamposteria(){
   if(portKg>0.01) cols.push({lbl:'Cemento',    v:d=>d.port, fmt:fmtUC('portland')});
   if(calKg>0.01)  cols.push({lbl:'Cal',        v:d=>d.cal,  fmt:fmtUC('cal')});
   cols.push({lbl:'Arena gruesa (m³)', v:d=>d.arena, fmt:fmtN(2)});
+  if(hidroH>0.01) cols.push({lbl:'Hidrófugo (L)', v:d=>d.hidro||0, fmt:fmtN(1)});
   state.resultados.mamp.porNivel = porNivel;
   const pn = document.getElementById('mamp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('mamp', porNivel, cols);
@@ -7728,7 +7630,8 @@ function updateDashboard(){
   // Hierro dashboard rows
   const maxMl=Math.max(0, ...Object.values(hierros));
   const phiColors={6:'blue',8:'green',10:'accent',12:'orange',16:'purple',20:'red'};
-  document.getElementById('hierro-dash-rows').innerHTML=
+  const hdr = document.getElementById('hierro-dash-rows');
+  if(hdr) hdr.innerHTML=
     phisOrden.filter(p=>hierros[p]>0.1).map(p=>`
     <div class="mat-row" style="flex-wrap:wrap;row-gap:0;">
       <div class="mat-dot" style="background:var(--${phiColors[p]||'accent'})"></div>
@@ -7888,7 +7791,7 @@ function updateDashboard(){
   }
 
   // Hidrófugo y membrana dashboard
-  const hidroTotal = (res.rev?.sika||0) + (res.bases?.hidro||0) + (res.cim?.hidro||0);
+  const hidroTotal = (res.rev?.sika||0) + (res.mamp?.hidroL||0) + (res.bases?.hidro||0) + (res.cim?.hidro||0);
   setTxt('dm-hidro', n(hidroTotal,1));
   const supT2 = r('techo-sup');
   setTxt('dm-membrana', n(Math.ceil(supT2/9)*1.1, 1));
@@ -8009,6 +7912,7 @@ function updateDashboard(){
 
     losDash.innerHTML = rows || '<div style="padding:16px;color:var(--text3);font-size:12px;text-align:center;">Sin datos cargados</div>';
   }
+  programarDashItems();
 }
 
 // ── RESUMEN FINAL ──────────────────────────────────────────────────────────
@@ -8072,7 +7976,7 @@ function datosResumen(){
   const piedraTotal = res.cim?.piedra||0;
 
   // ── Hidrófugo ─────────────────────────────────────────────────────────
-  const hikaSika  = res.rev?.sika||0;
+  const hikaSika  = (res.rev?.sika||0) + (res.mamp?.hidroL||0);
   const hidrBases = res.bases?.hidro||0;
   const hidrCim   = res.cim?.hidro||0;
   const hidrTotal = hikaSika + hidrBases + hidrCim;
@@ -8135,7 +8039,7 @@ function datosResumen(){
       U('Membrana Asfáltica','membrana', membrana*10, 1.05),
       U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
       ...aisl,
-      U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoque grueso hidrófugo PB'),
+      U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoques y hiladas hidrófugas de PB'),
       U('Hidrófugo de masa','hidroMasa', hidrBases+hidrCim, 1, 'bases + cim.'),
       U('Alambre N°14','alambre', acc.al14, 1.05, '2 kg/m³ H° armado'),
       U('Alambre N°17','alambre', acc.al17, 1.05, '2 kg/m³ H° armado'),
@@ -8460,7 +8364,7 @@ function materialesPorItem(){
   // Mampostería (por nivel)
   Object.entries(res.mamp?.porNivel||{}).forEach(([k, d], i, all)=>{
     const it = nuevo(tit('Mampostería', k, all.length>1));
-    add(it,'ladrillon',d.lad); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena);
+    add(it,'ladrillon',d.lad); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena); add(it,'hidrofugo',d.hidro||0);
   });
   // Revoques y cielorrasos (por nivel)
   Object.entries(res.rev?.porNivel||{}).forEach(([k, d], i, all)=>{
@@ -8515,6 +8419,41 @@ function materialesPorItem(){
     return {titulo:it.titulo, filas};
   }).filter(sc=>sc.filas.length);
   return {pct, supTotal: r('sup-pb')+r('sup-pa'), secciones};
+}
+
+// Pestaña de cada ítem, para ir desde el dashboard
+function pagDeItem(titulo){
+  const t = titulo.toLowerCase();
+  if(t.startsWith('columnas')) return ['columnas','▮'];
+  if(t.startsWith('vigas')) return ['vigas','━'];
+  if(t.startsWith('bases')) return ['bases','◾'];
+  if(t.startsWith('cimientos')) return ['bases','🧱'];
+  if(t.startsWith('mampost')) return ['mamposteria','🧱'];
+  if(t.startsWith('revoques')) return ['revoques','🖼'];
+  if(t.startsWith('contrapiso')) return ['contrapiso','▱'];
+  if(t.startsWith('losas')) return ['losas','⬜'];
+  if(t.startsWith('cubierta')) return ['losas','🏠'];
+  return ['resumen','📦'];
+}
+let _dashTimer = null;
+function programarDashItems(){ clearTimeout(_dashTimer); _dashTimer = setTimeout(renderDashItems, 80); }
+function renderDashItems(){
+  if(!document.getElementById('page-dashboard')?.classList.contains('active')) return;
+  const el = document.getElementById('dash-items');
+  if(!el) return;
+  let d;
+  try{ d = materialesPorItem(); }catch(e){ console.error(e); return; }
+  el.innerHTML = d.secciones.length ? d.secciones.map(sc=>{
+    const [pag, ico] = pagDeItem(sc.titulo);
+    const [tit, niv] = sc.titulo.split(' · ');
+    return `<div class="dash-item">
+      <div class="dash-item-tit" onclick="showPage('${pag}')" title="Ir a la pestaña">
+        <span>${ico} ${_escHtml(tit)}${niv?` <span class="dash-item-niv">${_escHtml(sc.titulo.slice(tit.length+3))}</span>`:''}</span><span class="dash-item-ir">›</span></div>
+      <table class="dash-item-t"><tbody>${sc.filas.map(f=>`<tr><td>${_escHtml(f.mat)}</td><td class="right"><b>${fmtRes(f.cant, f.entero)}</b></td><td class="muted">${_escHtml(f.unidad)}</td></tr>`).join('')}</tbody></table>
+    </div>`;
+  }).join('') : '<div class="obras-vacio">Todavía no hay materiales cargados.</div>';
+  const tot = document.getElementById('dash-total');
+  if(tot) tot.innerHTML = renderTablaResumen(datosResumen().secciones);
 }
 
 function printPagePorItem(){
