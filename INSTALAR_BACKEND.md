@@ -82,3 +82,17 @@ Se actualiza solo cada vez que usás "Guardar proyecto", "🗄 Guardar" o
 implementaciones → ✏️ editar → Versión: Nueva versión → Implementar.** Si
 creás una implementación nueva desde cero te da otra URL distinta y hay que
 volver a pasármela.
+
+## Actualizar el script a la versión 2 (versiones + historial)
+
+Una sola vez, para que Drive guarde las versiones de cada obra y el historial
+de lo guardado antes (🕘 en la ventana 🏗 Obras):
+
+1. Abrí el proyecto de Apps Script de ObraCalc (script.google.com).
+2. Borrá todo el código y pegá el contenido completo de `apps_script_obracalc.gs`.
+3. Guardá (💾).
+4. **Implementar → Gestionar implementaciones → ✏️ (editar) → Versión: Nueva versión → Implementar.**
+   Así la URL sigue siendo la misma y no hay que tocar la app.
+
+Hasta que lo actualices, la app sigue guardando igual: cada versión que no es
+"Principal" va a una carpeta aparte "Obra — Versión", y el historial no está disponible.
