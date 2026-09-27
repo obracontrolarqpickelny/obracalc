@@ -1612,6 +1612,32 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
 
   @page { margin: 18mm 15mm; size: A4 portrait; }
 }
+/* Bases a todo el ancho (la tabla no entraba en media pantalla) · casillas de medidas */
+.bases-grid { grid-template-columns: 1fr !important; }
+.dim-input { width: 68px !important; font-size: 12px !important; }
+.uc-ver { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); margin: 0 0 10px 2px; cursor: pointer; }
+/* Contrapiso armado */
+.cp-arm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; padding: 7px 10px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; color: var(--text2); }
+.cp-arm-lbl { font-weight: 700; color: var(--text); }
+.cp-arm select { width: auto !important; font-size: 11px !important; padding: 4px 6px !important; }
+.cp-arm label { display: flex; align-items: center; gap: 4px; }
+.cp-arm input { width: 70px !important; font-size: 12px !important; padding: 4px 6px !important; }
+
+/* Desplegables con ancho suficiente para su texto */
+.niv-filtro select { min-width: 150px; }
+.cp-arm select { min-width: 125px; }
+.cp-horm select { min-width: 290px; }
+#rec-filtro-phi, #rec-filtro-estado { min-width: 120px; }
+#tabla-losas-macizas select[onchange*="'factor'"] { min-width: 108px; }
+
+.mort-tabla select { min-width: 150px; }
+td select[onchange*="'hormTipo'"] { min-width: 118px; }
+@media (max-width: 1450px) and (min-width: 769px) {
+  .table-wrap table td, .table-wrap table th { padding-left: 6px; padding-right: 6px; }
+  .table-wrap table th { white-space: normal; }
+}
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2667,7 +2693,7 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
           </div>
         </div>
 
-        <div class="grid-2">
+        <div class="grid-2 bases-grid">
           <div class="card">
             <div class="card-header"><span class="card-icon">◾</span><span class="card-title">Bases (zapatas aisladas)</span></div>
             <div class="card-body">
@@ -3147,6 +3173,12 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
                   <div class="field"><div class="field-label">Esp. carpeta <span class="field-hint">cm</span></div>
                     <input type="number" id="carp-esp" value="3.5" step="0.5" class="input-editable" oninput="calcContrapiso()"></div>
                 </div>
+                <div class="cp-arm">
+                  <span class="cp-arm-lbl">Armadura</span>
+                  <select id="cp-arm-phi-pb" onchange="calcContrapiso()" title="Diámetro de la malla"><option value="0" selected>Sin armadura</option><option value="4.2">Ø 4,2</option><option value="6">Ø 6</option><option value="8">Ø 8</option><option value="10">Ø 10</option><option value="12">Ø 12</option></select>
+                  <label>c/ <input type="number" id="cp-arm-sep-pb" value="150" step="25" min="50" oninput="calcContrapiso()"> mm</label>
+                  <select id="cp-arm-capas-pb" onchange="calcContrapiso()"><option value="1" selected>Malla simple</option><option value="2">Malla doble</option></select>
+                </div>
 
                 <div class="niv-cab" style="--niv:var(--green);">2° nivel / PA</div>
                 <div class="field-row">
@@ -3160,6 +3192,12 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
                     <input type="number" id="carp-sup-pa" value="87" class="input-editable" oninput="calcContrapiso()"></div>
                   <div class="field"></div>
                 </div>
+                <div class="cp-arm">
+                  <span class="cp-arm-lbl">Armadura</span>
+                  <select id="cp-arm-phi-pa" onchange="calcContrapiso()" title="Diámetro de la malla"><option value="0" selected>Sin armadura</option><option value="4.2">Ø 4,2</option><option value="6">Ø 6</option><option value="8">Ø 8</option><option value="10">Ø 10</option><option value="12">Ø 12</option></select>
+                  <label>c/ <input type="number" id="cp-arm-sep-pa" value="150" step="25" min="50" oninput="calcContrapiso()"> mm</label>
+                  <select id="cp-arm-capas-pa" onchange="calcContrapiso()"><option value="1" selected>Malla simple</option><option value="2">Malla doble</option></select>
+                </div>
 
                 <div class="niv-cab" style="--niv:var(--purple);">3° nivel</div>
                 <div class="field-row">
@@ -3172,6 +3210,12 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
                   <div class="field"><div class="field-label">Sup. carpeta <span class="field-hint">m²</span></div>
                     <input type="number" id="carp-sup-p3" value="0" class="input-editable" oninput="calcContrapiso()"></div>
                   <div class="field"></div>
+                </div>
+                <div class="cp-arm">
+                  <span class="cp-arm-lbl">Armadura</span>
+                  <select id="cp-arm-phi-p3" onchange="calcContrapiso()" title="Diámetro de la malla"><option value="0" selected>Sin armadura</option><option value="4.2">Ø 4,2</option><option value="6">Ø 6</option><option value="8">Ø 8</option><option value="10">Ø 10</option><option value="12">Ø 12</option></select>
+                  <label>c/ <input type="number" id="cp-arm-sep-p3" value="150" step="25" min="50" oninput="calcContrapiso()"> mm</label>
+                  <select id="cp-arm-capas-p3" onchange="calcContrapiso()"><option value="1" selected>Malla simple</option><option value="2">Malla doble</option></select>
                 </div>
                 <div id="cp-niv-extra"></div>
                 <button type="button" class="btn-niv-add" onclick="agregarNivel()">＋ Agregar nivel</button>
@@ -3206,9 +3250,9 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
         <!-- Stats losas — poblados por JS -->
         <div id="losas-stats-top" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
           <div class="stat blue">
-            <div class="stat-label">Losetas 12 cm</div>
+            <div class="stat-label">Losetas</div>
             <div class="stat-value" id="losa-stat-los12">—</div>
-            <div class="stat-unit">unidades</div>
+            <div class="stat-unit" id="losa-stat-los-unit">unidades</div>
           </div>
           <div class="stat green">
             <div class="stat-label">Malla electrosoldada 6</div>
@@ -3565,6 +3609,7 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
           </div>
         </div>
 
+        <label class="uc-ver"><input type="checkbox" id="uc-ver-todos" onchange="renderUnidades()"> Mostrar también los materiales que no se usan en esta obra (<span id="uc-ver-cant">0</span>)</label>
         <div class="card">
           <div class="table-wrap" style="border:none;">
             <table class="uc-tabla">
@@ -3767,6 +3812,7 @@ const UC_DEF = [
   {k:'piedra',    grupo:'Áridos',       mat:'Piedra bola',             base:'m³',     pres:'m³',    cont:1},
   {k:'ladrillon', grupo:'Losas y varios', mat:'Ladrillones',           base:'unidad', pres:'unidad',cont:1},
   {k:'loseta',    grupo:'Losas y varios', mat:'Losetas 12 cm',         base:'unidad', pres:'unidad',cont:1},
+  {k:'loseta16',  grupo:'Losas y varios', mat:'Losetas 16 cm',         base:'unidad', pres:'unidad',cont:1},
   {k:'malla',     grupo:'Losas y varios', mat:'Malla de losa',         base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
   {k:'membrana',  grupo:'Losas y varios', mat:'Membrana asfáltica',    base:'m²',     pres:'rollo', cont:10},
   {k:'emulsion',  grupo:'Losas y varios', mat:'Emulsión asfáltica',    base:'litros', pres:'litros',cont:1,    sug:[1,4,18,20]},
@@ -4836,7 +4882,14 @@ function quitarNivel(k){
 // (así el autoguardado toma sus ids) y cada vez que cambia la lista.
 function construirNivelesExtra(){
   const ex = nivelesTodos().filter(x=>!NIVELES_BASE.some(b=>b.k===x.k));
-  const guardar = cont => { const v = {}; cont?.querySelectorAll('input[id]').forEach(i=>v[i.id]=i.value); return v; };
+  const guardar = cont => { const v = {}; cont?.querySelectorAll('input[id],select[id]').forEach(i=>v[i.id]=i.value); return v; };
+  const armadura = (s, v) => {
+    const op = (id, opciones, def) => opciones.map(([val,lbl])=>`<option value="${val}" ${String(v[id] ?? def)===String(val)?'selected':''}>${lbl}</option>`).join('');
+    return `<div class="cp-arm"><span class="cp-arm-lbl">Armadura</span>
+      <select id="cp-arm-phi-${s}" onchange="calcContrapiso()">${op('cp-arm-phi-'+s, [[0,'Sin armadura'],['4.2','Ø 4,2'],[6,'Ø 6'],[8,'Ø 8'],[10,'Ø 10'],[12,'Ø 12']], 0)}</select>
+      <label>c/ <input type="number" id="cp-arm-sep-${s}" value="${v['cp-arm-sep-'+s] ?? 150}" step="25" min="50" oninput="calcContrapiso()"> mm</label>
+      <select id="cp-arm-capas-${s}" onchange="calcContrapiso()">${op('cp-arm-capas-'+s, [[1,'Malla simple'],[2,'Malla doble']], 1)}</select></div>`;
+  };
   const campo = (id, val, onin, lbl, hint, def) =>
     `<div class="field"><div class="field-label">${lbl}${hint?` <span class="field-hint">${hint}</span>`:''}</div>
       <input type="number" id="${id}" value="${val ?? def}" class="input-editable" oninput="${onin}"></div>`;
@@ -4858,7 +4911,8 @@ function construirNivelesExtra(){
   if(cp){ const v = guardar(cp); cp.innerHTML = ex.map(n=>{ const s=n.suf, c='calcContrapiso()';
     return cab(n)
       + `<div class="field-row">${campo('cp-sup-'+s, v['cp-sup-'+s], c, 'Sup. contrapiso', 'm²', 0)}${campo('cp-esp-'+s, v['cp-esp-'+s], c, 'Espesor', 'cm', 10)}</div>`
-      + `<div class="field-row">${campo('carp-sup-'+s, v['carp-sup-'+s], c, 'Sup. carpeta', 'm²', 0)}<div class="field"></div></div>`; }).join(''); }
+      + `<div class="field-row">${campo('carp-sup-'+s, v['carp-sup-'+s], c, 'Sup. carpeta', 'm²', 0)}<div class="field"></div></div>`
+      + armadura(s, v); }).join(''); }
 
   // Filtros "Mostrar" con todos los niveles
   ['col','vd','losa','losamac'].forEach(l=>{
@@ -5498,7 +5552,7 @@ function fmtParte(v){
 // conservan la opción elegida: 1 = cemento + cal · 2 = cem. albañilería ·
 // 3 = cemento + arena (texturado).
 const MORT_TIPOS = {
-  '2': {lbl:'Cem. albañilería + arena', corto:'Cem. alb.',   campos:[['alb','Cem. alb.'],['are','Arena']]},
+  '2': {lbl:'Cem. alb. + arena', corto:'Cem. alb.',   campos:[['alb','Cem. alb.'],['are','Arena']]},
   '1': {lbl:'Cemento + cal + arena',    corto:'Cem.+cal',    campos:[['cem','Cemento'],['cal','Cal'],['are','Arena']]},
   '3': {lbl:'Cemento + arena',          corto:'Cemento',     campos:[['cem','Cemento'],['are','Arena']]},
   '4': {lbl:'Yeso (enlucido)',          corto:'Yeso',        campos:[['ykg','kg yeso / m³']]},
@@ -5970,9 +6024,9 @@ function renderBases(){
       <td><input value="${b.denom}" onchange="updateBase(${b.id},'denom',this.value)"
         style="width:52px;color:var(--orange);font-weight:700;font-size:12px;"></td>
       <td class="right"><input type="number" value="${b.cant}" onchange="updateBase(${b.id},'cant',+this.value);calcBases()" class="qty-input"></td>
-      <td class="right"><input type="number" value="${b.ancho}" step="0.05" onchange="updateBase(${b.id},'ancho',+this.value);calcBases()" style="width:50px;font-size:11px;"></td>
-      <td class="right"><input type="number" value="${b.largo}" step="0.05" onchange="updateBase(${b.id},'largo',+this.value);calcBases()" style="width:50px;font-size:11px;"></td>
-      <td class="right"><input type="number" value="${b.alto}" step="0.05" onchange="updateBase(${b.id},'alto',+this.value);calcBases()" style="width:50px;font-size:11px;"></td>
+      <td class="right"><input type="number" value="${b.ancho}" step="0.05" class="dim-input" onchange="updateBase(${b.id},'ancho',+this.value);calcBases()"></td>
+      <td class="right"><input type="number" value="${b.largo}" step="0.05" class="dim-input" onchange="updateBase(${b.id},'largo',+this.value);calcBases()"></td>
+      <td class="right"><input type="number" value="${b.alto}" step="0.05" class="dim-input" onchange="updateBase(${b.id},'alto',+this.value);calcBases()"></td>
       <td>
         <div class="phi-row">
           <span class="phi-badge" style="background:#6db87a22;color:var(--green);">Ø1</span>
@@ -6528,7 +6582,11 @@ function calcContrapiso(){
   const niveles = nivelesArea('cp').map(nv=>{
     const sup = r('cp-sup-'+nv.suf), esp = r('cp-esp-'+nv.suf)/100, supC = r('carp-sup-'+nv.suf);
     const vol = sup*esp, volC = supC*ec;
-    return {nv, sup, vol, supC, volC,
+    const phi = parseFloat(document.getElementById('cp-arm-phi-'+nv.suf)?.value) || 0;
+    const sep = Math.max(parseFloat(document.getElementById('cp-arm-sep-'+nv.suf)?.value) || 150, 25);
+    const capas = +(document.getElementById('cp-arm-capas-'+nv.suf)?.value) || 1;
+    const mlArm = phi ? sup * (2 / (sep/1000)) * capas * 1.10 : 0;   // barras en X e Y, +10 % solapes
+    return {nv, sup, vol, supC, volC, phi, sep, capas, mlArm,
       cemB25: (elab ? 0 : vol*hf.cemBol25*0.60) + volC*CARP_CEM_KG_M3/25,
       arena:  (elab ? 0 : vol*hf.arena) + volC*CARP_ARENA_M3M3,
       ripio:   elab ? 0 : vol*hf.piedra,
@@ -6539,6 +6597,9 @@ function calcContrapiso(){
   const cemCarp = volCarp*CARP_CEM_KG_M3/25, arCarp = volCarp*CARP_ARENA_M3M3;
   const cemCp = T('cemB25') - cemCarp, arCp = T('arena') - arCarp, ripCp = T('ripio');
 
+  // Armadura por Ø (va a Hierros del Resumen)
+  const porPhiCp = {};
+  niveles.forEach(x=>{ if(x.mlArm>0) porPhiCp[x.phi] = (porPhiCp[x.phi]||0) + x.mlArm; });
   renderHormResult('cont', volCP, contTipo);
   if(!elab) setTxt('cont-horm-result', `${n(volCP,2)} m³ de contrapiso en obra · mezcla con el 60 % del cemento del dosaje de Dosificaciones`);
 
@@ -6552,6 +6613,7 @@ function calcContrapiso(){
         + fila('Ripio clasificado', n(ripCp,2), 'm³')}
     ${fila('Cemento carpeta', n(ucDesdeB25('portland',cemCarp),1), ucLabel('portland'), 'border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;')}
     ${fila('Arena carpeta', n(arCarp,2), 'm³')}
+    ${Object.entries(porPhiCp).sort((a,b)=>+a[0]-+b[0]).map(([p,ml])=>fila(`Armadura Ø${String(p).replace('.',',')}`, n(ml,1)+' m', `${Math.ceil(ml/BARRA_COMERCIAL)} barras ${BARRA_COMERCIAL} m`)).join('')}
     <div class="dosaje-row" style="border-top:1px solid var(--border2);background:var(--accent-dim2);border-radius:6px;padding:8px;margin-top:6px;">
       <div class="dosaje-material" style="font-weight:700;color:var(--text)">Cemento total</div>
       <div class="dosaje-value accent">${n(ucDesdeB25('portland',cemCp+cemCarp),1)}</div>
@@ -6561,7 +6623,7 @@ function calcContrapiso(){
   state.resultados=state.resultados||{};
   const contCemTotal = cemCp + cemCarp;
   const contArena    = arCp + arCarp;
-  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elab ? volCP : 0, tipo: elab ? contTipo : 'obra'};
+  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elab ? volCP : 0, tipo: elab ? contTipo : 'obra', porPhi: porPhiCp};
 
   setTxt('cont-stat-elab',  elab ? n(volCP,2)+' m³ '+contTipo : '—');
   setTxt('cont-stat-cem',   n(ucDesdeB25('portland', contCemTotal),1));
@@ -6581,6 +6643,7 @@ function calcContrapiso(){
   cols.push({lbl:'Cemento', v:d=>d.cemB25*25, fmt:fmtUC('portland')});
   cols.push({lbl:'Arena (m³)', v:d=>d.arena, fmt:fmtN(2)});
   if(!elab) cols.push({lbl:'Ripio (m³)', v:d=>d.ripio, fmt:fmtN(2)});
+  Object.keys(porPhiCp).sort((a,b)=>+a-+b).forEach(p=>cols.push({lbl:`Armadura Ø${String(p).replace('.',',')}<br><span class="niv-ayuda">barras ${BARRA_COMERCIAL} m</span>`, v:d=>d.phi==p?d.mlArm:0, fmt:fmtBar}));
   const pn = document.getElementById('cp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('cp', porNivel, cols);
   updateDashboard();
@@ -6702,7 +6765,7 @@ function renderLosasMacizas(){
           style="width:100%;font-size:10px;padding:2px;">
           <option value="1" ${l.factor===1?'selected':''}>× 1 simple</option>
           <option value="1.5" ${l.factor===1.5?'selected':''}>× 1.5 escalera</option>
-          <option value="2" ${l.factor===2?'selected':''}>× 2 doble malla</option>
+          <option value="2" ${l.factor===2?'selected':''}>× 2 doble</option>
         </select>
       </td>
       <td class="right accent" style="font-size:11px;">${n(mlTotal,1)}</td>
@@ -6749,10 +6812,13 @@ function calcLosasMacizas(){
 
 function calcLosas(){
   let totalLos=0, totalM6=0, totalHcomp=0;
+  const losPorAlt = {12:0, 16:0};   // losetas según altura (se compran por separado)
   const byTipoLosa={};   // H17/H21/H25 → m³ capa compresión
   state.losas.forEach(l=>{
     const lPorMl = Math.ceil(1000/l.sep);
-    totalLos  += Math.ceil(l.cant * l.sup * lPorMl * 1.05);
+    const nLos = Math.ceil(l.cant * l.sup * lPorMl * 1.05);
+    totalLos  += nLos;
+    losPorAlt[+l.alt===16?16:12] += nLos;
     totalM6   += l.cant * l.sup * 1.05 / 14.4;
     const volComp = l.cant * l.sup * ((l.capComp||7)/100);
     totalHcomp += volComp;
@@ -6762,12 +6828,14 @@ function calcLosas(){
   setTxt('losa-total-losetas', n(totalLos,0));
   setTxt('losa-total-m6',      n(totalM6,2));
   setTxt('losa-total-hcomp',   n(totalHcomp,2)+' m³');
-  setTxt('ld-losetas12', n(totalLos,0));
+  setTxt('ld-losetas12', n(losPorAlt[12],0));
+  setTxt('ld-losetas16', n(losPorAlt[16],0));
   setTxt('ld-malla6',    n(totalM6,2));
   state.resultados=state.resultados||{};
-  state.resultados.losa={losetas12:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa};
+  state.resultados.losa={losetas12:losPorAlt[12], losetas16:losPorAlt[16], losetas:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa};
   // Stats superiores losas
   setTxt('losa-stat-los12', n(totalLos,0));
+  setTxt('losa-stat-los-unit', losPorAlt[16]>0 ? `12 cm: ${losPorAlt[12]} · 16 cm: ${losPorAlt[16]}` : 'unidades');
   setTxt('losa-stat-m6',    n(totalM6,2));
   setTxt('losa-stat-hcomp', n(totalHcomp,2));
   calcLosasMacizas();
@@ -7367,6 +7435,7 @@ function updateDashboard(){
   sumarPhi(res.vig?.hierrosPhi);
   sumarPhi(res.bases?.hierrosPhi);
   sumarPhi(res.losaMac?.porPhi);
+  sumarPhi(res.cont?.porPhi);
   const phisOrden = Object.keys(hierros).sort((a,b)=>+a-+b);
   const barrasPorPhi={};
   let totalBarras=0;
@@ -7779,6 +7848,7 @@ function datosResumen(){
     {el:'res-losas', titulo:'Losas y Varios', filas:[
       U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct),
       U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
+      U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, 1.12),
       U('Malla de losa','malla', (res.losa?.malla6||0)*14.4, 1.10),
       U('Membrana Asfáltica','membrana', membrana*10, 1.05),
       U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
@@ -7791,6 +7861,8 @@ function datosResumen(){
       U('Clavos punta París 2½"','clavos', acc.cl25, 1.05, '1 kg/m³ H° armado'),
     ]},
   ];
+  // Sólo lo que se usa en esta obra: lo que da 0 no aparece (pantalla, PDF, Excel, CSV)
+  secciones.forEach(sec=>{ sec.filas = sec.filas.filter(f=>(f.base||0) > 1e-6); });
   return {pct, supTotal, mlRec, secciones};
 }
 
@@ -7879,8 +7951,14 @@ function renderUnidades(){
   const tb = document.getElementById('uc-tbody');
   if(!tb) return;
   const cant = ucCantidadesBase();
+  // Sólo los materiales que tiene esta obra (aparecen y desaparecen solos);
+  // con la casilla se ven también los demás, para dejarlos configurados.
+  const verTodos = document.getElementById('uc-ver-todos')?.checked;
+  const usados = UC_DEF.filter(d=>(cant[d.k]||0) > 1e-6);
+  const lista = verTodos ? UC_DEF : usados;
+  setTxt('uc-ver-cant', UC_DEF.length - usados.length);
   let grupo = '';
-  tb.innerHTML = UC_DEF.map(d=>{
+  tb.innerHTML = (lista.length ? '' : '<tr><td colspan="5" class="muted" style="padding:14px;">Todavía no hay materiales en esta obra.</td></tr>') + lista.map(d=>{
     const b = ucBorr(d.k);
     let html = '';
     if(d.grupo!==grupo){ grupo = d.grupo; html += `<tr class="uc-grupo"><td colspan="5">${grupo}</td></tr>`; }
