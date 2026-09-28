@@ -1728,6 +1728,12 @@ input, select, textarea, button { font-family: inherit; }
 .sug-h { font-weight: 700; margin-left: 2px; }
 .sug-h.red { color: var(--red); } .sug-h.green { color: var(--green); } .sug-h.orange { color: var(--orange); }
 
+/* Bases: parrilla X / Y */
+.base-dir { font-weight: 800; min-width: 20px; text-align: center; }
+.base-dir.x { background: var(--blue-dim) !important; color: var(--blue) !important; }
+.base-dir.y { background: var(--green-dim) !important; color: var(--green) !important; }
+.base-arm-res { font-size: 9.5px; color: var(--text3); margin-top: 2px; white-space: nowrap; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2639,7 +2645,7 @@ input, select, textarea, button { font-family: inherit; }
                       <th class="right">Ancho (m)<button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','ancho')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                       <th class="right">Largo (m)<button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','largo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                       <th class="right">Alto (m)<button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','alto')" title="Poner el mismo valor en todas las filas">⇊</button></th>
-                      <th style="min-width:130px">Armadura · Ø1 / Ø2<br><span style="font-weight:400;color:var(--text3);">diám · sep mm</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','arm')" title="Poner el mismo valor en todas las filas">⇊</button></th>
+                      <th style="min-width:150px" data-tip="X: barras paralelas al ancho · Y: barras paralelas al largo. Cada barra = medida − 8 cm + ganchos de 10Ø">Armadura · X / Y<br><span style="font-weight:400;color:var(--text3);">diám · sep mm</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','arm')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                       <th style="min-width:100px">Tipo H°<button type="button" class="col-apl" onclick="colAplAbrir(event,'bases','hormTipo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                       <th class="right">m³ H°</th>
                       <th></th>
@@ -3739,9 +3745,9 @@ const state = {
     {id:6,denom:'VC-1',phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:1.95,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false},
   ],
   bases: [
-    {id:1,denom:'B1',cant:19,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:0,sep2:150},
-    {id:2,denom:'B2',cant:13,ancho:0.90,largo:0.90,alto:0.70,phi:8,sep:150,phi2:0,sep2:150},
-    {id:3,denom:'B3',cant:2, ancho:1.25,largo:1.25,alto:0.70,phi:8,sep:150,phi2:0,sep2:150},
+    {id:1,denom:'B1',cant:19,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:8,sep2:150},
+    {id:2,denom:'B2',cant:13,ancho:0.90,largo:0.90,alto:0.70,phi:8,sep:150,phi2:8,sep2:150},
+    {id:3,denom:'B3',cant:2, ancho:1.25,largo:1.25,alto:0.70,phi:8,sep:150,phi2:8,sep2:150},
   ],
   losas: [
     {id:1,denom:'L1',cant:1,sup:6.55, alt:12,phi:6,sep:150,capComp:7,hormTipo:'H17'},
@@ -4730,9 +4736,9 @@ function closeEstriboPicker(){
 }
 
 // Phi selector HTML helper
-function phiSelectHtml(val, onchg){
+function phiSelectHtml(val, onchg, sinVacio){
   return `<select class="phi-select" onchange="${onchg}" style="width:52px;padding:3px 2px;font-size:11px;">
-    ${[0,6,8,10,12,16,20].map(p=>`<option value="${p}" ${p==val?'selected':''}>${p||'—'}</option>`).join('')}
+    ${(sinVacio ? [6,8,10,12,16,20] : [0,6,8,10,12,16,20]).map(p=>`<option value="${p}" ${p==val?'selected':''}>${p||'—'}</option>`).join('')}
   </select>`;
 }
 
@@ -6202,15 +6208,25 @@ function renderCortesVigas(){
 }
 
 // ── BASES Y CIMIENTOS ─────────────────────────────────────────────────────
+// Parrilla de la base, una capa: barras en X (paralelas al ANCHO, repartidas a lo
+// largo del LARGO) con Ø1, y barras en Y (paralelas al LARGO, repartidas a lo
+// ancho) con Ø2. Cada barra = medida − 8 cm (4 cm de recubrimiento por lado)
+// + gancho de 10Ø en cada punta. Si Ø2 no está cargado se usa el mismo que X.
+function baseBarras(b){
+  const phiX = +b.phi || 8,  sepX = +b.sep || 150;
+  const phiY = +b.phi2 || phiX, sepY = +b.sep2 || sepX;
+  const barra = (dim, phi) => Math.max((+dim||0) - 0.08, 0.05) + 2*10*phi/1000;
+  const nX = Math.ceil((+b.largo||0)/(sepX/1000)) + 1;
+  const nY = Math.ceil((+b.ancho||0)/(sepY/1000)) + 1;
+  return [
+    {dir:'X', phi:phiX, sep:sepX, L:barra(b.ancho, phiX), n:nX, N:nX*(+b.cant||0)},
+    {dir:'Y', phi:phiY, sep:sepY, L:barra(b.largo, phiY), n:nY, N:nY*(+b.cant||0)},
+  ];
+}
 function renderBases(){
   const tbody=document.getElementById('bases-tbody');
   tbody.innerHTML=state.bases.map(b=>{
-    const n2Dir = Math.ceil(b.ancho/(b.sep/1000))+1;
-    const mlBase = 2*n2Dir*b.largo + 2*n2Dir*b.ancho;
-    // phi2 en dirección perpendicular si difiere
-    const n2Dir2 = b.phi2 ? (Math.ceil(b.largo/(b.sep2/1000))+1) : 0;
-    const mlBase2 = b.phi2 ? (2*n2Dir2*b.ancho + 2*n2Dir2*b.largo) : 0;
-    const mlTotal = b.cant * (mlBase + mlBase2);
+    const [bx, by] = baseBarras(b);
     const volHorm = b.cant * b.ancho * b.largo * b.alto;
     const bHormTipo = b.hormTipo||'H17';
     const bHt = HORM_TIPOS[bHormTipo]||HORM_TIPOS['H17'];
@@ -6222,16 +6238,17 @@ function renderBases(){
       <td class="right"><input type="number" value="${b.largo}" step="0.05" class="dim-input" onchange="updateBase(${b.id},'largo',+this.value);calcBases()"></td>
       <td class="right"><input type="number" value="${b.alto}" step="0.05" class="dim-input" onchange="updateBase(${b.id},'alto',+this.value);calcBases()"></td>
       <td>
-        <div class="phi-row">
-          <span class="phi-badge" style="background:#6db87a22;color:var(--green);">Ø1</span>
-          ${phiSelectHtml(b.phi,`updateBase(${b.id},'phi',+this.value);calcBases()`)}
-          <input type="number" value="${b.sep}" onchange="updateBase(${b.id},'sep',+this.value);calcBases()" class="sep-input" title="Sep mm">
+        <div class="phi-row" title="En X: barras paralelas al ANCHO, repartidas a lo largo del largo">
+          <span class="phi-badge base-dir x">X</span>
+          ${phiSelectHtml(bx.phi,`updateBase(${b.id},'phi',+this.value);renderBases()`, true)}
+          <input type="number" value="${bx.sep}" onchange="updateBase(${b.id},'sep',+this.value);renderBases()" class="sep-input" title="Separación en X (mm)">
         </div>
-        <div class="phi-row">
-          <span class="phi-badge" style="background:#33333388;color:var(--text3);">Ø2</span>
-          ${phiSelectHtml(b.phi2||0,`updateBase(${b.id},'phi2',+this.value);calcBases()`)}
-          <input type="number" value="${b.sep2||150}" onchange="updateBase(${b.id},'sep2',+this.value);calcBases()" class="sep-input" title="Sep mm Ø2">
+        <div class="phi-row" title="En Y: barras paralelas al LARGO, repartidas a lo ancho">
+          <span class="phi-badge base-dir y">Y</span>
+          ${phiSelectHtml(by.phi,`updateBase(${b.id},'phi2',+this.value);renderBases()`, true)}
+          <input type="number" value="${by.sep}" onchange="updateBase(${b.id},'sep2',+this.value);renderBases()" class="sep-input" title="Separación en Y (mm)">
         </div>
+        <div class="base-arm-res">X: ${bx.n} × ${n(bx.L,2)} m · Y: ${by.n} × ${n(by.L,2)} m</div>
       </td>
       <td style="min-width:95px;">
         <select onchange="updateBase(${b.id},'hormTipo',this.value);calcBases()"
@@ -6254,7 +6271,7 @@ function updateBase(id,f,v){const b=state.bases.find(x=>x.id===id);if(b)b[f]=v;}
 function removeBase(id){state.bases=state.bases.filter(x=>x.id!==id);renderBases();}
 function addBase(){
   const id=++state.nextId.bas;
-  state.bases.push({id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:0,sep2:150,hormTipo:'H17'});
+  state.bases.push({id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:8,sep2:150,hormTipo:'H17'});
   renderBases();
 }
 function calcBases(){
@@ -6269,22 +6286,12 @@ function calcBases(){
     const tipo = b.hormTipo||'H17';
     byTipo[tipo] = (byTipo[tipo]||0) + volHorm;
 
-    // Hierros Ø1
-    if(b.phi){
-      const n1 = Math.ceil(b.ancho/(b.sep/1000))+1;
-      const ml1 = b.cant * (2*n1*b.largo + 2*n1*b.ancho);
-      if(!hierrosPhi[b.phi]) hierrosPhi[b.phi]={ml:0,barras:0};
-      hierrosPhi[b.phi].ml += ml1;
-      hierrosPhi[b.phi].barras += b.cant * n1 * 2 * 2;
-    }
-    // Hierros Ø2
-    if(b.phi2){
-      const n2 = Math.ceil(b.largo/(b.sep2/1000))+1;
-      const ml2 = b.cant * (2*n2*b.ancho + 2*n2*b.largo);
-      if(!hierrosPhi[b.phi2]) hierrosPhi[b.phi2]={ml:0,barras:0};
-      hierrosPhi[b.phi2].ml += ml2;
-      hierrosPhi[b.phi2].barras += b.cant * n2 * 2 * 2;
-    }
+    // Parrilla X / Y
+    baseBarras(b).forEach(p=>{
+      if(!hierrosPhi[p.phi]) hierrosPhi[p.phi]={ml:0,barras:0};
+      hierrosPhi[p.phi].ml += p.N * p.L;
+      hierrosPhi[p.phi].barras += p.N;
+    });
   });
 
   // Calcular barras comerciales
@@ -7197,7 +7204,8 @@ const COL_APLICAR = {
     ancho:    [{k:'ancho', lbl:'Ancho (m)', num:true, step:0.05}],
     largo:    [{k:'largo', lbl:'Largo (m)', num:true, step:0.05}],
     alto:     [{k:'alto',  lbl:'Alto (m)', num:true, step:0.05}],
-    arm:      [{k:'phi',   lbl:'Ø1', num:true, opts:_PHIS}, {k:'sep', lbl:'Sep. Ø1 (mm)', num:true, step:10}],
+    arm:      [{k:'phi', lbl:'Ø en X', num:true, opts:_PHIS}, {k:'sep', lbl:'Sep. X (mm)', num:true, step:10},
+               {k:'phi2', lbl:'Ø en Y', num:true, opts:_PHIS}, {k:'sep2', lbl:'Sep. Y (mm)', num:true, step:10}],
     hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:()=>Object.entries(HORM_TIPOS).map(([k,v])=>[k,v.label])}],
   }},
 };
@@ -7356,16 +7364,7 @@ function piezasObra(){
   });
   state.bases.forEach(bs=>{
     const b = {item:'Base', pag:'bases', tabla:'tabla-bases', denom:bs.denom};
-    if(bs.phi){
-      const n1 = Math.ceil(bs.ancho/(bs.sep/1000))+1;
-      add({...b, phi:+bs.phi, parte:'Ø1'}, bs.largo, 2*n1*bs.cant);
-      add({...b, phi:+bs.phi, parte:'Ø1'}, bs.ancho, 2*n1*bs.cant);
-    }
-    if(bs.phi2){
-      const n2 = Math.ceil(bs.largo/(bs.sep2/1000))+1;
-      add({...b, phi:+bs.phi2, parte:'Ø2'}, bs.ancho, 2*n2*bs.cant);
-      add({...b, phi:+bs.phi2, parte:'Ø2'}, bs.largo, 2*n2*bs.cant);
-    }
+    baseBarras(bs).forEach(p=>add({...b, phi:p.phi, parte:'parrilla en '+p.dir}, p.L, p.N));
   });
   (state.losas_macizas||[]).forEach(l=>{
     const b = {item:'Losa maciza', pag:'losas', tabla:'tabla-losas-macizas', denom:l.denom, nivel:l.nivel};
@@ -7513,16 +7512,7 @@ function recortesObra(){
   });
   state.bases.forEach(bs=>{
     const b = {item:'Bases', pag:'bases', tabla:'tabla-bases', denom:bs.denom};
-    if(bs.phi){
-      const n1 = Math.ceil(bs.ancho/(bs.sep/1000))+1;
-      add({...b, phi:+bs.phi, parte:'Ø1 largo'}, _cortesBarra(bs.largo, 2*n1*bs.cant));
-      add({...b, phi:+bs.phi, parte:'Ø1 ancho'}, _cortesBarra(bs.ancho, 2*n1*bs.cant));
-    }
-    if(bs.phi2){
-      const n2 = Math.ceil(bs.largo/(bs.sep2/1000))+1;
-      add({...b, phi:+bs.phi2, parte:'Ø2 ancho'}, _cortesBarra(bs.ancho, 2*n2*bs.cant));
-      add({...b, phi:+bs.phi2, parte:'Ø2 largo'}, _cortesBarra(bs.largo, 2*n2*bs.cant));
-    }
+    baseBarras(bs).forEach(p=>add({...b, phi:p.phi, parte:'parrilla en '+p.dir}, _cortesBarra(p.L, p.N)));
   });
   (state.losas_macizas||[]).forEach(l=>{
     const b = {item:'Losas macizas', pag:'losas', tabla:'tabla-losas-macizas', denom:l.denom, nivel:l.nivel};
@@ -8965,6 +8955,8 @@ function applySnapshot(snap, opts){
   if(Array.isArray(snap.vigas_vd)) state.vigas_vd = snap.vigas_vd.map(v=>{delete v.lBarra; return v;});
   // 'Llenado a mano (sin H°)' se quitó (era lo mismo que H° hecho en obra)
   state.bases.forEach(b=>{ if(b.hormTipo==='mano') b.hormTipo='obra'; });
+  // Bases de antes: sin Ø2 cargado → Y igual que X (ahora siempre está activo)
+  state.bases.forEach(b=>{ if(!+b.phi2){ b.phi2 = +b.phi || 8; b.sep2 = +b.sep || 150; } });
   // Ganchos: el valor fijo viejo (12/14 cm) pasa a la regla automática 10Ø
   [...state.columnas, ...state.vigas_vf, ...state.vigas_vd].forEach(normGancho);
 
@@ -9208,6 +9200,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{ const d = JSON.parse(localStorage.getItem('obracalc_drive_ok')||'null');
       if(d && _activa && d.nombre===_activa.nombre && d.version===_activa.version){ _driveStatus='saved'; actualizarIndicadorDrive(); } }catch(_){}
   }
+});
+
+// Decimales: con el navegador en español la coma es el separador decimal y el
+// punto puede leerse como separador de miles ("0.7" → 7). El punto (el del
+// teclado numérico o el común) se escribe como coma. Si el navegador usa punto
+// decimal, no se toca nada.
+const _COMA_DECIMAL = (1.5).toLocaleString().includes(',');
+document.addEventListener('keydown', e=>{
+  const el = e.target;
+  if(!_COMA_DECIMAL || !(el instanceof HTMLInputElement) || el.type!=='number') return;
+  if(e.key!=='.' || e.ctrlKey || e.metaKey || e.altKey) return;
+  let ok = false;
+  try{ ok = document.queryCommandEnabled && document.queryCommandEnabled('insertText'); }catch(_){}
+  if(!ok) return;                 // sin forma segura de reemplazar: se deja el punto
+  e.preventDefault();
+  document.execCommand('insertText', false, ',');
+});
+// Al salir de la casilla el número se vuelve a escribir en el formato local (0,7)
+document.addEventListener('focusout', e=>{
+  const el = e.target;
+  if(!(el instanceof HTMLInputElement) || el.type!=='number' || el.value==='') return;
+  const v = el.value;              // valor interno, siempre con punto
+  el.value = ''; el.value = v;     // re-escribe el texto visible con la coma local
 });
 
 // Ctrl+S guarda la obra (como en Word/Excel) · Ctrl+K abre el buscador
@@ -9842,7 +9857,7 @@ function iaDefaults(tipo, id){
     case 'columna': return {id,denom:'C'+id,cantElem:1,phi:12,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,alt:2.70,forma:'rect',secA:20,secB:20,recub:REC_DEFAULT,phiEstr:6,sepEstr:150,estribType:1};
     case 'viga_vf': return {id,denom:'VF-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false};
     case 'viga_vd': return {id,denom:'VD-'+id,phi:10,nBarras:4,phi2:0,n2:0,phi3:0,n3:0,phiEstr:6,sepEstr:20,longLibre:3.0,ancho:20,alto:20,estribType:1,hormTipo:'H17',techoLiviano:false};
-    case 'base':    return {id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:0,sep2:150,hormTipo:'H17'};
+    case 'base':    return {id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:8,sep2:150,hormTipo:'H17'};
     case 'losa':    return {id,denom:'L'+id,cant:1,sup:5,alt:12,phi:'6',sep:150,capComp:7,hormTipo:'H17'};
     case 'losa_maciza': return {id,denom:'LM'+id,cant:1,ancho:3.0,largo:5.0,alto:12,phiX:'8',sepX:150,phiY:'8',sepY:150,factor:1};
     default: throw new Error('tipo desconocido: "'+tipo+'". Válidos: '+IA_TIPOS_VALIDOS.join(', '));
