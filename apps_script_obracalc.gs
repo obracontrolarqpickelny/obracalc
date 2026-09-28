@@ -195,8 +195,16 @@ function doPost(e) {
     var nombreArch = _archivoVersion(version);
 
     // Lo que había antes pasa al historial (así nunca se pierde un guardado)
+    // Lo que había antes pasa al historial: siempre en 💾 Guardar (hito) y, en la
+    // sincronización automática (cada pocos segundos), como mucho una copia cada 30 min.
     var viejo = _archivo(carpeta, nombreArch);
-    if (viejo) { try { _alHistorial(carpeta, viejo, version); } catch (err) { console.error('historial: ' + err); } }
+    var props = PropertiesService.getScriptProperties();
+    var claveH = 'hist_' + carpeta.getId() + '_' + _limpio(version);
+    var ultH = +(props.getProperty(claveH) || 0);
+    if (viejo && (body.hito || Date.now() - ultH > 30 * 60 * 1000)) {
+      try { _alHistorial(carpeta, viejo, version); props.setProperty(claveH, String(Date.now())); }
+      catch (err) { console.error('historial: ' + err); }
+    }
 
     _escribir(carpeta, nombreArch, JSON.stringify(d));
     var info = _info(carpeta, d, version);

@@ -1720,7 +1720,7 @@ input, select, textarea, button { font-family: inherit; }
 @media (max-width: 768px) { .sup-niveles { grid-template-columns: 1fr; } }
 
 /* Dosificaciones habituales */
-.mort-sug textarea, #dos-sug { width: 100%; font-size: 11.5px !important; line-height: 1.4; padding: 5px 7px !important; resize: vertical; min-height: 54px; }
+.mort-sug textarea, #dos-sug { width: 100%; font-size: 11.5px !important; line-height: 1.4; padding: 5px 7px !important; resize: none; overflow: hidden; min-height: 30px; }
 .sug-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .sug-chip { font-size: 11px; padding: 2px 8px; border-radius: 12px; cursor: pointer; background: var(--surface); border: 1px solid var(--border2); color: var(--text2); }
 .sug-chip:hover { border-color: var(--accent); color: var(--accent); }
@@ -1733,6 +1733,16 @@ input, select, textarea, button { font-family: inherit; }
 .base-dir.x { background: var(--blue-dim) !important; color: var(--blue) !important; }
 .base-dir.y { background: var(--green-dim) !important; color: var(--green) !important; }
 .base-arm-res { font-size: 9.5px; color: var(--text3); margin-top: 2px; white-space: nowrap; }
+
+/* Tilde verde de sincronización (abajo) */
+.sync-ok { position: fixed; left: 16px; bottom: 16px; z-index: 1300; display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--green); color: var(--green); font-weight: 700; font-size: 12.5px;
+  padding: 7px 14px 7px 8px; border-radius: 22px; box-shadow: 0 6px 18px rgba(0,0,0,.15);
+  opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
+.sync-ok.vis { opacity: 1; transform: translateY(0); }
+.sync-ok-ico { width: 20px; height: 20px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+#saveIndicator.saved { font-weight: 700; }
+@media (max-width: 768px) { .sync-ok { bottom: calc(64px + env(safe-area-inset-bottom)); } }
 
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
@@ -2289,7 +2299,7 @@ input, select, textarea, button { font-family: inherit; }
                 Partes en volumen (balde, carretilla). Cada mezcla se aplica sola en
                 <a href="#" onclick="showPage('mamposteria');return false;" style="color:var(--accent);font-weight:600;">Mampostería</a> y en
                 <a href="#" onclick="showPage('revoques');return false;" style="color:var(--accent);font-weight:600;">Revoques</a>, donde se elige el espesor.
-                La arena da el volumen del mortero; el aglomerante llena sus huecos.
+                Cada m³ se calcula con el peso y el volumen real de cada material, el agua y el aire: cambia con la proporción que elijas.
               </div>
               <div class="mort-ac">
                 <span>Agua de amasado · relación agua / aglomerante</span>
@@ -5630,19 +5640,34 @@ function aplicarDosajeObjetivo(){
 // cal, cem. albañilería) se mete en sus huecos (~30 % del agregado) y sólo si
 // sobra pasta suma volumen. Con este criterio 1:4 de cem. albañilería da
 // 300 kg y 1 m³ de arena por m³, igual que las tablas de obra.
+// Densidades reales (partícula sólida, sin huecos) de los aglomerantes — kg/m³
+const DENS_REAL_MORT = { cemento:3100, cemAlb:2900, cal:2300, arena:2600 };
+const AIRE_MORTERO = 0.03;   // aire atrapado típico de un mortero
+// Rendimiento por m³ de mezcla a partir de partes en volumen suelto (balde).
+// Método de volúmenes absolutos: cada parte pesa lo que su densidad aparente
+// (cemento 1.400, cem. alb. 1.200, cal 600, arena 1.500 kg/m³) y ocupa en el
+// mortero sólo su volumen real (peso ÷ densidad real), más el agua de amasado
+// (aglomerantes × a/c de Dosificaciones) y 3 % de aire. Así cambian el
+// cemento, la cal, la arena y el agua de cada m³ según la proporción elegida.
+// Con agregado liviano (perlita/pomeca de la cubierta) se mantiene la regla
+// de obra: el agregado da el volumen y el aglomerante llena sus huecos.
 function rendMezcla(p){
   const cem=+p.cem||0, cal=+p.cal||0, alb=+p.alb||0, are=+p.are||0, liv=+p.liv||0;
-  const agr = are + liv, lig = cem + cal + alb;
-  const V = agr + Math.max(0, 0.5*lig - 0.30*agr);
-  if(!(V>0)) return {portKg:0, calKg:0, albKg:0, arenaM3:0, livM3:0, yesoKg:0};
-  return {
-    yesoKg:  0,
-    portKg:  cem/V * DENS_AP.cemento,
-    calKg:   cal/V * DENS_AP.cal,
-    albKg:   alb/V * DENS_AP.cemAlb,
-    arenaM3: are/V,
-    livM3:   liv/V,
-  };
+  const cero = {portKg:0, calKg:0, albKg:0, arenaM3:0, livM3:0, yesoKg:0, aguaL:0};
+  if(liv > 0){
+    const agr = are + liv, lig = cem + cal + alb;
+    const V = agr + Math.max(0, 0.5*lig - 0.30*agr);
+    if(!(V>0)) return cero;
+    return {...cero, portKg: cem/V*DENS_AP.cemento, calKg: cal/V*DENS_AP.cal, albKg: alb/V*DENS_AP.cemAlb,
+            arenaM3: are/V, livM3: liv/V, aguaL: (cem*DENS_AP.cemento + alb*DENS_AP.cemAlb + cal*DENS_AP.cal)/V*aguaCemento()};
+  }
+  const mCem = cem*DENS_AP.cemento, mAlb = alb*DENS_AP.cemAlb, mCal = cal*DENS_AP.cal, mAre = are*DENS_AP.arena;
+  const aguaM3 = (mCem + mAlb + mCal) * aguaCemento() / 1000;
+  const vAbs = mCem/DENS_REAL_MORT.cemento + mAlb/DENS_REAL_MORT.cemAlb + mCal/DENS_REAL_MORT.cal
+             + mAre/DENS_REAL_MORT.arena + aguaM3;
+  const V = vAbs / (1 - AIRE_MORTERO);          // m³ de mortero que rinde la pastonada
+  if(!(V>0)) return cero;
+  return {...cero, portKg: mCem/V, calKg: mCal/V, albKg: mAlb/V, arenaM3: are/V, aguaL: aguaM3*1000/V};
 }
 
 // ¼ : 1 : 4 en vez de 0.25 : 1 : 4
@@ -5661,10 +5686,11 @@ const MORT_TIPOS = {
   '2': {lbl:'Cem. alb. + arena', corto:'Cem. alb.',   campos:[['alb','Cem. alb.'],['are','Arena']]},
   '1': {lbl:'Cemento + cal + arena',    corto:'Cem.+cal',    campos:[['cem','Cemento'],['cal','Cal'],['are','Arena']]},
   '3': {lbl:'Cemento + arena',          corto:'Cemento',     campos:[['cem','Cemento'],['are','Arena']]},
-  '4': {lbl:'Yeso (enlucido)',          corto:'Yeso',        campos:[['ykg','kg yeso / m³']]},
+  '4': {lbl:'Yeso (enlucido)',          corto:'Yeso',        campos:[['ykg','kg/m² por cm']]},
 };
-// Yeso aplicado: ~1.000 kg de yeso por m³ de enlucido (≈ 10 kg/m² por cm de espesor)
-const YESO_KG_M3 = 1000;
+// Yeso aplicado: 5 kg por m² por cada cm de espesor (= 500 kg por m³)
+const YESO_KG_M2CM = 5;
+const YESO_KG_M3 = YESO_KG_M2CM * 100;
 const MORTEROS = [
   {k:'mamp', lbl:'Mampostería',             sub:'asiento · arena gruesa', sel:'mamp-mort-tipo', tipos:['2','1']},
   {k:'gi',   lbl:'Revoque grueso interior', sub:'arena gruesa',          sel:'rev-opc-gi',     tipos:['2','1']},
@@ -5676,16 +5702,25 @@ const MORTEROS = [
 // Valores iniciales: reproducen los consumos que ya usaba la planilla
 // (mampostería 18,6 kg cem. alb. + 0,078 m³ arena por m² · grueso 7,5 kg/m²)
 const MORT_DEF = {
-  mamp: {tipo:'2', t2:{alb:1, are:5}, t1:{cem:0.25, cal:1, are:4}},
-  gi:   {tipo:'2', t2:{alb:1, are:4}, t1:{cem:0.25, cal:1, are:4}},
-  ge:   {tipo:'2', t2:{alb:1, are:4}, t1:{cem:0.25, cal:1, are:4}, t3:{cem:1, are:3}},
-  fi:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}},
-  fe:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}, t3:{cem:1, are:3}},
-  cr:   {tipo:'4', t4:{ykg:YESO_KG_M3}, t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:3}},
+  mamp: {tipo:'2', t2:{alb:1, are:4}, t1:{cem:1, cal:1, are:5}},
+  gi:   {tipo:'2', t2:{alb:1, are:5}, t1:{cem:0.25, cal:1, are:4}},
+  ge:   {tipo:'2', t2:{alb:1, are:5}, t1:{cem:0.25, cal:1, are:4}, t3:{cem:1, are:3}},
+  fi:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}},
+  fe:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}, t3:{cem:1, are:3}},
+  cr:   {tipo:'4', t4:{ykg:YESO_KG_M2CM}, t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}},
 };
 
 // Dosificaciones habituales (ayuda memoria, se editan en la tabla y se guardan con la obra)
 const MORT_SUG = {
+  mamp: 'Cem.+cal 1:¼:3 (resistencia elevada)\nCem.+cal 1:½:4 (intermedia)\nCem.+cal 1:1:5 (normal)\nCem.+cal 1:1:6 (normal)\nCem. alb. 1:4',
+  gi:   'Cem.+cal ¼:1:4 (opción 1)\nCem. alb. 1:5 (opción 2)',
+  ge:   'Cem.+cal ¼:1:4 (opción 1)\nCem. alb. 1:5 (opción 2)\nCemento 1:3',
+  fi:   'Cem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)',
+  fe:   'Cem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)\nCemento 1:3',
+  cr:   'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2\nCem. alb. 1:3',
+};
+// Textos de ayuda memoria que traía la versión anterior (si no se editaron, se actualizan)
+const MORT_SUG_VIEJO = {
   mamp: 'Cem. alb. 1:5\nCem. alb. 1:6\nCem.+cal ¼:1:4\nCem.+cal ½:1:5',
   gi:   'Cem. alb. 1:4\nCem. alb. 1:5\nCem.+cal ¼:1:4\nCem.+cal ½:1:4',
   ge:   'Cem. alb. 1:4\nCem.+cal ¼:1:3\nCemento 1:3',
@@ -5706,7 +5741,7 @@ function parseSugMortero(linea){
   const l = String(linea||'').trim();
   if(!l) return null;
   let m = l.match(/^yeso\b\s*([\d.,]+)?/i);
-  if(m) return {tipo:'4', partes:{ykg: m[1] ? parseFloat(m[1].replace(',', '.')) : YESO_KG_M3}, txt:l};
+  if(m) return {tipo:'4', partes:{ykg: m[1] ? parseFloat(m[1].replace(',', '.')) : YESO_KG_M2CM}, txt:l};
   m = l.match(/^([a-záéíóúñ.+\s]+?)\s*([0-9⅛¼½¾.,]+(?:\s*:\s*[0-9⅛¼½¾.,]+)+)/i);
   if(!m) return null;
   const pref = m[1].toLowerCase(), ps = m[2].split(':').map(_parteTxt);
@@ -5716,8 +5751,10 @@ function parseSugMortero(linea){
   if(/cem/.test(pref) && ps.length===2) return {tipo:'3', partes:{cem:ps[0], are:ps[1]}, txt:l};
   return null;
 }
+function autoAlto(ta){ if(!ta) return; ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
 function renderSugChips(k){
   const ta = document.getElementById('mz-sug-'+k), box = document.getElementById('mz-sugc-'+k);
+  autoAlto(ta);
   const M = MORTEROS.find(x=>x.k===k);
   if(!ta || !box || !M) return;
   const act = mortero(k);
@@ -5744,6 +5781,7 @@ function usarSugMortero(k, i){
 function renderSugHorm(){
   const ta = document.getElementById('dos-sug'), box = document.getElementById('dos-sugc');
   if(!ta || !box) return;
+  autoAlto(ta);
   const ac = parseFloat(document.getElementById('dos-ac')?.value) || 0.50;
   const c0 = r('dos-cem'), a0 = r('dos-arena'), p0 = r('dos-piedra');
   box.innerHTML = ta.value.split('\n').map((l, i)=>{
@@ -5781,7 +5819,7 @@ function construirMorteros(){
       `<div class="mort-partes" id="mz-${M.k}-t${t}" ${t===def.tipo?'':'style="display:none;"'}>`
       + MORT_TIPOS[t].campos.map(([c,lbl],i)=>
           (i?'<span class="mort-dos">:</span>':'')
-          + `<label class="mort-parte"><input type="number" id="mz-${M.k}-t${t}-${c}" value="${def['t'+t][c]}" step="${c==='ykg'?50:0.125}" min="0" oninput="morteroCambio()"${c==='ykg'?' style="width:74px !important;"':''}><span>${lbl}</span></label>`
+          + `<label class="mort-parte"><input type="number" id="mz-${M.k}-t${t}-${c}" value="${def['t'+t][c]}" step="${c==='ykg'?0.5:0.125}" min="0" oninput="morteroCambio()"${c==='ykg'?' style="width:74px !important;"':''}><span>${lbl}</span></label>`
         ).join('')
       + '</div>').join('');
     return `<tr>
@@ -5809,9 +5847,9 @@ function mortero(k){
     partes[c] = isFinite(v) && v>=0 ? v : def['t'+tipo][c];
   });
   if(tipo==='4'){
-    // Yeso: no es mezcla con arena, se computa por kg de yeso por m³ aplicado
-    const rend = {...rendMezcla({}), yesoKg: partes.ykg};
-    return {k, tipo, partes, rend, label:'Yeso'};
+    // Yeso: no es mezcla con arena; kg por m² por cada cm de espesor (× 100 = kg por m³)
+    const rend = {...rendMezcla({}), yesoKg: partes.ykg * 100};
+    return {k, tipo, partes, rend, label:`Yeso ${String(partes.ykg).replace('.',',')} kg/m²·cm`};
   }
   const rend = rendMezcla(partes);
   const label = MORT_TIPOS[tipo].corto + ' ' + MORT_TIPOS[tipo].campos.map(([c])=>fmtParte(partes[c])).join(':');
@@ -5843,7 +5881,7 @@ function calcMortero(){
     if(el) el.innerHTML =
         lin(R.portKg,'cemento','portland') + lin(R.albKg,'cem. alb.','cemAlb') + lin(R.calKg,'cal','cal')
       + lin(R.yesoKg,'yeso','yeso')
-      + (m.tipo!=='4' ? `<div><b>${n((R.portKg+R.albKg+R.calKg)*aguaCemento(),0)}</b> L agua</div>` : '')
+      + (m.tipo!=='4' ? `<div><b>${n(R.aguaL,0)}</b> L agua</div>` : '')
       + (R.arenaM3>0.0001 ? `<div><b>${n(R.arenaM3,2)}</b> m³ arena ${fina?'fina':'gruesa'}</div>` : '');
     const em = document.getElementById('mort-maq-'+M.k);
     if(em) em.innerHTML = m.tipo==='4' ? '<div style="color:var(--text3);">se prepara a mano</div>' : [
@@ -5851,7 +5889,7 @@ function calcMortero(){
         R.albKg >0.001 ? `${n(R.albKg*mq.m3,1)} kg cem. alb.` : '',
         R.calKg >0.001 ? `${n(R.calKg*mq.m3,1)} kg cal` : '',
         `${n(R.arenaM3*mq.m3*DENS_AP.arena,0)} kg arena`,
-        `${n((R.portKg+R.albKg+R.calKg)*aguaCemento()*mq.m3,1)} L agua`,
+        `${n(R.aguaL*mq.m3,1)} L agua`,
       ].filter(Boolean).map(x=>'<div>'+x+'</div>').join('');
   });
   MORTEROS.forEach(M=>renderSugChips(M.k));
@@ -8914,6 +8952,43 @@ function scheduleAutosave(){
   const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='guardando…';
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(saveAll, 800);
+  programarAutoSync();
+}
+
+// ── GUARDADO Y SINCRONIZACIÓN AUTOMÁTICOS (como ObraControl) ─────────────
+// 3 s después del último cambio la obra abierta se guarda sola en la lista de
+// obras y se sube a Drive. Arriba quedan en verde "✓ guardado" y la nube, y
+// abajo aparece un tilde verde cada vez que llega a Drive. 💾 Guardar sigue
+// estando para forzar una copia en el historial de Drive.
+const AUTOSYNC_MS = 3000;
+let _autoSyncTimer = null, _autoSyncEnCurso = false;
+function programarAutoSync(){
+  if(!_bootDone) return;
+  clearTimeout(_autoSyncTimer);
+  _autoSyncTimer = setTimeout(autoSync, AUTOSYNC_MS);
+}
+async function autoSync(){
+  if(!_activa) return;                               // obra sin nombre: hay que guardarla una vez
+  if(_autoSyncEnCurso){ programarAutoSync(); return; }
+  _autoSyncEnCurso = true;
+  try{
+    const snap = captureSnapshot();
+    if(!_guardarEntrada(_activa.nombre, _activa.version, snap)) return;
+    saveAll(); marcarGuardado();
+    if(DRIVE_URL){
+      const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
+      if(ok) tildeSync('Guardado en Drive');
+    } else tildeSync('Guardado');
+    if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
+  } finally { _autoSyncEnCurso = false; }
+}
+// Tilde verde abajo, discreto
+function tildeSync(txt){
+  let el = document.getElementById('sync-ok');
+  if(!el){ el = document.createElement('div'); el.id = 'sync-ok'; el.className = 'sync-ok'; document.body.appendChild(el); }
+  el.innerHTML = '<span class="sync-ok-ico">✓</span>' + txt;
+  el.classList.add('vis');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('vis'), 2200);
 }
 
 function saveAll(){
@@ -8928,11 +9003,7 @@ function saveAll(){
     _dirty = false;
     const si=document.getElementById('saveIndicator');
     si?.classList.remove('saving'); si?.classList.add('saved');
-    const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='guardado ✓';
-    setTimeout(()=>{
-      si?.classList.remove('saved');
-      const s=document.getElementById('saveLabel'); if(s) s.textContent='guardado';
-    }, 3000);
+    const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='✓ guardado';
   } catch(e){
     const lleno = e && (e.name==='QuotaExceededError' || e.code===22);
     const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='⚠️ sin guardar';
@@ -8997,6 +9068,13 @@ function applySnapshot(snap, opts){
     el.value=val;
   });
   if(snap.fields && snap.fields['cim-horm-tipo']==='mano'){ const el=document.getElementById('cim-horm-tipo'); if(el) el.value='obra'; }
+  // Ayuda memoria sin editar de la versión anterior → las dosificaciones corregidas
+  Object.keys(MORT_SUG_VIEJO).forEach(k=>{
+    const el = document.getElementById('mz-sug-'+k);
+    if(el && snap.fields && (snap.fields['mz-sug-'+k]==null || snap.fields['mz-sug-'+k]===MORT_SUG_VIEJO[k])) el.value = MORT_SUG[k];
+  });
+  // Yeso: antes se cargaba en kg por m³ (1000); ahora en kg por m² por cm
+  { const y = document.getElementById('mz-cr-t4-ykg'); if(y && +y.value > 50) y.value = (+y.value===1000) ? YESO_KG_M2CM : +y.value/100; }
   // Obras de antes: la mezcla del hidrófugo era un solo número (1 : n)
   if(snap.fields && snap.fields['rev-hid-prop']!=null && snap.fields['rev-hid-are']==null){
     const el=document.getElementById('rev-hid-are'); if(el) el.value = snap.fields['rev-hid-prop'];
@@ -9181,7 +9259,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Save indicator initial state
   const si=document.getElementById('saveIndicator');
   si?.classList.add('saved');
-  const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='guardado';
+  const sl=document.getElementById('saveLabel'); if(sl) sl.textContent='✓ guardado';
 
   // A partir de acá el autosave queda habilitado
   _bootDone = true;
@@ -9193,6 +9271,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   try{ sucioPrevio = localStorage.getItem(SUCIO_KEY)==='1'; }catch(_){}
   if(restored && sucioPrevio){
     marcarSucio();
+    programarAutoSync();   // si la obra tiene nombre, se sube sola
     setTimeout(()=>toastDeshacer(`⚠️ Se recuperaron cambios que no se habían guardado${_activa?' en "'+_activa.nombre+' · '+_activa.version+'"':''}.`,
       ()=>guardarObra(), 'Guardar ahora', 15000), 1200);
   } else {
@@ -9324,7 +9403,8 @@ function guardarObra(){
   const snap = captureSnapshot();
   if(!_guardarEntrada(_activa.nombre, _activa.version, snap)) return;
   saveAll(); marcarGuardado();
-  driveSyncAhora(_activa.nombre, _activa.version, snap, true);
+  clearTimeout(_autoSyncTimer);
+  driveSyncAhora(_activa.nombre, _activa.version, snap, true).then(ok=>{ if(ok) tildeSync('Guardado en Drive'); });
   if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
   showToast(`💾 Guardada: ${_activa.nombre} · ${_activa.version}`,'success',2500);
 }
@@ -10204,7 +10284,7 @@ function actualizarIndicadorDrive(){
   if(!el || !DRIVE_URL){ if(el) el.style.display='none'; return; }
   el.style.display = 'flex';
   el.classList.remove('saving','saved','error');
-  const textos = {idle:'☁ Drive', pending:'☁ sin subir', saving:'☁ sincronizando…', saved:'☁ sincronizado', error:'☁ error'};
+  const textos = {idle:'☁ Drive', pending:'☁ sin subir', saving:'☁ sincronizando…', saved:'☁ ✓ sincronizado', error:'☁ sin conexión'};
   lbl.textContent = textos[_driveStatus] || '☁ Drive';
   if(_driveStatus==='saving') el.classList.add('saving');
   else if(_driveStatus==='saved') el.classList.add('saved');
@@ -10272,7 +10352,7 @@ async function _driveLoadHist(obra, archivo){
 
 // Sube al Drive con aviso visual. Sólo en guardados explícitos (💾 Guardar,
 // Guardar como, restaurar): el servidor guarda antes la anterior en historial/.
-async function driveSyncAhora(obraName, version, snap, hito){
+async function driveSyncAhora(obraName, version, snap, hito, silencioso){
   obraName = obraName || _activa?.nombre;
   if(!DRIVE_URL || !obraName) return false;
   version = version || (_activa && _activa.nombre===obraName ? _activa.version : V_PRINCIPAL);
@@ -10280,7 +10360,7 @@ async function driveSyncAhora(obraName, version, snap, hito){
   const ok = await _driveSave(obraName, version, snap || captureSnapshot(), hito);
   _driveStatus = ok ? 'saved' : 'error'; actualizarIndicadorDrive();
   if(ok){ try{ localStorage.setItem('obracalc_drive_ok', JSON.stringify({nombre:obraName, version})); }catch(_){} }
-  else showToast('⚠️ Quedó guardada en este navegador, pero no se pudo subir a Drive','',4000);
+  else if(!silencioso) showToast('⚠️ Quedó guardada en este navegador, pero no se pudo subir a Drive','',4000);
   return ok;
 }
 
