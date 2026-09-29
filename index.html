@@ -4794,37 +4794,115 @@ function confirmarQuitar(el, que){
   return confirm(`¿Eliminar ${que} "${el.denom||''}"?\n\nSe borra la fila con todos sus datos.`);
 }
 
-// ── TAB: siempre a la casilla siguiente ─────────────────────────────────
-// Varias tablas se vuelven a dibujar al cambiar un valor (niveles, alturas,
-// vigas…). Si eso pasa justo con el Tab, la casilla de destino desaparece y el
-// navegador volvía al principio. Acá se decide primero a dónde ir, se confirma
-// el valor y después se vuelve a buscar esa casilla (misma tabla, mismo lugar).
+// ── TAB / ENTER: siempre a la casilla siguiente ─────────────────────────
+// Varias tablas se vuelven a dibujar al cambiar un valor (alturas, sección,
+// vigas…) o al traer cambios de Drive. Para que el cursor no se pierda:
+//  1) Tab / Enter deciden primero a dónde ir, confirman el valor y van ahí.
+//  2) Se recuerda siempre en qué casilla está el cursor (tabla + posición).
+//     Si esa casilla desaparece porque se redibujó la tabla — ahora o un rato
+//     después — el cursor vuelve a la misma casilla de la tabla nueva.
 const _FOCO_SEL = 'input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),a[href],[tabindex]';
 function _focuseables(raiz){
   return [...(raiz||document).querySelectorAll(_FOCO_SEL)].filter(el=>el.tabIndex>=0 && el.getClientRects().length>0);
 }
-document.addEventListener('keydown', e=>{
-  if(e.key!=='Tab' || e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
-  const act = document.activeElement;
-  if(!act || act===document.body || !act.closest('.main')) return;   // modales: comportamiento normal
+let _focoMem = null;   // {el, contId, idx}
+function _recordarFoco(el){
+  if(!el || el===document.body || !el.closest?.('.main')) { _focoMem = null; return; }
+  const cont = el.parentElement?.closest('[id]');
+  _focoMem = {el, contId: cont?.id || null, idx: cont ? _focuseables(cont).indexOf(el) : -1};
+}
+function _enfocar(el){
+  if(!el) return;
+  el.focus();
+  if(el.select && /^(text|number|search)$/.test(el.type||'')) { try{ el.select(); }catch(_){} }
+}
+// Casilla recordada que se borró al redibujar → la misma de la tabla nueva
+function _restaurarFoco(){
+  const m = _focoMem;
+  if(!m || m.el.isConnected) return;
+  const a = document.activeElement;
+  if(a && a!==document.body && a.isConnected) { _recordarFoco(a); return; }
+  if(!m.contId || m.idx < 0) return;
+  const c = document.getElementById(m.contId);
+  const el = c ? _focuseables(c)[m.idx] : null;
+  if(el){ _enfocar(el); _recordarFoco(el); }
+}
+document.addEventListener('focusin', e=>_recordarFoco(e.target));
+let _rfPend = false;
+new MutationObserver(()=>{
+  if(_rfPend || !_focoMem || _focoMem.el.isConnected) return;
+  _rfPend = true;
+  requestAnimationFrame(()=>{ _rfPend = false; _restaurarFoco(); });
+}).observe(document.documentElement, {childList:true, subtree:true});
+
+function _irSiguiente(act, atras){
   const lista = _focuseables();
   const i = lista.indexOf(act);
-  if(i < 0) return;
-  const dest = lista[i + (e.shiftKey ? -1 : 1)];
-  if(!dest) return;
+  if(i < 0) return false;
+  const dest = lista[i + (atras ? -1 : 1)];
+  if(!dest) return false;
+  _recordarFoco(dest);                // a dónde vamos, aunque la tabla se redibuje
+  const m = _focoMem;
+  if(act.blur) act.blur();            // confirma el valor ("change" puede redibujar)
+  if(dest.isConnected) _enfocar(dest);
+  else if(m && m.contId && m.idx >= 0){ const c = document.getElementById(m.contId); const el = c ? _focuseables(c)[m.idx] : null; if(el){ _enfocar(el); _recordarFoco(el); } }
+  return true;
+}
+document.addEventListener('keydown', e=>{
+  if(e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+  const act = document.activeElement;
+  if(!act || act===document.body || !act.closest('.main')) return;   // modales: comportamiento normal
+  if(e.key==='Tab'){
+    if(_irSiguiente(act, e.shiftKey)) e.preventDefault();
+  } else if(e.key==='Enter' && !e.shiftKey){
+    // Enter = confirmar el valor y pasar a la siguiente (no en textos largos, botones ni buscador)
+    if(!/^(INPUT|SELECT)$/.test(act.tagName) || /^(checkbox|radio|button|submit)$/.test(act.type||'')) return;
+    if(act.matches('[data-busq]') || act.hasAttribute('onkeydown') || act.closest('.ia-panel')) return;
+    if(_irSiguiente(act, false)) e.preventDefault();
+  }
+});
+
+// ── DESHACER / REHACER (Ctrl+Z / Ctrl+Y) ────────────────────────────────
+// Cada vez que la obra se guarda sola (al rato de un cambio) queda un paso.
+// Ctrl+Z vuelve al paso anterior, Ctrl+Y (o Ctrl+Shift+Z) lo rehace.
+const _undo = [], _redo = [];
+let _undoActual = null, _undoAplicando = false;
+function _undoRegistrar(txt){
+  if(_undoAplicando){ _undoActual = txt; _undoAplicando = false; return; }
+  if(_undoActual != null && txt !== _undoActual){
+    _undo.push(_undoActual); if(_undo.length > 80) _undo.shift();
+    _redo.length = 0;
+  }
+  _undoActual = txt;
+}
+function _undoIr(desde, hacia, txtVacio, txtOk){
+  if(_dirty) saveAll();                       // lo que se estaba escribiendo cuenta como paso
+  if(!desde.length){ showToast(txtVacio,'',1500); return; }
+  const destino = desde.pop();
+  hacia.push(_undoActual);
+  const pag = paginaActual(), main = document.querySelector('.main');
+  const sc = main ? main.scrollTop : 0, wy = window.scrollY;
+  const foco = _focoMem;
+  _undoAplicando = true;
+  applySnapshot(JSON.parse(destino));
+  _undoActual = destino;
+  if(paginaActual()!==pag) showPage(pag);
+  if(main) main.scrollTop = sc;
+  window.scrollTo(0, wy);
+  if(foco && !foco.el.isConnected){ _focoMem = foco; _restaurarFoco(); }
+  scheduleAutosave();                         // se guarda y se sube como cualquier cambio
+  showToast(txtOk,'success',1200);
+}
+function deshacer(){ _undoIr(_undo, _redo, 'No hay nada para deshacer', '↶ Deshecho'); }
+function rehacer(){  _undoIr(_redo, _undo, 'No hay nada para rehacer', '↷ Rehecho'); }
+document.addEventListener('keydown', e=>{
+  if(!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if(k!=='z' && k!=='y') return;
+  const t = e.target;
+  if(t?.closest?.('.ia-panel, .modal-backdrop.open, [data-busq]')) return;   // chat, modales y buscador: deshacer normal
   e.preventDefault();
-  const cont = dest.parentElement?.closest('[id]');
-  const contId = cont?.id, idx = cont ? _focuseables(cont).indexOf(dest) : -1;
-  if(act.blur) act.blur();            // confirma el valor (dispara "change", que puede redibujar)
-  const ir = tarde => {
-    let el = dest.isConnected ? dest : null;
-    if(!el && contId && idx >= 0){ const c2 = document.getElementById(contId); if(c2) el = _focuseables(c2)[idx] || null; }
-    if(!el || (tarde && document.activeElement===el)) return;
-    if(tarde && document.activeElement && document.activeElement!==document.body && document.activeElement.isConnected) return;
-    el.focus();
-    if(el.select && /^(text|number|search)$/.test(el.type||'')) { try{ el.select(); }catch(_){} }
-  };
-  ir(false); setTimeout(()=>ir(true), 0); setTimeout(()=>ir(true), 60);
+  if(k==='y' || (k==='z' && e.shiftKey)) rehacer(); else deshacer();
 });
 
 // ── DUPLICAR ELEMENTO ────────────────────────────────────────────────────
@@ -9652,7 +9730,7 @@ function programarAutoSync(){
 }
 async function autoSync(){
   if(!_activa) return;                               // obra sin nombre: hay que guardarla una vez
-  if(_autoSyncEnCurso){ programarAutoSync(); return; }
+  if(_autoSyncEnCurso || _pullEnCurso || (DRIVE_URL && !_cargaInicialHecha)){ programarAutoSync(); return; }
   _autoSyncEnCurso = true;
   try{
     const snap = captureSnapshot();
@@ -9670,7 +9748,7 @@ async function autoSync(){
         rem = await _driveLoad(_activa.nombre, _activa.version);
       }
       const k = _syncKey(_activa.nombre, _activa.version), conocido = _syncTs()[k];
-      if(conocido != null && rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts && !rem.renombradaA){
+      if(conocido != null && rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts && !rem.renombradaA && !_esTsPropio(_activa.nombre, _activa.version, rem.ts)){
         if(confirm(MSJ_CONFLICTO)){ _aplicarRemoto(_activa.nombre, _activa.version, rem); avisoSync('ok', 'Traídos los cambios del otro equipo'); return; }
       }
       const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
@@ -9720,6 +9798,7 @@ function saveAll(){
     if(prev && prev !== payload){ try{ localStorage.setItem(BACKUP_KEY, prev); }catch(_){} }
     localStorage.setItem(STORAGE_KEY, payload);
     _ultimoGuardado = _sinTs(payload);
+    _undoRegistrar(_ultimoGuardado);
     _dirty = false;
     const si=document.getElementById('saveIndicator');
     si?.classList.remove('saving'); si?.classList.add('saved');
@@ -9999,6 +10078,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // A partir de acá el autosave queda habilitado
   _bootDone = true;
   if(!restored) saveAll();   // primer guardado con los valores iniciales
+  if(_undoActual == null) _undoActual = _sinTs(JSON.stringify(captureSnapshot()));   // punto de partida de Ctrl+Z
 
   // Obra abierta + cambios sin guardar de la sesión anterior (cierre por error)
   iniciarObraActiva();
@@ -11177,7 +11257,11 @@ async function driveSyncAhora(obraName, version, snap, hito, silencioso){
   version = version || (_activa && _activa.nombre===obraName ? _activa.version : V_PRINCIPAL);
   _driveStatus = 'saving'; actualizarIndicadorDrive();
   const data = snap || captureSnapshot();
-  const ok = await _driveSave(obraName, version, data, hito);
+  _syncSeq++; _subiendo++;
+  let ok = false;
+  try{ ok = await _driveSave(obraName, version, data, hito); }
+  finally{ _subiendo--; _syncSeq++; }
+  if(ok) _tsPropio(obraName, version, data.ts);
   _driveStatus = ok ? 'saved' : 'error'; actualizarIndicadorDrive();
   if(ok) _marcarSincronizado(obraName, version, data);
   if(ok){ try{ localStorage.setItem('obracalc_drive_ok', JSON.stringify({nombre:obraName, version})); }catch(_){} }
@@ -11198,7 +11282,17 @@ const SYNC_TS_KEY = 'obracalc_sync_ts';
 const MSJ_CONFLICTO = 'Esta obra también se modificó desde otro equipo (celular o PC) y esos cambios todavía no están acá.\n\n'
   + 'Aceptar: traer lo de Drive (se pierden los cambios de este equipo que no se subieron).\n'
   + 'Cancelar: quedarse con lo de este equipo (se sube y reemplaza lo de Drive).';
-let _ultimoSubido = null, _pullEnCurso = false, _ultimoPull = 0;
+let _ultimoSubido = null, _pullEnCurso = false, _ultimoPull = 0, _syncSeq = 0, _subiendo = 0;
+// Sellos de lo que subió este equipo (últimos 40 por obra)
+const TS_PROPIOS_KEY = 'obracalc_ts_propios';
+function _tsPropio(nombre, version, ts){
+  if(!ts) return;
+  try{ const m = JSON.parse(localStorage.getItem(TS_PROPIOS_KEY)||'{}'); const k = _syncKey(nombre, version);
+    m[k] = [...(m[k]||[]).filter(x=>x!==ts), ts].slice(-40); localStorage.setItem(TS_PROPIOS_KEY, JSON.stringify(m)); }catch(_){}
+}
+function _esTsPropio(nombre, version, ts){
+  try{ const m = JSON.parse(localStorage.getItem(TS_PROPIOS_KEY)||'{}'); return (m[_syncKey(nombre, version)]||[]).includes(ts); }catch(_){ return false; }
+}
 const _syncKey = (nombre, version) => nombre + '|' + (version || V_PRINCIPAL);
 function _syncTs(){ try{ return JSON.parse(localStorage.getItem(SYNC_TS_KEY)||'{}') || {}; }catch(_){ return {}; } }
 function _marcarSincronizado(nombre, version, data){
@@ -11206,8 +11300,11 @@ function _marcarSincronizado(nombre, version, data){
   try{ const m = _syncTs(); m[_syncKey(nombre, version)] = data.ts || 0; localStorage.setItem(SYNC_TS_KEY, JSON.stringify(m)); }catch(_){}
   if(_esActiva(nombre, version)) _ultimoSubido = _sinTs(JSON.stringify(data));
 }
+let _ultimaActividad = 0;
+['keydown','pointerdown','input'].forEach(ev=>document.addEventListener(ev, ()=>{ _ultimaActividad = Date.now(); }, true));
 function _editando(){
   const a = document.activeElement;
+  if(Date.now() - _ultimaActividad < 8000) return true;          // se está trabajando: esperar
   return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest('.main, .ia-panel'));
 }
 // Pone en pantalla lo que vino de Drive sin cambiar de pestaña ni de lugar
@@ -11225,6 +11322,7 @@ function _aplicarRemoto(nombre, version, rem){
   if(paginaActual()!==pag) showPage(pag);
   if(main) main.scrollTop = sc;
   window.scrollTo(0, wy);
+  _restaurarFoco();
   if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
 }
 // ── RENOMBRAR OBRA ───────────────────────────────────────────────────────
@@ -11277,17 +11375,20 @@ async function renombrarObra(viejo){
   if(document.getElementById('modalProyectos')?.classList.contains('open')){ renderProjLista(); cargarListaDrive(); }
 }
 
-async function revisarDrive(forzar){
+async function revisarDrive(forzar, inicial){
   if(!DRIVE_URL) return;
   if(!_activa){ if(forzar){ showToast('Primero guardá la obra con nombre (💾 Guardar) o abrila desde 📂 Obras','',3500); } return; }
-  if(_pullEnCurso || (_autoSyncEnCurso && !forzar)) return;
+  if(_pullEnCurso || _subiendo || (_autoSyncEnCurso && !forzar)) return;
   if(!forzar && (document.hidden || Date.now() - _ultimoPull < 10000)) return;
   _pullEnCurso = true; _ultimoPull = Date.now();
   const {nombre, version} = _activa;
   try{
     if(forzar) avisoSync('sync', 'Cargando desde Drive…');
+    const seq0 = _syncSeq;
     const rem = await _driveLoad(nombre, version);
     if(!_esActiva(nombre, version)) return;                 // mientras tanto se abrió otra obra
+    // Mientras se leía, este equipo subió algo: lo leído ya es viejo → se vuelve a mirar después
+    if(_syncSeq !== seq0 || _subiendo || _autoSyncEnCurso){ _ultimoPull = 0; return; }
     if(!rem){ if(forzar) avisoSync('err', 'No se pudo leer Drive — revisá la conexión'); return; }
     if(rem.renombradaA && rem.renombradaA!==nombre){
       _renombrarLocal(nombre, rem.renombradaA);
@@ -11298,7 +11399,9 @@ async function revisarDrive(forzar){
     }
     const k = _syncKey(nombre, version), conocido = _syncTs()[k];
     const loc = _entrada(nombre, version);
-    const distinto = conocido != null ? (rem.ts||0) !== conocido : (rem.ts||0) > (loc?.data?.ts || 0);
+    let distinto = conocido != null ? (rem.ts||0) !== conocido : (rem.ts||0) > (loc?.data?.ts || 0);
+    // Una copia que subió este mismo equipo antes (Drive a veces devuelve una anterior): no es novedad
+    if(distinto && _esTsPropio(nombre, version, rem.ts)) distinto = false;
     const pendientes = _dirty || _projSucio || ['error','pending','saving'].includes(_driveStatus);
     if(!distinto){
       if(conocido == null && rem.ts) _marcarSincronizado(nombre, version, rem);
@@ -11311,7 +11414,7 @@ async function revisarDrive(forzar){
         document.getElementById('sync-ok')?.classList.remove('vis');
         programarAutoSync(); return;
       }
-    } else if(!forzar && _editando()){
+    } else if(!forzar && !inicial && _editando()){
       _ultimoPull = 0; setTimeout(()=>revisarDrive(false), 5000); return;   // no cambiar la casilla que estás escribiendo
     }
     _aplicarRemoto(nombre, version, rem);
@@ -11321,7 +11424,20 @@ async function revisarDrive(forzar){
 setInterval(()=>revisarDrive(false), 30000);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) revisarDrive(false); });
 window.addEventListener('focus', ()=>revisarDrive(false));
-document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>revisarDrive(false), 2500));
+// Al abrir la app: primero se trae lo último de Drive; recién después se sube
+let _cargaInicialHecha = false;
+async function cargaInicialDrive(){
+  try{
+    if(DRIVE_URL && _activa){
+      avisoSync('sync', 'Buscando la última versión en Drive…');
+      _ultimoPull = 0;
+      await revisarDrive(false, true);
+      const c = document.getElementById('sync-ok');
+      if(c?.classList.contains('sync-lat')) c.classList.remove('vis');
+    }
+  } finally { _cargaInicialHecha = true; }
+}
+document.addEventListener('DOMContentLoaded', ()=>setTimeout(cargaInicialDrive, 400));
 </script>
 </body>
 </html>
