@@ -1861,6 +1861,31 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 .hm-vacio { font-size: 11px; color: var(--text3); }
 .stat .horm-mat { border-top: 1px solid var(--border); padding-top: 6px; }
 
+/* Listas parciales */
+.tab-lista { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; margin-left: 8px; border-radius: 5px;
+  border: 1.5px solid var(--border2); color: transparent; font-size: 11px; font-weight: 900; cursor: pointer; vertical-align: middle; }
+.tab-lista:hover { border-color: var(--green); color: var(--green); }
+.tab-lista.on { background: var(--green); border-color: var(--green); color: #fff; }
+.nav-item.lista-parcial::after { content: '◐ ' attr(data-parcial); margin-left: 6px; color: var(--green); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.bn-item.lista-parcial::after { content: '◐'; position: absolute; top: 3px; right: 8px; font-size: 10px; color: var(--green); }
+.btn-lista.parcial { border-color: var(--green); color: var(--green); }
+
+/* Selección de filas */
+.fila-sel { width: 15px; height: 15px; margin: 0 6px 0 0; vertical-align: middle; cursor: pointer; accent-color: var(--accent); }
+tr.fila-selec > td { background: var(--accent-dim2) !important; }
+tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.selp { margin-bottom: 12px; padding: 0; border: 2px solid var(--accent); }
+.selp-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 14px; background: var(--accent-dim2); }
+.selp-cab b { color: var(--accent); font-size: 13px; }
+.selp-cab span { font-size: 11.5px; color: var(--text2); }
+.selp-acc { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.selp-acc .btn { font-size: 11px; padding: 5px 10px; }
+.selp-del { background: var(--red); color: #fff; border: 1px solid var(--red); }
+.selp-cuerpo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; padding: 10px 14px 12px; }
+.selp-t { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text3); margin-bottom: 4px; }
+.vf-res { padding: 6px 0 4px; }
+@media (max-width: 768px) { .selp-cuerpo { grid-template-columns: 1fr; } .selp-acc { margin-left: 0; } }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2637,8 +2662,8 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
         </div>
 
         <div class="tabs">
-          <div class="tab active" onclick="vigaTab('vf')">VF / VA</div>
-          <div class="tab" onclick="vigaTab('vd')">VD / VE / VC</div>
+          <div class="tab active" onclick="vigaTab('vf')">VF / VA<span class="tab-lista" data-sub="vigas:vf" onclick="event.stopPropagation();toggleSubLista('vigas:vf')" title="Marcar VF / VA como lista">✓</span></div>
+          <div class="tab" onclick="vigaTab('vd')">VD / VE / VC<span class="tab-lista" data-sub="vigas:vd" onclick="event.stopPropagation();toggleSubLista('vigas:vd')" title="Marcar VD / VE / VC como lista">✓</span></div>
           <div class="tab" onclick="vigaTab('cortes')">Planilla de Cortes</div>
         </div>
 
@@ -2682,6 +2707,10 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
                   </tr>
                 </tfoot>
               </table>
+            </div>
+            <div class="niv-panel">
+              <div class="niv-panel-tit">Resumen VF / VA <span>— hormigón, materiales y hierros para pedir</span></div>
+              <div id="vf-resumen"></div>
             </div>
           </div>
         </div>
@@ -4777,6 +4806,168 @@ document.addEventListener('pointerup', ()=>{
 document.addEventListener('pointercancel', _dragFin);
 window.addEventListener('blur', _dragFin);
 
+// ── SELECCIÓN DE FILAS ───────────────────────────────────────────────────
+// Casilla a la izquierda de cada fila (columnas, vigas, bases, losas). Shift+clic
+// selecciona un rango, como en el explorador de archivos. Con algunas filas
+// tildadas aparece arriba de la tabla el resultado de la selección (hormigón,
+// materiales y hierros) y los botones para eliminarlas juntas. Sin selección, o
+// con todas, los resultados de la pestaña son los de siempre (toda la tabla).
+// La selección es sólo de pantalla: no cambia la obra ni se guarda.
+const SEL_NOMBRES = {
+  'col-tbody':'columnas', 'vf-tbody':'vigas VF/VA', 'vd-tbody':'vigas VD/VE/VC',
+  'bases-tbody':'bases', 'losa-tbody':'losas', 'losa-mac-tbody':'losas macizas'
+};
+const _sel = {}, _selUlt = {};
+const _selSet = tb => _sel[tb] || (_sel[tb] = new Set());
+function _selIdsValidos(tb){
+  const cfg = DRAG_TB[tb]; if(!cfg) return new Set();
+  const hay = new Set(cfg.arr().map(x=>x.id)), S = _selSet(tb);
+  [...S].forEach(id=>{ if(!hay.has(id)) S.delete(id); });
+  return S;
+}
+// Casilla en las filas nuevas (cada vez que una tabla se dibuja)
+function _selDecorar(){
+  document.querySelectorAll('tr[data-drag]:not([data-sel])').forEach(tr=>{
+    const tb = tr.parentElement?.id;
+    if(!DRAG_TB[tb] || !tr.firstElementChild) return;
+    tr.dataset.sel = '1';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'fila-sel'; cb.tabIndex = -1;
+    cb.title = 'Seleccionar esta fila · Shift+clic: seleccionar desde la última tildada hasta ésta';
+    const on = _selSet(tb).has(+tr.dataset.drag);
+    cb.checked = on; tr.classList.toggle('fila-selec', on);
+    tr.firstElementChild.prepend(cb);
+  });
+}
+let _selPend = false;
+new MutationObserver(()=>{
+  if(_selPend) return;
+  _selPend = true;
+  requestAnimationFrame(()=>{ _selPend = false; _selDecorar(); });
+}).observe(document.documentElement, {childList:true, subtree:true});
+document.addEventListener('click', e=>{
+  const cb = e.target.closest?.('.fila-sel');
+  if(!cb) return;
+  const tr = cb.closest('tr'), tbody = tr.parentElement, tb = tbody.id, id = +tr.dataset.drag, S = _selSet(tb);
+  const filas = [...tbody.querySelectorAll('tr[data-drag]')].filter(t=>t.style.display!=='none');
+  if(e.shiftKey && _selUlt[tb] != null){
+    const a = filas.findIndex(t=>+t.dataset.drag===_selUlt[tb]), b = filas.indexOf(tr);
+    if(a >= 0 && b >= 0){
+      const [i, j] = a < b ? [a, b] : [b, a];
+      filas.slice(i, j+1).forEach(t=>{ const k = +t.dataset.drag; if(cb.checked) S.add(k); else S.delete(k); });
+    }
+  } else { if(cb.checked) S.add(id); else S.delete(id); }
+  _selUlt[tb] = id;
+  _selRefrescar(tb);
+});
+function _selRefrescar(tb){
+  const S = _selIdsValidos(tb), tbody = document.getElementById(tb);
+  tbody?.querySelectorAll('tr[data-drag]').forEach(tr=>{
+    const on = S.has(+tr.dataset.drag);
+    tr.classList.toggle('fila-selec', on);
+    const cb = tr.querySelector('.fila-sel'); if(cb) cb.checked = on;
+  });
+  _selPanel(tb);
+}
+function selTodas(tb){
+  const S = _selSet(tb);
+  document.getElementById(tb)?.querySelectorAll('tr[data-drag]').forEach(t=>{ if(t.style.display!=='none') S.add(+t.dataset.drag); });
+  _selRefrescar(tb);
+}
+function selLimpiar(tb){ _selSet(tb).clear(); _selUlt[tb] = null; _selRefrescar(tb); }
+function selEliminar(tb){
+  const S = _selIdsValidos(tb), cfg = DRAG_TB[tb];
+  if(!S.size || !cfg) return;
+  const a = cfg.arr(), nombres = a.filter(x=>S.has(x.id)).map(x=>x.denom).slice(0, 12).join(', ');
+  if(!confirm(`¿Eliminar ${S.size} ${SEL_NOMBRES[tb]||'filas'}?\n\n${nombres}${S.size>12?'…':''}\n\nSe puede deshacer con Ctrl+Z.`)) return;
+  for(let i = a.length-1; i >= 0; i--) if(S.has(a[i].id)) a.splice(i, 1);
+  const n = S.size;
+  S.clear(); _selUlt[tb] = null;
+  cfg.render();
+  scheduleAutosave();
+  _selPanel(tb);
+  showToast(`🗑 ${n} ${SEL_NOMBRES[tb]||'filas'} eliminadas — Ctrl+Z para deshacer`,'success',3000);
+}
+// Hormigón, materiales y hierros de un grupo de filas
+function _selResultado(tb, ids){
+  const arr = DRAG_TB[tb].arr().filter(x=>ids.has(x.id));
+  const porTipo = {}, extra = [];
+  const add = (t, v) => { if(v > 0) porTipo[t] = (porTipo[t]||0) + v; };
+  let armado = null;
+  if(tb==='col-tbody'){
+    const t = document.getElementById('col-horm-tipo')?.value || 'H17';
+    arr.forEach(c=>add(t, (+c.cantElem||0) * colArea(c) * (+c.alt||0)));
+  } else if(tb==='vf-tbody' || tb==='vd-tbody'){
+    arr.forEach(v=>add(v.techoLiviano ? 'obra' : (v.hormTipo||'H17'), vigaHorm(v) * (v.techoLiviano ? 1.5 : 1)));
+  } else if(tb==='bases-tbody'){
+    arr.forEach(b=>add(b.hormTipo||'H17', (+b.cant||0) * b.ancho * b.largo * b.alto));
+  } else if(tb==='losa-tbody'){
+    let l12 = 0, l16 = 0, malla = 0;
+    arr.forEach(l=>{
+      add(l.hormTipo||'H17', l.cant * l.sup * ((l.capComp||7)/100));
+      const los = Math.ceil(l.cant * l.sup * Math.ceil(1000/l.sep) * 1.05);
+      if(+l.alt===16) l16 += los; else l12 += los;
+      malla += l.cant * l.sup * 1.05;
+    });
+    if(l12) extra.push({q:l12, mat:'Losetas 12 cm', cant:n(l12,0)+' u.'});
+    if(l16) extra.push({q:l16, mat:'Losetas 16 cm', cant:n(l16,0)+' u.'});
+    if(malla) extra.push({q:malla, mat:'Malla de losa', cant:n(malla,1)+' m²', com:`${n(malla/14.4,1)} paneles`});
+  } else if(tb==='losa-mac-tbody'){
+    arr.forEach(l=>add('H17', l.cant * l.ancho * l.largo * (l.alto/100)));
+  }
+  const plan = planCortes(piezasObra().filter(p=>p.tb===tb && ids.has(p.id)));
+  return {n: arr.length, porTipo, extra, plan, armado};
+}
+function _hierrosHTML(plan){
+  const fs = Object.values(plan).sort((a,b)=>a.phi-b.phi);
+  if(!fs.length) return '<div class="hm-vacio">Sin hierros</div>';
+  return `<table class="hm-tabla"><tbody>${fs.map(d=>`<tr><td><b>Ø${String(d.phi).replace('.',',')}</b></td><td class="right">${n(d.ml,1)} ml</td><td class="right hm-com">${d.barrasCon} barras ${BARRA_COMERCIAL} m</td></tr>`).join('')}</tbody></table>`;
+}
+function _selPanel(tb){
+  const tbody = document.getElementById(tb);
+  if(!tbody) return;
+  const S = _selIdsValidos(tb), total = DRAG_TB[tb].arr().length;
+  let p = document.getElementById('selp-'+tb);
+  if(!S.size){ p?.remove(); return; }
+  if(!p){
+    p = document.createElement('div');
+    p.id = 'selp-'+tb; p.className = 'card selp';
+    const card = tbody.closest('.card');
+    (card || tbody.closest('table')).insertAdjacentElement('beforebegin', p);
+  }
+  const nom = SEL_NOMBRES[tb] || 'filas';
+  const acciones = `<div class="selp-acc">
+      ${S.size < total ? `<button type="button" class="btn btn-secondary" onclick="selTodas('${tb}')">Seleccionar todas</button>` : ''}
+      <button type="button" class="btn btn-secondary" onclick="selLimpiar('${tb}')">✕ Quitar selección</button>
+      <button type="button" class="btn selp-del" onclick="selEliminar('${tb}')">🗑 Eliminar ${S.size===1?'la seleccionada':'las '+S.size+' seleccionadas'}</button></div>`;
+  if(S.size >= total){
+    p.innerHTML = `<div class="selp-cab"><b>Todas las ${nom} seleccionadas</b><span>los resultados de la pestaña ya son los de toda la tabla</span>${acciones}</div>`;
+    return;
+  }
+  const r = _selResultado(tb, S);
+  const m3 = Object.values(r.porTipo).reduce((s,v)=>s+v, 0);
+  p.innerHTML = `<div class="selp-cab"><b>Selección: ${S.size} de ${total} ${nom}</b><span>resultados sólo de las tildadas${m3 ? ` · ${n(m3,2)} m³ de H°` : ''}</span>${acciones}</div>
+    <div class="selp-cuerpo">
+      <div><div class="selp-t">🪨 Hormigón y materiales</div>${hormMatHTML(r.porTipo, {extra: r.extra})}</div>
+      <div><div class="selp-t">🔩 Hierros · con aprovechamiento de sobrantes</div>${_hierrosHTML(r.plan)}</div>
+    </div>`;
+}
+function _selPanelesActualizar(){ Object.keys(_sel).forEach(tb=>{ if(_sel[tb].size) _selPanel(tb); }); }
+
+// Resumen de VF/VA (como las sumas por nivel de VD/VE/VC)
+function renderResumenVF(){
+  const box = document.getElementById('vf-resumen');
+  if(!box) return;
+  if(!state.vigas_vf.length){ box.innerHTML = '<div class="hm-vacio" style="padding:8px 0;">Sin vigas cargadas</div>'; return; }
+  const r = _selResultado('vf-tbody', new Set(state.vigas_vf.map(v=>v.id)));
+  const m3 = Object.values(r.porTipo).reduce((s,v)=>s+v, 0);
+  const zap = state.vigas_vf.filter(v=>v.zapata).length;
+  box.innerHTML = `<div class="selp-cuerpo vf-res">
+      <div><div class="selp-t">🪨 ${state.vigas_vf.length} vigas${zap ? ` (${zap} con zapata corrida)` : ''} · ${n(m3,2)} m³ de H°</div>${hormMatHTML(r.porTipo)}</div>
+      <div><div class="selp-t">🔩 Hierros · barras de ${BARRA_COMERCIAL} m</div>${_hierrosHTML(r.plan)}</div>
+    </div>`;
+}
+
 // ── FILA HECHA / REVISADA ────────────────────────────────────────────────
 // Sólo un recordatorio: no cambia ningún cálculo. Se guarda con la obra.
 function filaOk(btn, id){
@@ -5835,26 +6026,45 @@ function showPage(id) {
 // la pestaña se sigue pudiendo editar.
 const PAGS_LISTA = ['obra','hormigon','columnas','vigas','bases','mamposteria','revoques','contrapiso','losas','recortes','unidades'];
 function paginaActual(){ return document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard'; }
+// Pestañas con partes que se marcan por separado (el ✓ de cada sub-pestaña)
+const SUB_LISTAS = {vigas: ['vf', 'vd']};
+const _listaCompleta = (L, p) => !!L[p] || (SUB_LISTAS[p] ? SUB_LISTAS[p].every(x=>L[p+':'+x]) : false);
 function toggleLista(){
   const p = paginaActual(); if(!PAGS_LISTA.includes(p)) return;
   state.listas = state.listas || {};
-  if(state.listas[p]) delete state.listas[p]; else state.listas[p] = true;
+  const L = state.listas;
+  if(_listaCompleta(L, p)){ delete L[p]; (SUB_LISTAS[p]||[]).forEach(x=>delete L[p+':'+x]); }
+  else { L[p] = true; (SUB_LISTAS[p]||[]).forEach(x=>{ L[p+':'+x] = true; }); }
+  pintarListas(); scheduleAutosave();
+}
+function toggleSubLista(k){
+  state.listas = state.listas || {};
+  const L = state.listas, p = k.split(':')[0];
+  if(L[k]){ delete L[k]; delete L[p]; } else L[k] = true;
   pintarListas(); scheduleAutosave();
 }
 function pintarListas(){
   const L = state.listas || {};
+  const parcial = p => { const sub = SUB_LISTAS[p]; if(!sub || _listaCompleta(L, p)) return ''; const k = sub.filter(x=>L[p+':'+x]).length; return k ? `${k}/${sub.length}` : ''; };
   document.querySelectorAll('.nav-item, .bn-item').forEach(it=>{
     const m = (it.getAttribute('onclick')||'').match(/showPage\('([^']+)'\)/);
-    it.classList.toggle('lista', !!(m && L[m[1]]));
+    const pg = m && m[1];
+    it.classList.toggle('lista', !!(pg && _listaCompleta(L, pg)));
+    const par = pg ? parcial(pg) : '';
+    it.classList.toggle('lista-parcial', !!par);
+    if(par) it.dataset.parcial = par; else delete it.dataset.parcial;
   });
+  document.querySelectorAll('.tab-lista').forEach(t=>t.classList.toggle('on', !!L[t.dataset.sub] || !!L[t.dataset.sub.split(':')[0]]));
   const p = paginaActual(), b = document.getElementById('btn-lista');
   if(b){
+    const ok = _listaCompleta(L, p), par = parcial(p);
     b.style.display = PAGS_LISTA.includes(p) ? '' : 'none';
-    b.classList.toggle('on', !!L[p]);
-    b.textContent = L[p] ? '✓ Lista' : '☐ Marcar como lista';
+    b.classList.toggle('on', ok);
+    b.classList.toggle('parcial', !!par);
+    b.textContent = ok ? '✓ Lista' : par ? `◐ Lista en parte (${par})` : '☐ Marcar como lista';
   }
   const c = document.getElementById('listas-cont');
-  if(c){ const k = PAGS_LISTA.filter(x=>L[x]).length; c.textContent = k ? `✓ ${k}/${PAGS_LISTA.length} listas` : ''; }
+  if(c){ const k = PAGS_LISTA.filter(x=>_listaCompleta(L, x)).length; c.textContent = k ? `✓ ${k}/${PAGS_LISTA.length} listas` : ''; }
 }
 
 function toggleSidebar() {
@@ -8124,7 +8334,7 @@ function piezasObra(){
   const P = [];
   const add = (g, L, N) => { if(g.phi>0 && L>0.01 && N>0) P.push({...g, L:Math.round(L*1000)/1000, N}); };
   state.columnas.forEach(c=>{
-    const b = {item:'Columna', pag:'columnas', tabla:'tabla-columnas', denom:c.denom, nivel:c.nivel};
+    const b = {item:'Columna', pag:'columnas', tabla:'tabla-columnas', denom:c.denom, nivel:c.nivel, id:c.id, tb:'col-tbody'};
     [[c.phi,c.nBarras,'Ø1'],[c.phi2,c.n2,'Ø2'],[c.phi3,c.n3,'Ø3']].forEach(([p,nb,et])=>{
       if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(colAltHierro(c), p).lTramo, c.cantElem*nb);
     });
@@ -8135,7 +8345,7 @@ function piezasObra(){
   });
   [['vf','Viga'],['vd','Viga']].forEach(([t,lbl])=>{
     (t==='vf'?state.vigas_vf:state.vigas_vd).forEach(v=>{
-      const b = {item:lbl, pag:'vigas', tab:t, tabla:'tabla-vigas-'+t, denom:v.denom, nivel:t==='vd'?v.nivel:''};
+      const b = {item:lbl, pag:'vigas', tab:t, tabla:'tabla-vigas-'+t, denom:v.denom, nivel:t==='vd'?v.nivel:'', id:v.id, tb:t+'-tbody'};
       [[v.phi,v.nBarras,'Ø1'],[v.phi2,v.n2,'Ø2'],[v.phi3,v.n3,'Ø3']].forEach(([p,nb,et])=>{
         if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p).lTramo, nb);
       });
@@ -8144,11 +8354,11 @@ function piezasObra(){
     });
   });
   state.bases.forEach(bs=>{
-    const b = {item:'Base', pag:'bases', tabla:'tabla-bases', denom:bs.denom};
+    const b = {item:'Base', pag:'bases', tabla:'tabla-bases', denom:bs.denom, id:bs.id, tb:'bases-tbody'};
     baseBarras(bs).forEach(p=>add({...b, phi:p.phi, parte:'parrilla en '+p.dir}, p.L, p.N));
   });
   (state.losas_macizas||[]).forEach(l=>{
-    const b = {item:'Losa maciza', pag:'losas', tabla:'tabla-losas-macizas', denom:l.denom, nivel:l.nivel};
+    const b = {item:'Losa maciza', pag:'losas', tabla:'tabla-losas-macizas', denom:l.denom, nivel:l.nivel, id:l.id, tb:'losa-mac-tbody'};
     const nBX = Math.ceil(l.largo/(l.sepX/1000))+1, nBY = Math.ceil(l.ancho/(l.sepY/1000))+1;
     if(+l.phiX) add({...b, phi:+l.phiX, parte:'malla X'}, l.ancho, Math.round(l.cant*nBX*l.factor));
     if(+l.phiY) add({...b, phi:+l.phiY, parte:'malla Y'}, l.largo, Math.round(l.cant*nBY*l.factor));
@@ -8283,7 +8493,7 @@ function recortesObra(){
   });
   [['vf','Vigas VF/VA'],['vd','Vigas VD/VE/VC']].forEach(([t,lbl])=>{
     (t==='vf'?state.vigas_vf:state.vigas_vd).forEach(v=>{
-      const b = {item:lbl, pag:'vigas', tab:t, tabla:'tabla-vigas-'+t, denom:v.denom, nivel:t==='vd'?v.nivel:''};
+      const b = {item:lbl, pag:'vigas', tab:t, tabla:'tabla-vigas-'+t, denom:v.denom, nivel:t==='vd'?v.nivel:'', id:v.id, tb:t+'-tbody'};
       [[v.phi,v.nBarras,'Ø1'],[v.phi2,v.n2,'Ø2'],[v.phi3,v.n3,'Ø3']].forEach(([p,nb,et])=>{
         if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p), nb);
       });
@@ -8548,6 +8758,8 @@ function updateDashboard(){
   actualizarSupNiveles();
   renderTotFund();
   pintarMatHormigon();
+  renderResumenVF();
+  _selPanelesActualizar();
   setTxt('dash-sup',sup);
   // Nuevos stats de obra
   const prop = document.getElementById('obra-prop')?.value||'—';
@@ -9704,8 +9916,9 @@ let _saveTimer = null;
 let _dirty     = false;
 let _bootDone  = false;   // no guardar antes de que termine el init
 
-function scheduleAutosave(){
+function scheduleAutosave(ev){
   if(!_bootDone) return;
+  if(ev && ev.target && ev.target.classList && ev.target.classList.contains('fila-sel')) return;   // seleccionar filas no cambia la obra
   _dirty = true;
   marcarSucio();
   const si=document.getElementById('saveIndicator');
