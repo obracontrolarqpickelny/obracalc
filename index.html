@@ -1780,6 +1780,25 @@ input, select, textarea, button { font-family: inherit; }
 .nav-item.lista::after { content: '✓'; margin-left: 6px; color: var(--green); font-weight: 800; }
 .listas-cont { float: right; color: var(--green); font-weight: 700; letter-spacing: 0; text-transform: none; }
 
+/* Indicador de Drive: un solo indicador, como ObraControl.
+   Punto naranja latiendo sólo mientras sincroniza; después, tilde verde. */
+body.con-drive #saveIndicator { display: none !important; }
+#driveIndicator .save-dot { display: none; }
+#driveIndicator.sync-lat { color: var(--orange); font-weight: 700; }
+#driveIndicator.sync-lat #driveLabel { color: var(--orange); }
+#driveIndicator.sync-lat .save-dot { display: block; width: 8px; height: 8px; background: var(--orange); animation: pulse .8s infinite; }
+#driveIndicator.saved, #driveIndicator.saved #driveLabel { color: var(--green); font-weight: 700; }
+#driveIndicator.pending, #driveIndicator.pending #driveLabel { color: var(--orange); }
+#driveIndicator.error, #driveIndicator.error #driveLabel { color: var(--red); }
+@media (max-width: 768px) { body.con-drive #driveIndicator { display: flex !important; order: 2; padding: 0 2px; } }
+
+/* Contrapiso: otros sectores */
+.cp-sector { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--border); border-left: 4px solid var(--niv); border-radius: 8px; background: var(--surface2); }
+.cp-sec-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cp-sec-nombre { flex: 1; min-width: 0; font-weight: 700; font-size: 13px !important; }
+.cp-sector .cp-arm { flex-wrap: wrap; }
+.cp-sec-res { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -3011,9 +3030,10 @@ input, select, textarea, button { font-family: inherit; }
                     <input type="number" id="rf-ext-pb" value="123" class="input-editable" oninput="calcRevoques()"></div>
                 </div>
                 <div class="field-row">
-                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                  <div class="field"><div class="field-label">Cielorraso grueso <span class="field-hint">m²</span></div>
+                    <input type="number" id="crg-pb" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"><div class="field-label">Cielorraso fino <span class="field-hint">m²</span></div>
                     <input type="number" id="cr-pb" value="0" class="input-editable" oninput="calcRevoques()"></div>
-                  <div class="field"></div>
                 </div>
 
                 <div data-niv-bloque="PA">
@@ -3031,9 +3051,10 @@ input, select, textarea, button { font-family: inherit; }
                     <input type="number" id="rf-ext-pa" value="95.25" class="input-editable" oninput="calcRevoques()"></div>
                 </div>
                 <div class="field-row">
-                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                  <div class="field"><div class="field-label">Cielorraso grueso <span class="field-hint">m²</span></div>
+                    <input type="number" id="crg-pa" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"><div class="field-label">Cielorraso fino <span class="field-hint">m²</span></div>
                     <input type="number" id="cr-pa" value="0" class="input-editable" oninput="calcRevoques()"></div>
-                  <div class="field"></div>
                 </div>
 
                 </div>
@@ -3052,9 +3073,10 @@ input, select, textarea, button { font-family: inherit; }
                     <input type="number" id="rf-ext-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
                 </div>
                 <div class="field-row">
-                  <div class="field"><div class="field-label">Cielorraso <span class="field-hint">m²</span></div>
+                  <div class="field"><div class="field-label">Cielorraso grueso <span class="field-hint">m²</span></div>
+                    <input type="number" id="crg-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
+                  <div class="field"><div class="field-label">Cielorraso fino <span class="field-hint">m²</span></div>
                     <input type="number" id="cr-p3" value="0" class="input-editable" oninput="calcRevoques()"></div>
-                  <div class="field"></div>
                 </div>
                 </div>
                 <div id="rev-niv-extra"></div>
@@ -3094,7 +3116,13 @@ input, select, textarea, button { font-family: inherit; }
                         <td class="right rev-cons" id="rev-cons-fe">—</td>
                       </tr>
                       <tr>
-                        <td>Cielorraso</td>
+                        <td>Cielorraso grueso</td>
+                        <td class="rev-mez" id="rev-mez-cg">—</td>
+                        <td class="right"><input type="number" id="rev-esp-cg" value="1.5" step="0.5" min="0" class="rev-esp" oninput="calcRevoques()"></td>
+                        <td class="right rev-cons" id="rev-cons-cg">—</td>
+                      </tr>
+                      <tr>
+                        <td>Cielorraso fino</td>
                         <td class="rev-mez" id="rev-mez-cr">—</td>
                         <td class="right"><input type="number" id="rev-esp-cr" value="1" step="0.5" min="0" class="rev-esp" oninput="calcRevoques()"></td>
                         <td class="right rev-cons" id="rev-cons-cr">—</td>
@@ -3251,6 +3279,8 @@ input, select, textarea, button { font-family: inherit; }
                 </div>
                 <div id="cp-niv-extra"></div>
                 <button type="button" class="btn-niv-add" onclick="agregarNivel(event)">＋ Agregar nivel</button>
+                <div id="cp-sectores"></div>
+                <button type="button" class="btn-niv-add" style="margin-left:6px;" onclick="agregarCpSector()" title="Otro contrapiso en el mismo nivel u otro (ej: garaje armado)">＋ Agregar otro sector</button>
               </div>
               <div>
                 <div class="cp-horm">
@@ -3854,6 +3884,7 @@ const UC_DEF = [
   {k:'loseta',    grupo:'Losas y varios', mat:'Losetas 12 cm',         base:'unidad', pres:'unidad',cont:1},
   {k:'loseta16',  grupo:'Losas y varios', mat:'Losetas 16 cm',         base:'unidad', pres:'unidad',cont:1},
   {k:'malla',     grupo:'Losas y varios', mat:'Malla de losa',         base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
+  {k:'mallaSima', grupo:'Losas y varios', mat:'Malla SIMA (contrapiso)', base:'m²',   pres:'panel 2,40×6,00', cont:14.4},
   {k:'membrana',  grupo:'Losas y varios', mat:'Membrana asfáltica',    base:'m²',     pres:'rollo', cont:10},
   {k:'emulsion',  grupo:'Losas y varios', mat:'Emulsión asfáltica',    base:'litros', pres:'litros',cont:1,    sug:[1,4,18,20]},
   {k:'pomeca',    grupo:'Losas y varios', mat:'Pomeca',                base:'m³',     pres:'m³',    cont:1},
@@ -4951,7 +4982,7 @@ function nivelesTodos(){
 // Obras guardadas antes de esto: los niveles fijos con datos cargados quedan activos
 function inferirNivelesActivos(get){
   const val = id => parseFloat(get(id)) || 0;
-  const conDatos = suf => ['sup-','semi-','mamp-sup-','rg-int-','rg-ext-','rf-int-','rf-ext-','cr-','cp-sup-','carp-sup-'].some(p=>val(p+suf) > 0);
+  const conDatos = suf => ['sup-','semi-','mamp-sup-','rg-int-','rg-ext-','rf-int-','rf-ext-','cr-','crg-','cp-sup-','carp-sup-'].some(p=>val(p+suf) > 0);
   const filas = k => [...state.columnas, ...state.vigas_vd, ...state.losas, ...(state.losas_macizas||[])].some(o=>o.nivel===k);
   const cant = val('niveles');
   const act = [];
@@ -5081,7 +5112,7 @@ function construirNivelesExtra(){
     return cab(n)
       + `<div class="field-row">${campo('rg-int-'+s, v['rg-int-'+s], c, 'R. Grueso Int.', '', 0)}${campo('rg-ext-'+s, v['rg-ext-'+s], c, 'R. Grueso Ext.', '', 0)}</div>`
       + `<div class="field-row">${campo('rf-int-'+s, v['rf-int-'+s], c, 'R. Fino Int.', '', 0)}${campo('rf-ext-'+s, v['rf-ext-'+s], c, 'R. Fino Ext.', '', 0)}</div>`
-      + `<div class="field-row">${campo('cr-'+s, v['cr-'+s], c, 'Cielorraso', 'm²', 0)}<div class="field"></div></div>`; }).join(''); }
+      + `<div class="field-row">${campo('crg-'+s, v['crg-'+s], c, 'Cielorraso grueso', 'm²', 0)}${campo('cr-'+s, v['cr-'+s], c, 'Cielorraso fino', 'm²', 0)}</div>`; }).join(''); }
 
   const cp = document.getElementById('cp-niv-extra');
   if(cp){ const v = guardar(cp); cp.innerHTML = ex.map(n=>{ const s=n.suf, c='calcContrapiso()';
@@ -5794,7 +5825,8 @@ const MORTEROS = [
   {k:'ge',   lbl:'Revoque grueso exterior', sub:'arena gruesa',          sel:'rev-opc-ge',     tipos:['2','1','3']},
   {k:'fi',   lbl:'Revoque fino interior',   sub:'arena fina',            sel:'rev-opc-fi',     tipos:['2','1']},
   {k:'fe',   lbl:'Revoque fino exterior',   sub:'arena fina',            sel:'rev-opc-fe',     tipos:['2','1','3']},
-  {k:'cr',   lbl:'Cielorraso',              sub:'aplicado · arena fina', sel:'cr-mort-tipo',   tipos:['4','2','1']},
+  {k:'cg',   lbl:'Cielorraso grueso',       sub:'aplicado · arena gruesa', sel:'cg-mort-tipo', tipos:['2','1']},
+  {k:'cr',   lbl:'Cielorraso fino',         sub:'enlucido · yeso o arena fina', sel:'cr-mort-tipo', tipos:['4','2','1']},
 ];
 // Valores iniciales: reproducen los consumos que ya usaba la planilla
 // (mampostería 18,6 kg cem. alb. + 0,078 m³ arena por m² · grueso 7,5 kg/m²)
@@ -5804,6 +5836,7 @@ const MORT_DEF = {
   ge:   {tipo:'2', t2:{alb:1, are:5}, t1:{cem:0.25, cal:1, are:4}, t3:{cem:1, are:3}},
   fi:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}},
   fe:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}, t3:{cem:1, are:3}},
+  cg:   {tipo:'2', t2:{alb:1, are:4}, t1:{cem:0.25, cal:1, are:4}},
   cr:   {tipo:'4', t4:{ykg:YESO_KG_M2CM}, t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}},
 };
 
@@ -5814,7 +5847,8 @@ const MORT_SUG = {
   ge:   'Cem.+cal ¼:1:4 (opción 1)\nCem. alb. 1:5 (opción 2)\nCemento 1:3',
   fi:   'Cem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)',
   fe:   'Cem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)\nCemento 1:3',
-  cr:   'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2\nCem. alb. 1:3',
+  cg:   'Cem.+cal ¼:1:4 (opción 1)\nCem. alb. 1:4 (opción 2)',
+  cr:   'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)',
 };
 // Textos de ayuda memoria que traía la versión anterior (si no se editaron, se actualizan)
 const MORT_SUG_VIEJO = {
@@ -5823,7 +5857,8 @@ const MORT_SUG_VIEJO = {
   ge:   'Cem. alb. 1:4\nCem.+cal ¼:1:3\nCemento 1:3',
   fi:   'Cem. alb. 1:3\nCem.+cal ⅛:1:3\nCem.+cal ¼:1:3',
   fe:   'Cem. alb. 1:3\nCem.+cal ⅛:1:3\nCemento 1:3',
-  cr:   'Yeso 1000\nCem.+cal ⅛:1:3\nCem. alb. 1:3',
+  cr:   ['Yeso 1000\nCem.+cal ⅛:1:3\nCem. alb. 1:3', 'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2\nCem. alb. 1:3'],
+  cg:   [],
 };
 const _FRAC = {'⅛':0.125, '¼':0.25, '½':0.5, '¾':0.75};
 function _parteTxt(t){
@@ -6904,7 +6939,8 @@ function calcRevoques(){
     {k:'ge', lbl:'R. Grueso Ext.', grueso:true,  pre:'rg-ext', pctId:'rev-hid-ext', espDef:2.5},
     {k:'fi', lbl:'R. Fino Int.',   grueso:false, pre:'rf-int',                      espDef:0.5},
     {k:'fe', lbl:'R. Fino Ext.',   grueso:false, pre:'rf-ext',                      espDef:0.5},
-    {k:'cr', lbl:'Cielorraso',     grueso:false, pre:'cr',                          espDef:1},
+    {k:'cg', lbl:'Cielorraso grueso', grueso:true, pre:'crg',                        espDef:1.5},
+    {k:'cr', lbl:'Cielorraso fino', grueso:false, pre:'cr',                          espDef:1},
   ];
   const espM = t => {
     const el = document.getElementById('rev-esp-'+t.k);
@@ -6972,7 +7008,7 @@ function calcRevoques(){
     if(!niveles.length){ html += '<div class="rev-vacio">Sin superficie cargada</div>'; return; }
 
     niveles.forEach(nv=>{
-      const pctH = (t.grueso && nv.k==='pb') ? Math.min(Math.max(r(t.pctId),0),100)/100 : 0;
+      const pctH = (t.grueso && t.pctId && nv.k==='pb') ? Math.min(Math.max(r(t.pctId),0),100)/100 : 0;
       const supH = nv.sup * pctH;
       const supN = nv.sup - supH;
       const dN = dosMort(supN, m, e, !t.grueso);
@@ -7036,49 +7072,74 @@ function calcRevoques(){
 }
 
 // ── CONTRAPISO ──────────────────────────────────────────────────────────
+// Cada nivel tiene su contrapiso y su carpeta. Además se pueden agregar
+// "otros sectores" (state.cpSectores: garaje armado, galería…) en cualquier
+// nivel, con su espesor, su H° (o el mismo que el resto) y su armadura:
+// malla SIMA (paneles 2,40 × 6,00) o hierro cortado y atado.
+const MALLAS_SIMA = [
+  ['Q92',  'Q92 · Ø4,2 c/15'], ['Q131', 'Q131 · Ø5 c/15'], ['Q188', 'Q188 · Ø6 c/15'],
+  ['Q257', 'Q257 · Ø7 c/15'], ['Q335', 'Q335 · Ø8 c/15'],
+];
+const SIMA_SOLAPE = 1.10;   // +10 % de m² de malla por solapes entre paneles
 function calcContrapiso(){
   const ec = r('carp-esp')/100;
   const contTipo = document.getElementById('cont-horm-tipo')?.value||'obra';
-  const elab = contTipo!=='obra';
   const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
   // Carpeta (planilla): 8,75 kg de cemento y 0,05 m³ de arena por m² de 3,5 cm
   const CARP_CEM_KG_M3 = 8.75/0.035, CARP_ARENA_M3M3 = 0.05/0.035;
   // Contrapiso en obra: mezcla más pobre que el dosaje madre (60 % del cemento)
-  const niveles = nivelesArea('cp').map(nv=>{
-    const sup = r('cp-sup-'+nv.suf), esp = r('cp-esp-'+nv.suf)/100, supC = r('carp-sup-'+nv.suf);
-    const vol = sup*esp, volC = supC*ec;
-    const phi = parseFloat(document.getElementById('cp-arm-phi-'+nv.suf)?.value) || 0;
-    const sep = Math.max(parseFloat(document.getElementById('cp-arm-sep-'+nv.suf)?.value) || 150, 25);
-    const capas = +(document.getElementById('cp-arm-capas-'+nv.suf)?.value) || 1;
-    const mlArm = phi ? sup * (2 / (sep/1000)) * capas * 1.10 : 0;   // barras en X e Y, +10 % solapes
-    return {nv, sup, vol, supC, volC, phi, sep, capas, mlArm,
-      cemB25: (elab ? 0 : vol*hf.cemBol25*0.60) + volC*CARP_CEM_KG_M3/25,
-      arena:  (elab ? 0 : vol*hf.arena) + volC*CARP_ARENA_M3M3,
-      ripio:   elab ? 0 : vol*hf.piedra,
-      elab:    elab ? vol : 0};
+  const mat = (o, tipoH) => {
+    const el = tipoH!=='obra';
+    const mlArm = o.phi ? o.sup * (2 / (o.sep/1000)) * o.capas * 1.10 : 0;   // barras en X e Y, +10 % solapes
+    return {...o, tipoH, mlArm, vol:o.sup*o.esp, volC:o.supC*ec,
+      cemB25: (el ? 0 : o.sup*o.esp*hf.cemBol25*0.60) + o.supC*ec*CARP_CEM_KG_M3/25,
+      arena:  (el ? 0 : o.sup*o.esp*hf.arena) + o.supC*ec*CARP_ARENA_M3M3,
+      ripio:   el ? 0 : o.sup*o.esp*hf.piedra,
+      elab:    el ? o.sup*o.esp : 0};
+  };
+  const niveles = nivelesArea('cp').map(nv=>mat({nv,
+    sup: r('cp-sup-'+nv.suf), esp: r('cp-esp-'+nv.suf)/100, supC: r('carp-sup-'+nv.suf),
+    phi: parseFloat(document.getElementById('cp-arm-phi-'+nv.suf)?.value) || 0,
+    sep: Math.max(parseFloat(document.getElementById('cp-arm-sep-'+nv.suf)?.value) || 150, 25),
+    capas: +(document.getElementById('cp-arm-capas-'+nv.suf)?.value) || 1, mallaM2:0}, contTipo));
+  const sectores = (state.cpSectores||[]).map(s=>{
+    const arm = s.arm || 'no', sup = +s.sup || 0, capas = +s.capas || 1;
+    return mat({nv: nivelInfo(s.nivel||'PB'), sector:s, nombre: (s.nombre||'').trim() || 'Otro sector',
+      sup, esp: (+s.esp||0)/100, supC: +s.supC || 0, capas,
+      phi: arm==='hierro' ? (+s.phi || 6) : 0, sep: Math.max(+s.sep || 150, 25),
+      mallaM2: arm==='malla' ? sup * capas * SIMA_SOLAPE : 0, malla: s.malla || 'Q188'}, s.horm || contTipo);
   });
-  const T = k => niveles.reduce((s,x)=>s+x[k], 0);
+  const filasCp = [...niveles, ...sectores];
+  const T = k => filasCp.reduce((s,x)=>s+x[k], 0);
   const volCP = T('vol'), volCarp = T('volC');
   const cemCarp = volCarp*CARP_CEM_KG_M3/25, arCarp = volCarp*CARP_ARENA_M3M3;
   const cemCp = T('cemB25') - cemCarp, arCp = T('arena') - arCarp, ripCp = T('ripio');
+  const elabPorTipo = {};
+  filasCp.forEach(x=>{ if(x.elab>0) elabPorTipo[x.tipoH] = (elabPorTipo[x.tipoH]||0) + x.elab; });
+  const elabTot = T('elab'), volObra = volCP - elabTot;
 
-  // Armadura por Ø (va a Hierros del Resumen)
-  const porPhiCp = {};
-  niveles.forEach(x=>{ if(x.mlArm>0) porPhiCp[x.phi] = (porPhiCp[x.phi]||0) + x.mlArm; });
-  renderHormResult('cont', volCP, contTipo);
-  if(!elab) setTxt('cont-horm-result', `${n(volCP,2)} m³ de contrapiso en obra · mezcla con el 60 % del cemento del dosaje de Dosificaciones`);
+  // Armadura por Ø (va a Hierros del Resumen) y mallas SIMA por tipo (m²)
+  const porPhiCp = {}, mallas = {};
+  filasCp.forEach(x=>{
+    if(x.mlArm>0) porPhiCp[x.phi] = (porPhiCp[x.phi]||0) + x.mlArm;
+    if(x.mallaM2>0) mallas[x.malla] = (mallas[x.malla]||0) + x.mallaM2;
+  });
+  const volGral = filasCp.filter(x=>x.tipoH===contTipo).reduce((s,x)=>s+x.vol, 0);
+  renderHormResult('cont', volGral, contTipo);
+  if(contTipo==='obra') setTxt('cont-horm-result', `${n(volGral,2)} m³ de contrapiso en obra · mezcla con el 60 % del cemento del dosaje de Dosificaciones`);
 
   const fila = (mat, val, unit, estilo) => `<div class="dosaje-row"${estilo?` style="${estilo}"`:''}><div class="dosaje-material">${mat}</div><div class="dosaje-value">${val}</div><div class="dosaje-unit">${unit}</div></div>`;
   document.getElementById('cont-resultado').innerHTML = `
     <div class="field-label" style="margin-bottom:10px;">Contrapiso (${n(volCP,3)} m³) + Carpeta (${n(volCarp,3)} m³)</div>
-    ${elab
-      ? fila(`<span style="color:var(--blue);">H° elaborado ${contTipo}</span>`, `<span style="color:var(--blue);">${n(volCP,2)}</span>`, 'm³')
-      : fila('Cemento contrapiso', n(ucDesdeB25('portland',cemCp),1), ucLabel('portland'))
+    ${Object.entries(elabPorTipo).map(([t,v])=>fila(`<span style="color:var(--blue);">H° elaborado ${t}</span>`, `<span style="color:var(--blue);">${n(v,2)}</span>`, 'm³')).join('')}
+    ${(volObra>0.0005 || !elabTot)
+      ? fila('Cemento contrapiso', n(ucDesdeB25('portland',cemCp),1), ucLabel('portland'))
         + fila('Arena gruesa contrapiso', n(arCp,2), 'm³')
-        + fila('Ripio clasificado', n(ripCp,2), 'm³')}
+        + fila('Ripio clasificado', n(ripCp,2), 'm³') : ''}
     ${fila('Cemento carpeta', n(ucDesdeB25('portland',cemCarp),1), ucLabel('portland'), 'border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;')}
     ${fila('Arena carpeta', n(arCarp,2), 'm³')}
     ${Object.entries(porPhiCp).sort((a,b)=>+a[0]-+b[0]).map(([p,ml])=>fila(`Armadura Ø${String(p).replace('.',',')}`, n(ml,1)+' m', `${Math.ceil(ml/BARRA_COMERCIAL)} barras ${BARRA_COMERCIAL} m`)).join('')}
+    ${Object.entries(mallas).map(([t,m2])=>fila(`Malla SIMA ${t}`, n(m2,1)+' m²', `${n(ucDesdeBase('mallaSima', m2),1)} ${ucLabel('mallaSima')}`)).join('')}
     <div class="dosaje-row" style="border-top:1px solid var(--border2);background:var(--accent-dim2);border-radius:6px;padding:8px;margin-top:6px;">
       <div class="dosaje-material" style="font-weight:700;color:var(--text)">Cemento total</div>
       <div class="dosaje-value accent">${n(ucDesdeB25('portland',cemCp+cemCarp),1)}</div>
@@ -7088,30 +7149,102 @@ function calcContrapiso(){
   state.resultados=state.resultados||{};
   const contCemTotal = cemCp + cemCarp;
   const contArena    = arCp + arCarp;
-  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elab ? volCP : 0, tipo: elab ? contTipo : 'obra', porPhi: porPhiCp, niveles};
+  const tiposE = Object.keys(elabPorTipo);
+  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elabTot,
+    tipo: tiposE.length===1 ? tiposE[0] : (elabTot ? contTipo : 'obra'), elabPorTipo, porPhi: porPhiCp, mallas, niveles, sectores};
 
-  setTxt('cont-stat-elab',  elab ? n(volCP,2)+' m³ '+contTipo : '—');
+  setTxt('cont-stat-elab',  elabTot ? n(elabTot,2)+' m³ '+tiposE.join(' + ') : '—');
   setTxt('cont-stat-cem',   n(ucDesdeB25('portland', contCemTotal),1));
   document.querySelectorAll('.uc-port-unit').forEach(e=>{ e.textContent = ucLabel('portland'); });
   setTxt('cont-stat-arena', n(contArena,2));
   setTxt('cont-stat-ripio', n(ripCp,2));
+  sectores.forEach(x=>setTxt('cps-res-'+x.sector.id,
+    `${n(x.vol,2)} m³${x.elab ? ' H° '+x.tipoH : ' en obra'}`
+    + (x.mallaM2 ? ` · malla ${x.malla}: ${n(x.mallaM2,1)} m² ≈ ${Math.ceil(ucDesdeBase('mallaSima', x.mallaM2))} paneles` : '')
+    + (x.mlArm ? ` · Ø${String(x.phi).replace('.',',')}: ${n(x.mlArm,1)} m ≈ ${Math.ceil(x.mlArm/BARRA_COMERCIAL)} barras` : '')));
 
-  // Parciales por nivel
+  // Parciales por nivel (los otros sectores se suman a su nivel)
   const porNivel = {};
-  niveles.filter(x=>x.sup>0 || x.supC>0).forEach(x=>{ porNivel[x.nv.k] = x; });
+  filasCp.filter(x=>x.sup>0 || x.supC>0).forEach(x=>{
+    const p = porNivel[x.nv.k] || (porNivel[x.nv.k] = {sup:0, vol:0, supC:0, elab:0, cemB25:0, arena:0, ripio:0, mallaM2:0, arm:{}});
+    ['sup','vol','supC','elab','cemB25','arena','ripio','mallaM2'].forEach(k=>{ p[k] += x[k]||0; });
+    if(x.mlArm>0) p.arm[x.phi] = (p.arm[x.phi]||0) + x.mlArm;
+  });
   const cols = [
     {lbl:'Contrapiso (m²)', v:d=>d.sup,  fmt:fmtN(1)},
     {lbl:'Contrapiso (m³)', v:d=>d.vol,  fmt:fmtN(2)},
     {lbl:'Carpeta (m²)',    v:d=>d.supC, fmt:fmtN(1)},
   ];
-  if(elab) cols.push({lbl:`H° ${contTipo} (m³)`, v:d=>d.elab, fmt:v=>v>0?`<b style="color:var(--blue);">${n(v,2)}</b>`:'—'});
+  if(elabTot) cols.push({lbl:`H° elaborado (m³)`, v:d=>d.elab, fmt:v=>v>0?`<b style="color:var(--blue);">${n(v,2)}</b>`:'—'});
   cols.push({lbl:'Cemento', v:d=>d.cemB25*25, fmt:fmtUC('portland')});
   cols.push({lbl:'Arena (m³)', v:d=>d.arena, fmt:fmtN(2)});
-  if(!elab) cols.push({lbl:'Ripio (m³)', v:d=>d.ripio, fmt:fmtN(2)});
-  Object.keys(porPhiCp).sort((a,b)=>+a-+b).forEach(p=>cols.push({lbl:`Armadura Ø${String(p).replace('.',',')}<br><span class="niv-ayuda">barras ${BARRA_COMERCIAL} m</span>`, v:d=>d.phi==p?d.mlArm:0, fmt:fmtBar}));
+  if(ripCp>0.0005) cols.push({lbl:'Ripio (m³)', v:d=>d.ripio, fmt:fmtN(2)});
+  Object.keys(porPhiCp).sort((a,b)=>+a-+b).forEach(p=>cols.push({lbl:`Armadura Ø${String(p).replace('.',',')}<br><span class="niv-ayuda">barras ${BARRA_COMERCIAL} m</span>`, v:d=>d.arm[p]||0, fmt:fmtBar}));
+  if(Object.keys(mallas).length) cols.push({lbl:'Malla SIMA (m²)', v:d=>d.mallaM2, fmt:fmtN(1)});
   const pn = document.getElementById('cp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('cp', porNivel, cols);
   updateDashboard();
+}
+
+// Otros sectores de contrapiso (garaje armado, galería…)
+function agregarCpSector(){
+  const L = state.cpSectores = state.cpSectores || [];
+  const id = L.reduce((m,x)=>Math.max(m, x.id||0), 0) + 1;
+  L.push({id, nombre:'', nivel:'PB', sup:0, esp:12, supC:0, horm:'', arm:'malla', malla:'Q188', phi:6, sep:150, capas:1});
+  renderCpSectores(); calcContrapiso(); scheduleAutosave();
+  setTimeout(()=>document.querySelector(`[data-k="cps-${id}-nombre"]`)?.focus(), 30);
+}
+function quitarCpSector(id){
+  const s = (state.cpSectores||[]).find(x=>x.id===id);
+  if(!s) return;
+  if((+s.sup>0 || +s.supC>0) && !confirm(`¿Quitar el sector "${(s.nombre||'').trim() || 'Otro sector'}"?`)) return;
+  state.cpSectores = state.cpSectores.filter(x=>x.id!==id);
+  renderCpSectores(); calcContrapiso(); scheduleAutosave();
+}
+// rehacer = cambia lo que se ve (tipo de armadura, nivel, H°): se vuelve a dibujar
+function cpSecCambio(id, campo, val, rehacer){
+  const s = (state.cpSectores||[]).find(x=>x.id===id);
+  if(!s) return;
+  s[campo] = val;
+  if(rehacer) renderCpSectores();
+  calcContrapiso(); scheduleAutosave();
+}
+function renderCpSectores(){
+  const box = document.getElementById('cp-sectores');
+  if(!box) return;
+  const L = state.cpSectores || [];
+  const op = (lista, val) => lista.map(([v,l])=>`<option value="${v}" ${String(v)===String(val)?'selected':''}>${l}</option>`).join('');
+  const num = (s, campo, step, w) => `<input type="number" value="${s[campo] ?? ''}" step="${step}" min="0" data-k="cps-${s.id}-${campo}"
+      oninput="cpSecCambio(${s.id},'${campo}',+this.value)" class="input-editable" style="width:${w||'100%'};">`;
+  box.innerHTML = L.map(s=>{
+    const nv = nivelInfo(s.nivel||'PB'), arm = s.arm || 'no';
+    return `<div class="cp-sector" style="--niv:${nv.color||'var(--orange)'};">
+      <div class="cp-sec-cab">
+        <input type="text" class="cp-sec-nombre" value="${_escHtml(s.nombre||'')}" placeholder="Nombre del sector (ej: Garaje)" data-k="cps-${s.id}-nombre"
+          oninput="cpSecCambio(${s.id},'nombre',this.value)">
+        ${nivelSelectHTML(s.nivel||'PB', `cpSecCambio(${s.id},'nivel',this.value,true)`)}
+        <button type="button" class="niv-quitar" onclick="quitarCpSector(${s.id})" title="Quitar este sector">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><div class="field-label">Sup. contrapiso <span class="field-hint">m²</span></div>${num(s,'sup',0.5)}</div>
+        <div class="field"><div class="field-label">Espesor <span class="field-hint">cm</span></div>${num(s,'esp',1)}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><div class="field-label">Sup. carpeta <span class="field-hint">m² · 0 si no lleva</span></div>${num(s,'supC',0.5)}</div>
+        <div class="field"><div class="field-label">Hormigón</div>
+          <select onchange="cpSecCambio(${s.id},'horm',this.value)" style="width:100%;">${op([['','Igual que el resto'],['obra','H° hecho en obra'],['H8','Elaborado H8'],['H13','Elaborado H13'],['H17','Elaborado H17'],['H21','Elaborado H21'],['H25','Elaborado H25']], s.horm||'')}</select></div>
+      </div>
+      <div class="cp-arm">
+        <span class="cp-arm-lbl">Armadura</span>
+        <select onchange="cpSecCambio(${s.id},'arm',this.value,true)">${op([['no','Sin armadura'],['malla','Malla SIMA (paneles 2,40×6,00)'],['hierro','Hierro cortado y atado']], arm)}</select>
+        ${arm==='malla' ? `<select onchange="cpSecCambio(${s.id},'malla',this.value)">${op(MALLAS_SIMA, s.malla||'Q188')}</select>` : ''}
+        ${arm==='hierro' ? `<select onchange="cpSecCambio(${s.id},'phi',+this.value)">${op([['4.2','Ø 4,2'],[6,'Ø 6'],[8,'Ø 8'],[10,'Ø 10'],[12,'Ø 12']], s.phi||6)}</select>
+          <label>c/ ${num(s,'sep',25,'64px')} mm</label>` : ''}
+        ${arm!=='no' ? `<select onchange="cpSecCambio(${s.id},'capas',+this.value)">${op([[1,'Simple'],[2,'Doble']], s.capas||1)}</select>` : ''}
+      </div>
+      <div class="cp-sec-res" id="cps-res-${s.id}">—</div>
+    </div>`;
+  }).join('');
 }
 
 // ── LOSAS ────────────────────────────────────────────────────────────────
@@ -8208,7 +8341,7 @@ function updateDashboard(){
     Object.entries(res.bases?.byTipo||{}).forEach(([t,v])=>{byTipoAll[t]=(byTipoAll[t]||0)+v;});
     const cimT = res.cim?.hormTipo||'obra';
     byTipoAll[cimT] = (byTipoAll[cimT]||0) + (res.cim?.volHorm||0);
-    if(res.cont?.elaborado>0){ const ct=res.cont.tipo||'H17'; byTipoAll[ct]=(byTipoAll[ct]||0)+res.cont.elaborado; }
+    Object.entries(res.cont?.elabPorTipo || (res.cont?.elaborado>0 ? {[res.cont.tipo||'H17']:res.cont.elaborado} : {})).forEach(([t,v])=>{byTipoAll[t]=(byTipoAll[t]||0)+v;});
   Object.entries(res.losa?.byTipo||{}).forEach(([t,v])=>{byTipoAll[t]=(byTipoAll[t]||0)+v;});
     if(res.losaMac?.horm>0) byTipoAll['H17']=(byTipoAll['H17']||0)+res.losaMac.horm;
     const colors2 = {H8:'var(--text3)',H13:'var(--green)',H17:'var(--blue)',H21:'var(--accent)',H25:'var(--orange)',obra:'var(--purple)',mano:'var(--red)'};
@@ -8371,7 +8504,7 @@ function datosResumen(){
   const cimTipo = res.cim?.hormTipo||'obra';
   hormByTipo[cimTipo] = (hormByTipo[cimTipo]||0) + (res.cim?.volHorm||0);
   // Contrapiso
-  if(res.cont?.elaborado>0){ const ct=res.cont.tipo||'H17'; hormByTipo[ct] = (hormByTipo[ct]||0) + res.cont.elaborado; }
+  Object.entries(res.cont?.elabPorTipo || (res.cont?.elaborado>0 ? {[res.cont.tipo||'H17']:res.cont.elaborado} : {})).forEach(([t,v])=>{hormByTipo[t]=(hormByTipo[t]||0)+v;});
   // Capa de compresión de losas — sumar por tipo
   Object.entries(res.losa?.byTipo||{}).forEach(([t,v])=>{hormByTipo[t]=(hormByTipo[t]||0)+v;});
   // Losas macizas (H17)
@@ -8470,6 +8603,7 @@ function datosResumen(){
       U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
       U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, 1.12),
       U('Malla de losa','malla', (res.losa?.malla6||0)*14.4, 1.10),
+      ...Object.entries(res.cont?.mallas||{}).map(([t,m2])=>U('Malla SIMA '+t,'mallaSima', m2, 1, 'contrapiso · con solapes')),
       U('Membrana Asfáltica','membrana', membrana*10, 1.05),
       U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
       ...aisl,
@@ -8728,12 +8862,12 @@ const ITEM_MAT = [
   ['portland','Cemento Portland','portland'], ['cemAlb','Cemento Albañilería','cemAlb'], ['cal','Cal Hidratada Especial','cal'],
   ['yeso','Yeso','yeso'], ['H:','H° elaborado','hormElab'], ['hierro:','Hierro','hierro'],
   ['arenaG','Arena Gruesa','arenaG'], ['arenaF','Arena Fina','arenaF'], ['ripio','Ripio Clasificado','ripio'], ['piedra','Piedra Bola','piedra'],
-  ['lad:','Ladrillos','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'],
+  ['lad:','Ladrillos','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'], ['msima:','Malla SIMA','mallaSima'],
   ['membrana','Membrana Asfáltica','membrana'], ['emulsion','Emulsión Asfáltica','emulsion'], ['pomeca','Aislación (Pomeca)','pomeca'], ['perlita','Aislación (Perlita)','perlita'],
   ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
   ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
 ];
-const ITEM_INCR_FIJO = {loseta:1.12, loseta16:1.12, malla:1.10, membrana:1.05, emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
+const ITEM_INCR_FIJO = {'msima:':1, loseta:1.12, loseta16:1.12, malla:1.10, membrana:1.05, emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
 
 function materialesPorItem(){
   const pct = r('res-pct')/100 + 1, B = BARRA_COMERCIAL;
@@ -8811,8 +8945,15 @@ function materialesPorItem(){
   cpN.forEach(x=>{
     const it = nuevo(tit('Contrapiso y carpeta', x.nv.k, cpN.length>1));
     add(it,'portland',x.cemB25*25); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
-    if(x.elab>0) add(it,'H:'+(res.cont.tipo||'H17'), x.elab);
+    if(x.elab>0) add(it,'H:'+(x.tipoH||res.cont.tipo||'H17'), x.elab);
     if(x.mlArm>0) add(it,'hierro:'+x.phi, Math.ceil(x.mlArm/B)*B);
+  });
+  (res.cont?.sectores||[]).filter(x=>x.sup>0 || x.supC>0).forEach(x=>{
+    const it = nuevo(`Contrapiso · ${x.nombre} · ${x.nv.largo}`);
+    add(it,'portland',x.cemB25*25); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
+    if(x.elab>0) add(it,'H:'+x.tipoH, x.elab);
+    if(x.mlArm>0) add(it,'hierro:'+x.phi, Math.ceil(x.mlArm/B)*B);
+    if(x.mallaM2>0) add(it,'msima:'+x.malla, x.mallaM2);
   });
   // Losas (por nivel)
   const gl = grupos([...state.losas.map(l=>({...l, _t:'p'})), ...(state.losas_macizas||[]).map(l=>({...l, _t:'m'}))]);
@@ -8846,7 +8987,7 @@ function materialesPorItem(){
         const q = it.m[x];
         const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pct);
         const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
-                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : lbl;
+                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : key==='msima:' ? 'Malla SIMA '+x.slice(6) : lbl;
         filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f)});
       });
     });
@@ -9270,6 +9411,7 @@ function applySnapshot(snap, opts){
   state.nivelesActivos = Array.isArray(snap.nivelesActivos) ? snap.nivelesActivos : inferirNivelesActivos(id=>snap.fields?.[id]);
   state.murosExtra = Array.isArray(snap.murosExtra) ? snap.murosExtra : [];
   state.listas = (snap.listas && typeof snap.listas==='object') ? snap.listas : {};
+  state.cpSectores = Array.isArray(snap.cpSectores) ? snap.cpSectores : [];
   construirNivelesExtra();
 
   // Campos del formulario (sincrónico: el DOM estático ya existe)
@@ -9283,10 +9425,15 @@ function applySnapshot(snap, opts){
   // Ayuda memoria sin editar de la versión anterior → las dosificaciones corregidas
   Object.keys(MORT_SUG_VIEJO).forEach(k=>{
     const el = document.getElementById('mz-sug-'+k);
-    if(el && snap.fields && (snap.fields['mz-sug-'+k]==null || snap.fields['mz-sug-'+k]===MORT_SUG_VIEJO[k])) el.value = MORT_SUG[k];
+    if(el && snap.fields && (snap.fields['mz-sug-'+k]==null || [].concat(MORT_SUG_VIEJO[k]).includes(snap.fields['mz-sug-'+k]))) el.value = MORT_SUG[k];
   });
   // Yeso: antes se cargaba en kg por m³ (1000); ahora en kg por m² por cm
   { const y = document.getElementById('mz-cr-t4-ykg'); if(y && +y.value > 50) y.value = (+y.value===1000) ? YESO_KG_M2CM : +y.value/100; }
+  // Cielorraso grueso: las obras de antes no lo tenían
+  if(snap.fields && snap.fields['crg-pb']==null){
+    document.querySelectorAll('input[id^="crg-"]').forEach(el=>el.value = 0);
+    const e = document.getElementById('rev-esp-cg'); if(e) e.value = 1.5;
+  }
   // Semicubierta: antes era un único número → queda en PB
   if(snap.fields && snap.fields['semi-pb']==null){
     document.querySelectorAll('input[id^="semi-"]').forEach(el=>el.value = 0);
@@ -9308,7 +9455,7 @@ function applySnapshot(snap, opts){
 // Re-render + recálculo completo, sin toast
 function renderAll(){
   pintarListas();
-  renderMurosExtra();
+  renderMurosExtra(); renderCpSectores();
   renderColumnas(); renderVigas('vf'); renderVigas('vd');
   renderBases(); renderLosas(); renderLosasMacizas(); renderRecortes();
   calcHorm(); calcMortero(); calcColTotals(); calcVigaTotals();
@@ -9670,7 +9817,7 @@ async function abrirVersion(nombre, version){
 
 // Obra nueva vacía: sin elementos y con las superficies en cero; se conservan
 // las dosificaciones, espesores y porcentajes como punto de partida.
-const _CAMPOS_CANTIDAD = /^(sup-|semi-|mamp-sup-|rg-|rf-|cr-(pb|pa|p3)$|cp-sup-|carp-sup-|techo-sup$|cim-largo$)/;
+const _CAMPOS_CANTIDAD = /^(sup-|semi-|mamp-sup-|rg-|rf-|crg?-(pb|pa|p3|n\d+)$|cp-sup-|carp-sup-|techo-sup$|cim-largo$)/;
 function snapshotVacio(nombre){
   const s = captureSnapshot();
   Object.keys(s.fields).forEach(id=>{
@@ -9680,7 +9827,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {};
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = [];
   return s;
 }
 
@@ -9917,6 +10064,7 @@ function captureSnapshot(){
     nivelesActivos: state.nivelesActivos||[],
     murosExtra: state.murosExtra||[],
     listas: state.listas||{},
+    cpSectores: state.cpSectores||[],
     nivSel: state.nivSel||{},
   };
 }
@@ -10504,14 +10652,18 @@ function actualizarIndicadorDrive(){
   const lbl = document.getElementById('driveLabel');
   if(!el || !DRIVE_URL){ if(el) el.style.display='none'; return; }
   el.style.display = 'flex';
-  el.classList.remove('saving','saved','error');
-  const textos = {idle:'☁ Drive', pending:'☁ sin subir', saving:'☁ sincronizando…', saved:'☁ ✓ sincronizado', error:'☁ sin conexión'};
-  lbl.textContent = textos[_driveStatus] || '☁ Drive';
-  if(_driveStatus==='saving') el.classList.add('saving');
-  else if(_driveStatus==='saved') el.classList.add('saved');
-  else if(_driveStatus==='error') el.classList.add('error');
-  else if(_driveStatus==='pending') el.classList.add('pending');
-  el.title = {saved:'Lo guardado está en Google Drive', pending:'Hay cambios que todavía no se subieron — tocá 💾 Guardar', saving:'Subiendo a Google Drive…', error:'No se pudo subir a Drive'}[_driveStatus] || 'Respaldo en Google Drive';
+  document.body.classList.add('con-drive');   // un solo indicador, como ObraControl
+  el.classList.remove('idle','saving','saved','error','pending','sync-lat');
+  // Un cambio sin subir se sube solo a los 3 s: se ve igual que "sincronizando".
+  // Sólo la obra que nunca se guardó con nombre queda esperando 💾 Guardar.
+  let st = _driveStatus;
+  const sinNombre = st==='pending' && !_activa;
+  if(st==='pending' && !sinNombre) st = 'saving';
+  const textos = {idle:'☁ Drive', saving:'sincronizando…', saved:'✓ guardado en Drive', error:'⚠ sin conexión · guardado en el equipo'};
+  lbl.textContent = sinNombre ? '☁ sin guardar en Drive' : (textos[st] || '☁ Drive');
+  el.classList.add(sinNombre ? 'pending' : st==='saving' ? 'sync-lat' : st);
+  el.title = sinNombre ? 'La obra todavía no tiene nombre — tocá 💾 Guardar'
+    : ({saved:'Lo guardado está en Google Drive', saving:'Subiendo a Google Drive…', error:'No se pudo subir a Drive — quedó guardado en este equipo y se reintenta con el próximo cambio'}[st] || 'Respaldo en Google Drive');
 }
 
 // Versión del script de Drive: 2 = versiones + historial. Con el script viejo (1)
