@@ -1830,6 +1830,17 @@ tr.fila-hecha > td:first-child { box-shadow: inset 3px 0 0 var(--green); }
 td.fila-acc { white-space: nowrap; }
 td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 
+/* Asistente: se arrastra */
+.ia-fab { touch-action: none; user-select: none; }
+.ia-fab.moviendo { cursor: grabbing; transform: scale(1.06); box-shadow: 0 10px 28px rgba(0,0,0,.28); transition: none; }
+/* Barra de abajo: todas las pestañas, se desplaza de costado */
+.bottom-nav-inner { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.bn-item { flex: 0 0 auto; min-width: 66px; scroll-snap-align: center; position: relative; }
+.bn-item.bn-acc { color: var(--blue); }
+.bn-item.lista::after { content: '✓'; position: absolute; top: 3px; right: 8px; font-size: 10px; font-weight: 900; color: var(--green); }
+.bottom-nav::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 18px; pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--surface)); }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -1970,9 +1981,15 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 
 <!-- BOTTOM NAV (mobile) -->
 <div class="bottom-nav">
-  <div class="bottom-nav-inner">
+  <div class="bottom-nav-inner" id="bnInner">
     <div class="bn-item active" onclick="showPage('dashboard')" data-page="dashboard">
       <div class="bn-icon">⬛</div><div class="bn-label">Inicio</div>
+    </div>
+    <div class="bn-item" onclick="showPage('obra')" data-page="obra">
+      <div class="bn-icon">🏗</div><div class="bn-label">Obra</div>
+    </div>
+    <div class="bn-item" onclick="showPage('hormigon')" data-page="hormigon">
+      <div class="bn-icon">🧪</div><div class="bn-label">Dosif.</div>
     </div>
     <div class="bn-item" onclick="showPage('columnas')" data-page="columnas">
       <div class="bn-icon">▮</div><div class="bn-label">Columnas</div>
@@ -1980,14 +1997,35 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
     <div class="bn-item" onclick="showPage('vigas')" data-page="vigas">
       <div class="bn-icon">━</div><div class="bn-label">Vigas</div>
     </div>
+    <div class="bn-item" onclick="showPage('bases')" data-page="bases">
+      <div class="bn-icon">◾</div><div class="bn-label">Bases</div>
+    </div>
     <div class="bn-item" onclick="showPage('mamposteria')" data-page="mamposteria">
       <div class="bn-icon">🧱</div><div class="bn-label">Mamp.</div>
+    </div>
+    <div class="bn-item" onclick="showPage('revoques')" data-page="revoques">
+      <div class="bn-icon">🖼</div><div class="bn-label">Revoques</div>
+    </div>
+    <div class="bn-item" onclick="showPage('contrapiso')" data-page="contrapiso">
+      <div class="bn-icon">▱</div><div class="bn-label">Contrap.</div>
+    </div>
+    <div class="bn-item" onclick="showPage('losas')" data-page="losas">
+      <div class="bn-icon">⬜</div><div class="bn-label">Losas</div>
     </div>
     <div class="bn-item" onclick="showPage('recortes')" data-page="recortes">
       <div class="bn-icon">✂</div><div class="bn-label">Recortes</div>
     </div>
+    <div class="bn-item" onclick="showPage('unidades')" data-page="unidades">
+      <div class="bn-icon">⚖</div><div class="bn-label">Unidades</div>
+    </div>
     <div class="bn-item" onclick="showPage('resumen')" data-page="resumen">
       <div class="bn-icon">📋</div><div class="bn-label">Resumen</div>
+    </div>
+    <div class="bn-item bn-acc" onclick="openProyectos()" title="Obras guardadas: abrir, traer de Drive, historial">
+      <div class="bn-icon">📂</div><div class="bn-label">Obras</div>
+    </div>
+    <div class="bn-item bn-acc" onclick="revisarDrive(true)" title="Cargar desde Drive: trae los últimos cambios" id="bnDrive">
+      <div class="bn-icon">☁⤓</div><div class="bn-label">Drive</div>
     </div>
   </div>
 </div>
@@ -2089,11 +2127,12 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
         <div class="save-dot"></div>
         <span id="saveLabel">guardado</span>
       </div>
-      <div class="save-indicator" id="driveIndicator" style="display:none;" title="Respaldo en Google Drive">
+      <div class="save-indicator" id="driveIndicator" style="display:none;cursor:pointer;" title="Respaldo en Google Drive" onclick="revisarDrive(true)">
         <div class="save-dot"></div>
         <span id="driveLabel">☁ Drive</span>
       </div>
       <button class="btn btn-secondary tb-desk" onclick="recalcAllUI()" style="padding:7px 10px;" title="Recalcular todo">⟳</button>
+      <button class="btn btn-secondary tb-desk" onclick="revisarDrive(true)" style="padding:7px 10px;" title="Cargar desde Drive: trae los últimos cambios (por ejemplo, los hechos desde el celular)">☁⤓</button>
       <!-- Grupo backup rápido -->
       <button class="btn btn-secondary tb-desk" onclick="backupRapido()"
         style="padding:7px 12px;border-color:var(--green);color:var(--green);"
@@ -3805,7 +3844,7 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 </div>
 
 <!-- ═══ ASISTENTE IA ═══ -->
-<button id="iaFab" class="ia-fab" onclick="toggleIaPanel()" title="Asistente de obra">
+<button id="iaFab" class="ia-fab" title="Asistente de obra — mantené apretado y arrastralo para moverlo">
   <span class="ia-fab-icon">🤖</span><span class="ia-fab-label">Asistente</span>
 </button>
 
@@ -5633,7 +5672,7 @@ function toggleLista(){
 }
 function pintarListas(){
   const L = state.listas || {};
-  document.querySelectorAll('.nav-item').forEach(it=>{
+  document.querySelectorAll('.nav-item, .bn-item').forEach(it=>{
     const m = (it.getAttribute('onclick')||'').match(/showPage\('([^']+)'\)/);
     it.classList.toggle('lista', !!(m && L[m[1]]));
   });
@@ -9478,6 +9517,10 @@ const _showPagePatched = (id) => {
   document.querySelectorAll('.bn-item').forEach(b=>{
     b.classList.toggle('active', b.dataset.page===id);
   });
+  // La pestaña abierta queda a la vista en la barra de abajo
+  const bi = document.getElementById('bnInner'), ba = bi?.querySelector('.bn-item.active');
+  if(bi && ba && bi.scrollWidth > bi.clientWidth)
+    bi.scrollTo({left: ba.offsetLeft - bi.clientWidth/2 + ba.offsetWidth/2, behavior:'smooth'});
 };
 // override
 window.showPage = _showPagePatched;
@@ -9522,7 +9565,17 @@ async function autoSync(){
     if(!_guardarEntrada(_activa.nombre, _activa.version, snap)) return;
     saveAll(); marcarGuardado();
     if(DRIVE_URL){
+      const txt = _sinTs(JSON.stringify(snap));
+      if(txt === _ultimoSubido && _driveStatus!=='error'){ _driveStatus = 'saved'; actualizarIndicadorDrive(); return; }
       avisoSync('sync', 'Sincronizando con Drive…');
+      // ¿Alguien cambió la obra en Drive (celular / PC) desde la última vez?
+      const k = _syncKey(_activa.nombre, _activa.version), conocido = _syncTs()[k];
+      if(conocido != null){
+        const rem = await _driveLoad(_activa.nombre, _activa.version);
+        if(rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts){
+          if(confirm(MSJ_CONFLICTO)){ _aplicarRemoto(_activa.nombre, _activa.version, rem); avisoSync('ok', 'Traídos los cambios del otro equipo'); return; }
+        }
+      }
       const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
       if(ok) tildeSync('Guardado en Drive');
       else avisoSync('err', 'Sin conexión — quedó guardado en este equipo');
@@ -10234,6 +10287,7 @@ async function traerDeDrive(nombre, version){
   const data = await _driveLoad(nombre, version);
   if(!data){ showToast('⚠️ No se pudo traer la obra de Drive','',3000); return; }
   _guardarEntrada(nombre, version, data);
+  _marcarSincronizado(nombre, version, data);
   renderProjLista(); cargarListaDrive();
   if(_esActiva(nombre, version) || confirm(`"${nombre} · ${version}" quedó guardada en este navegador. ¿Abrirla ahora?`)){
     if(_esActiva(nombre, version)){ applySnapshot(data); saveAll(); marcarGuardado(); }
@@ -10633,6 +10687,47 @@ function iaEliminar({tipo, denom}){
   return {ok:true, tipo, denom:removido.denom};
 }
 
+// Botón flotante del asistente: se arrastra a cualquier lugar de la pantalla y
+// queda ahí (se recuerda en este equipo). Un toque sin mover abre el chat.
+(function(){
+  const fab = document.getElementById('iaFab');
+  if(!fab) return;
+  const KEY = 'obracalc_iafab';
+  let pos = null, d = null, movido = false;
+  try{ pos = JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){}
+  const aplicar = () => {
+    if(!pos) return;
+    const w = fab.offsetWidth || 60, h = fab.offsetHeight || 46;
+    const abajo = (document.querySelector('.bottom-nav')?.offsetHeight || 0) + 8;
+    const x = Math.min(Math.max(pos.x, 6), window.innerWidth - w - 6);
+    const y = Math.min(Math.max(pos.y, 6), window.innerHeight - h - abajo);
+    Object.assign(fab.style, {left:x+'px', top:y+'px', right:'auto', bottom:'auto'});
+  };
+  requestAnimationFrame(aplicar);
+  window.addEventListener('resize', aplicar);
+  fab.addEventListener('pointerdown', e=>{
+    if(e.button!==0) return;
+    const b = fab.getBoundingClientRect();
+    d = {dx:e.clientX-b.left, dy:e.clientY-b.top, x0:e.clientX, y0:e.clientY};
+    movido = false;
+    try{ fab.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  fab.addEventListener('pointermove', e=>{
+    if(!d) return;
+    if(!movido && Math.hypot(e.clientX-d.x0, e.clientY-d.y0) < 6) return;
+    movido = true; fab.classList.add('moviendo');
+    pos = {x:e.clientX-d.dx, y:e.clientY-d.dy}; aplicar();
+  });
+  const fin = () => {
+    if(!d) return;
+    d = null; fab.classList.remove('moviendo');
+    if(movido){ pos = {x:parseFloat(fab.style.left)||0, y:parseFloat(fab.style.top)||0}; try{ localStorage.setItem(KEY, JSON.stringify(pos)); }catch(_){} }
+  };
+  fab.addEventListener('pointerup', fin);
+  fab.addEventListener('pointercancel', fin);
+  fab.addEventListener('click', ()=>{ if(movido){ movido = false; return; } toggleIaPanel(); });
+})();
+
 // ── UI: panel, mensajes, acciones ───────────────────────────────────────
 function toggleIaPanel(){
   const p = document.getElementById('iaPanel');
@@ -10884,6 +10979,7 @@ function actualizarIndicadorDrive(){
   el.classList.add(sinNombre ? 'pending' : st==='saving' ? 'sync-lat' : st);
   el.title = sinNombre ? 'La obra todavía no tiene nombre — tocá 💾 Guardar'
     : ({saved:'Lo guardado está en Google Drive', saving:'Subiendo a Google Drive…', error:'No se pudo subir a Drive — quedó guardado en este equipo y se reintenta con el próximo cambio'}[st] || 'Respaldo en Google Drive');
+  el.title += ' — tocá para traer lo último de Drive';
 }
 
 // Versión del script de Drive: 2 = versiones + historial. Con el script viejo (1)
@@ -10950,14 +11046,95 @@ async function driveSyncAhora(obraName, version, snap, hito, silencioso){
   if(!DRIVE_URL || !obraName) return false;
   version = version || (_activa && _activa.nombre===obraName ? _activa.version : V_PRINCIPAL);
   _driveStatus = 'saving'; actualizarIndicadorDrive();
-  const ok = await _driveSave(obraName, version, snap || captureSnapshot(), hito);
+  const data = snap || captureSnapshot();
+  const ok = await _driveSave(obraName, version, data, hito);
   _driveStatus = ok ? 'saved' : 'error'; actualizarIndicadorDrive();
+  if(ok) _marcarSincronizado(obraName, version, data);
   if(ok){ try{ localStorage.setItem('obracalc_drive_ok', JSON.stringify({nombre:obraName, version})); }catch(_){} }
   else if(!silencioso) showToast('⚠️ Quedó guardada en este navegador, pero no se pudo subir a Drive','',4000);
   return ok;
 }
 
 document.addEventListener('DOMContentLoaded', actualizarIndicadorDrive);
+
+// ── SINCRONIZACIÓN ENTRE EQUIPOS (celular ⇄ PC) ──────────────────────────
+// Cada equipo sube sus cambios solo (autoSync) y cada 30 s — y al volver a la
+// app — mira si en Drive hay algo distinto de lo último que subió o trajo. Si
+// lo hay y acá no hay cambios sin subir, lo trae solo. Si hay cambios en los
+// dos lados, pregunta. ☁⤓ (o tocar el indicador de Drive) fuerza la carga.
+// Se compara el "sello" (ts) de lo que está en Drive con el último conocido,
+// no con el reloj de cada equipo: así no importa si la hora difiere.
+const SYNC_TS_KEY = 'obracalc_sync_ts';
+const MSJ_CONFLICTO = 'Esta obra también se modificó desde otro equipo (celular o PC) y esos cambios todavía no están acá.\n\n'
+  + 'Aceptar: traer lo de Drive (se pierden los cambios de este equipo que no se subieron).\n'
+  + 'Cancelar: quedarse con lo de este equipo (se sube y reemplaza lo de Drive).';
+let _ultimoSubido = null, _pullEnCurso = false, _ultimoPull = 0;
+const _syncKey = (nombre, version) => nombre + '|' + (version || V_PRINCIPAL);
+function _syncTs(){ try{ return JSON.parse(localStorage.getItem(SYNC_TS_KEY)||'{}') || {}; }catch(_){ return {}; } }
+function _marcarSincronizado(nombre, version, data){
+  if(!data) return;
+  try{ const m = _syncTs(); m[_syncKey(nombre, version)] = data.ts || 0; localStorage.setItem(SYNC_TS_KEY, JSON.stringify(m)); }catch(_){}
+  if(_esActiva(nombre, version)) _ultimoSubido = _sinTs(JSON.stringify(data));
+}
+function _editando(){
+  const a = document.activeElement;
+  return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest('.main, .ia-panel'));
+}
+// Pone en pantalla lo que vino de Drive sin cambiar de pestaña ni de lugar
+function _aplicarRemoto(nombre, version, rem){
+  const pag = paginaActual(), main = document.querySelector('.main');
+  const sc = main ? main.scrollTop : 0, wy = window.scrollY;
+  clearTimeout(_autoSyncTimer);
+  applySnapshot(rem);
+  _guardarEntrada(nombre, version, rem);
+  saveAll(); marcarGuardado();
+  clearTimeout(_autoSyncTimer);
+  _marcarSincronizado(nombre, version, rem);
+  _ultimoSubido = _sinTs(JSON.stringify(captureSnapshot()));
+  _driveStatus = 'saved'; actualizarIndicadorDrive();
+  if(paginaActual()!==pag) showPage(pag);
+  if(main) main.scrollTop = sc;
+  window.scrollTo(0, wy);
+  if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
+}
+async function revisarDrive(forzar){
+  if(!DRIVE_URL) return;
+  if(!_activa){ if(forzar){ showToast('Primero guardá la obra con nombre (💾 Guardar) o abrila desde 📂 Obras','',3500); } return; }
+  if(_pullEnCurso || (_autoSyncEnCurso && !forzar)) return;
+  if(!forzar && (document.hidden || Date.now() - _ultimoPull < 10000)) return;
+  _pullEnCurso = true; _ultimoPull = Date.now();
+  const {nombre, version} = _activa;
+  try{
+    if(forzar) avisoSync('sync', 'Cargando desde Drive…');
+    const rem = await _driveLoad(nombre, version);
+    if(!_esActiva(nombre, version)) return;                 // mientras tanto se abrió otra obra
+    if(!rem){ if(forzar) avisoSync('err', 'No se pudo leer Drive — revisá la conexión'); return; }
+    const k = _syncKey(nombre, version), conocido = _syncTs()[k];
+    const loc = _entrada(nombre, version);
+    const distinto = conocido != null ? (rem.ts||0) !== conocido : (rem.ts||0) > (loc?.data?.ts || 0);
+    const pendientes = _dirty || _projSucio || ['error','pending','saving'].includes(_driveStatus);
+    if(!distinto){
+      if(conocido == null && rem.ts) _marcarSincronizado(nombre, version, rem);
+      if(!forzar) return;
+      if(!pendientes){ avisoSync('ok', 'Ya tenés lo último de Drive'); return; }
+      if(!confirm('¿Cargar lo que está en Drive?\n\nSe pierden los cambios de este equipo que todavía no se subieron.')){ document.getElementById('sync-ok')?.classList.remove('vis'); return; }
+    } else if(pendientes){
+      if(!confirm(MSJ_CONFLICTO)){
+        _marcarSincronizado(nombre, version, rem); _ultimoSubido = null;   // gana lo de acá: se sube
+        document.getElementById('sync-ok')?.classList.remove('vis');
+        programarAutoSync(); return;
+      }
+    } else if(!forzar && _editando()){
+      _ultimoPull = 0; setTimeout(()=>revisarDrive(false), 5000); return;   // no cambiar la casilla que estás escribiendo
+    }
+    _aplicarRemoto(nombre, version, rem);
+    avisoSync('ok', forzar ? 'Cargado desde Drive' : 'Actualizado con los cambios del otro equipo');
+  } finally { _pullEnCurso = false; }
+}
+setInterval(()=>revisarDrive(false), 30000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) revisarDrive(false); });
+window.addEventListener('focus', ()=>revisarDrive(false));
+document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>revisarDrive(false), 2500));
 </script>
 </body>
 </html>
