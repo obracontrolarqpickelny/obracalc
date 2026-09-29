@@ -1794,8 +1794,11 @@ body.con-drive #saveIndicator { display: none !important; }
 
 /* Contrapiso: otros sectores */
 .cp-sector { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--border); border-left: 4px solid var(--niv); border-radius: 8px; background: var(--surface2); }
-.cp-sec-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.cp-sec-nombre { flex: 1; min-width: 0; font-weight: 700; font-size: 13px !important; }
+.cp-sec-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.cp-sec-nombre { flex: 1 1 240px; min-width: 200px; font-weight: 700; font-size: 13px !important; }
+/* el selector de nivel viene con width:100% (lo usan las tablas): acá va al lado
+   del nombre, así que se ajusta a su contenido y no lo aplasta */
+.cp-sec-cab .nivel-select { flex: 0 0 auto; width: auto !important; margin-top: 0; font-size: 11px !important; padding: 4px 8px !important; }
 .cp-sector .cp-arm { flex-wrap: wrap; }
 .cp-sec-res { font-size: 11px; color: var(--text2); margin-top: 6px; }
 
