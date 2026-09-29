@@ -10241,7 +10241,7 @@ function renderProjLista(){
     const d0 = vs[0].data?.fields||{};
     const cols = vs[0].data?.columnas?.length||0, vigs=(vs[0].data?.vigas_vf?.length||0)+(vs[0].data?.vigas_vd?.length||0);
     return `<div class="obra-grupo${_activa&&_activa.nombre===nom?' act':''}">
-      <div class="obra-grupo-tit">🏗 ${obraTituloHTML(d0, nom)} <span>· ${cols} col · ${vigs} vig</span></div>
+      <div class="obra-grupo-tit">🏗 ${obraTituloHTML(d0, nom)} <span>· ${cols} col · ${vigs} vig${(d0['obra-prop']||'').trim() && (d0['obra-prop']||'').trim()!==nom ? ` · guardada como «${_escHtml(nom)}»` : ''}</span></div>
       ${vs.map(p=>{
         const v = _ver(p), act = _esActiva(nom, v);
         return `<div class="obra-ver${act?' act':''}">
@@ -10267,8 +10267,16 @@ async function cargarListaDrive(){
   const obras = await _driveList();
   if(!obras){ box.innerHTML = '<div class="obras-vacio">No se pudo conectar con Drive. Revisá la conexión y volvé a abrir 🏗 Obras.</div>'; return; }
   if(!obras.length){ box.innerHTML = '<div class="obras-vacio">Todavía no hay obras en Drive. Se suben solas al tocar 💾 Guardar.</div>'; return; }
-  box.innerHTML = obras.map(o=>`<div class="obra-grupo">
-      <div class="obra-grupo-tit">☁ ${_escHtml(o.nombre)}</div>
+  // Drive puede tener dos carpetas con el mismo nombre (guardados simultáneos
+  // con el script viejo): se muestran una sola vez
+  const unicas = [];
+  obras.forEach(o=>{
+    const u = unicas.find(x=>x.nombre===o.nombre);
+    if(!u) unicas.push({nombre:o.nombre, versiones:[...(o.versiones||[{nombre:V_PRINCIPAL}])]});
+    else (o.versiones||[]).forEach(v=>{ if(!u.versiones.some(x=>x.nombre===v.nombre)) u.versiones.push(v); });
+  });
+  box.innerHTML = unicas.map((o,i)=>`<div class="obra-grupo">
+      <div class="obra-grupo-tit" data-drive-i="${i}">☁ ${_escHtml(o.nombre)}</div>
       ${(o.versiones||[{nombre:V_PRINCIPAL}]).map(v=>{
         const loc = _entrada(o.nombre, v.nombre);
         const tsDrive = v.actualizado ? new Date(v.actualizado).getTime() : 0;
@@ -10279,7 +10287,20 @@ async function cargarListaDrive(){
         return `<div class="obra-ver"><div class="obra-ver-info"><b>${_escHtml(v.nombre)}</b><span>${tsDrive?_fechaCorta(tsDrive)+' · ':''}${estado}</span></div><div class="proj-actions">${btn}</div></div>`;
       }).join('')}
     </div>`).join('');
+  // En Drive la carpeta lleva el nombre con que se guardó la obra (en obras
+  // viejas, el tipo: "VIVIENDA UNIFAMILIAR"). Se trae cada una para mostrar
+  // el propietario, igual que en la lista de este equipo.
+  unicas.forEach(async (o, i)=>{
+    const data = _driveTitulos[o.nombre] || await _driveLoad(o.nombre, V_PRINCIPAL);
+    if(!data?.fields) return;
+    _driveTitulos[o.nombre] = {fields: data.fields};
+    const el = box.querySelector(`[data-drive-i="${i}"]`);
+    const prop = (data.fields['obra-prop']||'').trim();
+    if(el) el.innerHTML = `☁ ${obraTituloHTML(data.fields, o.nombre)}`
+      + (prop && prop!==o.nombre ? ` <span>· guardada como «${_escHtml(o.nombre)}»</span>` : '');
+  });
 }
+const _driveTitulos = {};
 
 async function traerDeDrive(nombre, version){
   if(_entrada(nombre, version) && !confirm(`¿Reemplazar "${nombre} · ${version}" de este navegador por la de Drive?`)) return;
