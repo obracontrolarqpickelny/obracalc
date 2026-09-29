@@ -1845,6 +1845,22 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 .obra-renombrar { margin-left: 8px; padding: 2px 8px !important; font-size: 11px !important; vertical-align: middle; }
 .obra-renombrada { opacity: .55; }
 
+/* Materiales del hormigón (debajo de los m³) */
+.horm-mat { margin-top: 10px; }
+.horm-mat-card { margin-bottom: 16px; padding: 0; }
+.horm-mat-card .horm-mat { margin: 0; padding: 6px 14px 10px; background: var(--surface2); }
+.hm-tot { margin-left: auto; font-weight: 800; color: var(--blue); font-size: 13px; }
+.hm-tabla { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'DM Sans', sans-serif; }
+.hm-tabla td { padding: 4px 4px; border-bottom: 1px solid var(--border); color: var(--text2); }
+.hm-tabla td:nth-child(2) { font-weight: 700; color: var(--text); white-space: nowrap; }
+.hm-tabla .hm-com { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.hm-tabla tr.hm-elab td { color: var(--blue); }
+.hm-tabla tr.hm-sub td { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); font-weight: 700; padding-top: 8px; }
+.hm-tabla tr.hm-acc td { font-size: 11px; color: var(--text3); }
+.hm-tabla tr:last-child td { border-bottom: none; }
+.hm-vacio { font-size: 11px; color: var(--text3); }
+.stat .horm-mat { border-top: 1px solid var(--border); padding-top: 6px; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2487,6 +2503,7 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
             <div class="stat-label">Hormigón columnas</div>
             <div class="stat-value" id="col-stat-horm">—</div>
             <div class="stat-unit">m³ total</div>
+            <div class="horm-mat" id="col-horm-mat"></div>
           </div>
           <div class="card" style="padding:0;">
             <div class="card-header" style="padding:10px 14px;">
@@ -4593,6 +4610,78 @@ function renderHormResult(prefix, vol_m3, tipo){
       ${m.ripio.toFixed(2)} m³ ripio</span>`;
   }
   return m;
+}
+
+// ── MATERIALES DEL HORMIGÓN DE CADA PESTAÑA ─────────────────────────────
+// Debajo de los m³ de columnas, vigas, bases/cimientos y losas: qué hay que
+// pedir para ese hormigón, en kg / m³ y en la presentación comercial.
+// H° elaborado → m³ por tipo. H° en obra → cemento, arena, ripio y agua con
+// el dosaje de Dosificaciones. Más alambre y clavos del H° armado.
+function hormMatHTML(porTipo, o){
+  o = o || {};
+  const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
+  const ac = parseFloat(document.getElementById('dos-ac')?.value) || 0.50;
+  const fila = (mat, cant, com, cls) => `<tr${cls?` class="${cls}"`:''}><td>${mat}</td><td class="right">${cant}</td><td class="right hm-com">${com||''}</td></tr>`;
+  const com = (k, q, dec) => { const u = uc(k); return (u.cont===1 && String(u.pres)===String(u.base)) ? '' : `${n(ucDesdeBase(k, q), dec ?? 1)} ${ucLabel(k)}`; };
+  let filas = '', total = 0;
+  Object.entries(porTipo).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([t, v])=>{
+    if(!(v > 0.0005)) return;
+    total += v;
+    if(t==='obra' || t==='mano') return;
+    filas += fila(`<b>${(HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')} elaborado</b>`, `<b>${n(v,2)} m³</b>`, 'pedir exacto', 'hm-elab');
+  });
+  const vo = (porTipo.obra||0) + (porTipo.mano||0);
+  if(vo > 0.0005){
+    const cemKg = vo * hf.cemBol25 * 25, ar = vo * hf.arena, rp = vo * hf.piedra;
+    filas += fila(`H° en obra · ${n(vo,2)} m³`, '', '', 'hm-sub');
+    filas += fila('Cemento Portland', `${n(cemKg,0)} kg`, com('portland', cemKg));
+    filas += fila('Arena gruesa', `${n(ar,2)} m³`, com('arenaG', ar, 2));
+    filas += fila('Ripio clasificado', `${n(rp,2)} m³`, com('ripio', rp, 2));
+    filas += fila('Agua', `${n(cemKg*ac,0)} litros`, `a/c ${String(ac).replace('.',',')}`);
+  }
+  (o.extra||[]).forEach(x=>{ if(x.q > 0.0005) filas += fila(x.mat, x.cant, x.com||''); });
+  const arm = o.armadoM3 ?? total;   // alambre y clavos: sólo H° armado (no cimientos)
+  if(arm > 0.0005){
+    const al = arm * (ACCESORIOS_M3.al14 + ACCESORIOS_M3.al17), cl = arm * (ACCESORIOS_M3.cl2 + ACCESORIOS_M3.cl25);
+    filas += fila('Alambre N°14 + N°17', `${n(al,1)} kg`, com('alambre', al), 'hm-acc');
+    filas += fila('Clavos 2" + 2½"', `${n(cl,1)} kg`, com('clavos', cl), 'hm-acc');
+  }
+  if(!filas) return '<div class="hm-vacio">Sin hormigón cargado</div>';
+  return `<table class="hm-tabla"><tbody>${filas}</tbody></table>`;
+}
+// Tarjeta a lo ancho, creada una vez después de un elemento de la pestaña
+function _cajaHormMat(id, despuesDe, titulo){
+  let c = document.getElementById(id);
+  if(c) return c;
+  if(!despuesDe) return null;
+  const card = document.createElement('div');
+  card.className = 'card horm-mat-card';
+  card.innerHTML = `<div class="card-header" style="padding:9px 14px;"><span class="card-icon" style="font-size:14px;">🪨</span><span class="card-title" style="font-size:12px;">${titulo}</span><span class="hm-tot" id="${id}-tot"></span></div><div class="horm-mat" id="${id}"></div>`;
+  despuesDe.insertAdjacentElement('afterend', card);
+  return document.getElementById(id);
+}
+function pintarMatHormigon(){
+  const res = state.resultados || {};
+  const suma = o => Object.values(o).reduce((s,v)=>s+(+v||0), 0);
+  const put = (el, porTipo, o) => { if(el) el.innerHTML = hormMatHTML(porTipo, o); };
+  // Columnas
+  const colT = document.getElementById('col-horm-tipo')?.value || 'H17';
+  put(document.getElementById('col-horm-mat'), {[colT]: res.col?.horm || 0});
+  // Vigas (VF/VA + VD/VE/VC; techo liviano va como H° en obra ×1,5)
+  const vig = res.vig?.byTipo || {};
+  const cv = _cajaHormMat('vig-horm-mat', document.getElementById('vig-stat-elab')?.closest('.grid-3'), 'Materiales del hormigón · vigas');
+  put(cv, vig); setTxt('vig-horm-mat-tot', suma(vig) ? n(suma(vig),2)+' m³' : '');
+  // Bases y cimientos
+  const bc = {...(res.bases?.byTipo || {})};
+  if(res.cim?.volHorm > 0){ const t = res.cim.hormTipo || 'obra'; bc[t] = (bc[t]||0) + res.cim.volHorm; }
+  const cb = _cajaHormMat('bas-horm-mat', document.getElementById('fund-tot')?.closest('.card'), 'Materiales del hormigón · bases y cimientos');
+  put(cb, bc, {armadoM3: suma(res.bases?.byTipo || {}), extra: [{q: res.cim?.piedra || 0, mat: 'Piedra bola (cimientos)', cant: n(res.cim?.piedra || 0, 2) + ' m³'}]});
+  setTxt('bas-horm-mat-tot', suma(bc) ? n(suma(bc),2)+' m³ de H°' : '');
+  // Losas: capa de compresión + losas macizas (H17)
+  const lo = {...(res.losa?.byTipo || {})};
+  if(res.losaMac?.horm > 0) lo.H17 = (lo.H17||0) + res.losaMac.horm;
+  const cl = _cajaHormMat('losa-horm-mat', document.getElementById('losas-stats-top'), 'Materiales del hormigón · losas (capa de compresión y macizas)');
+  put(cl, lo); setTxt('losa-horm-mat-tot', suma(lo) ? n(suma(lo),2)+' m³' : '');
 }
 
 // Dispatch recalc desde el selector
@@ -8380,6 +8469,7 @@ function updateDashboard(){
   setVal('sup-total',sup,0);
   actualizarSupNiveles();
   renderTotFund();
+  pintarMatHormigon();
   setTxt('dash-sup',sup);
   // Nuevos stats de obra
   const prop = document.getElementById('obra-prop')?.value||'—';
