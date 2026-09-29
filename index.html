@@ -3435,6 +3435,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
             <div class="niv-panel-tit">Contrapiso y carpeta <span>— parciales por nivel, para pedidos de obra</span></div>
             <div id="cp-niveles"></div>
           </div>
+          <div id="cp-detalle"></div>
         </div>
       </div>
 
@@ -7866,6 +7867,44 @@ function calcContrapiso(){
   if(Object.keys(mallas).length) cols.push({lbl:'Malla SIMA (m²)', v:d=>d.mallaM2, fmt:fmtN(1)});
   const pn = document.getElementById('cp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('cp', porNivel, cols);
+
+  // Detalle fila por fila: cada nivel y cada sector con nombre (Garage,
+  // Veredines…), para pedir el material de una zona sola.
+  const pd = document.getElementById('cp-detalle');
+  if(pd){
+    const filas = filasCp.filter(x=>x.sup>0 || x.supC>0);
+    if(!filas.length) pd.innerHTML = '';
+    else{
+      const nom = x => x.sector ? (x.nombre||'Otro sector') : (x.nv?.largo||'Nivel');
+      const col = x => x.sector ? 'var(--orange)' : (x.nv?.color||'var(--text3)');
+      const cD = [
+        ['Sup. contrapiso (m²)', x=>x.sup>0?n(x.sup,2):'—'],
+        ['Esp. (cm)', x=>x.esp>0?n(x.esp*100,0):'—'],
+        ['Sup. carpeta (m²)', x=>x.supC>0?n(x.supC,2):'—'],
+        ['H° (m³)', x=>n(x.vol+x.volC,3)],
+        ['Cemento ('+ucLabel('portland')+')', x=>n(ucDesdeB25('portland', x.cemB25),1)],
+        ['Arena (m³)', x=>n(x.arena,2)],
+        ...(ripCp>0.0005 ? [['Ripio (m³)', x=>x.ripio>0.0005?n(x.ripio,2):'—']] : []),
+        ...(elabTot>0.0005 ? [['H° elaborado (m³)', x=>x.elab>0.0005?n(x.elab,2):'—']] : []),
+        ...(Object.keys(porPhiCp).length ? [['Armadura (m)', x=>x.mlArm>0.05?`${n(x.mlArm,1)} <span class="niv-ayuda">Ø${String(x.phi).replace('.',',')}</span>`:'—']] : []),
+        ...(Object.keys(mallas).length ? [['Malla SIMA (m²)', x=>x.mallaM2>0.05?n(x.mallaM2,1):'—']] : []),
+      ];
+      const tot = k => filas.reduce((s,x)=>s+(+x[k]||0), 0);
+      const T = {sup:tot('sup'), esp:0, supC:tot('supC'), vol:tot('vol'), volC:tot('volC'),
+        cemB25:tot('cemB25'), arena:tot('arena'), ripio:tot('ripio'), elab:tot('elab'),
+        mlArm:tot('mlArm'), mallaM2:tot('mallaM2'), phi:''};
+      pd.innerHTML = `<div class="niv-panel" style="margin-top:12px;">
+        <div class="niv-panel-tit">Detalle por sector <span>— cuánto lleva cada zona por separado</span></div>
+        <div class="table-wrap" style="border:none;"><table class="niv-tabla">
+          <thead><tr><th>Sector</th>${cD.map(c=>`<th class="right">${c[0]}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${filas.map(x=>`<tr><td><span class="niv-dot" style="background:${col(x)};"></span>${_escHtml(nom(x))}</td>
+              ${cD.map(c=>`<td class="right">${c[1](x)}</td>`).join('')}</tr>`).join('')}
+            <tr class="niv-tot"><td><span class="niv-dot" style="background:var(--text3);"></span>Total</td>
+              ${cD.map(c=>`<td class="right">${c[0]==='Esp. (cm)' ? '—' : c[1](T)}</td>`).join('')}</tr>
+          </tbody></table></div></div>`;
+    }
+  }
   updateDashboard();
 }
 
@@ -10164,8 +10203,12 @@ async function autoSync(){
         rem = await _driveLoad(_activa.nombre, _activa.version);
       }
       const k = _syncKey(_activa.nombre, _activa.version), conocido = _syncTs()[k];
+      // Mientras se está trabajando NO se interrumpe ni se pregunta nada: manda
+      // este equipo, que es donde se está cargando, y lo suyo se sube a Drive.
+      // Lo de Drive entra al abrir la app (ver cargaInicialDrive).
       if(conocido != null && rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts && !rem.renombradaA && !_esTsPropio(_activa.nombre, _activa.version, rem.ts)){
-        if(confirm(MSJ_CONFLICTO)){ _aplicarRemoto(_activa.nombre, _activa.version, rem); avisoSync('ok', 'Traídos los cambios del otro equipo'); return; }
+        _marcarSincronizado(_activa.nombre, _activa.version, rem);
+        _ultimoSubido = null;
       }
       const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
       if(ok) tildeSync('Guardado en Drive');
@@ -11728,6 +11771,18 @@ function _editando(){
   return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest('.main, .ia-panel'));
 }
 // Pone en pantalla lo que vino de Drive sin cambiar de pestaña ni de lugar
+// Al abrir, antes de traer lo de Drive: si este equipo tenía algo sin subir
+// (se cerró sin conexión, por ejemplo), queda como una versión aparte en 📂 Obras.
+function _respaldoSinSubir(nombre, version, loc, pendientes){
+  if(!pendientes || !loc?.data) return;
+  const f = new Date();
+  const sello = `${String(f.getDate()).padStart(2,'0')}-${String(f.getMonth()+1).padStart(2,'0')} ${String(f.getHours()).padStart(2,'0')}.${String(f.getMinutes()).padStart(2,'0')}`;
+  try{
+    _guardarEntrada(nombre, `${version} · sin subir ${sello}`, loc.data);
+    showToast('Se cargó lo último de Drive · lo que este equipo no había subido quedó en 📂 Obras','',5000);
+  }catch(_){}
+}
+
 function _aplicarRemoto(nombre, version, rem){
   const pag = paginaActual(), main = document.querySelector('.main');
   const sc = main ? main.scrollTop : 0, wy = window.scrollY;
@@ -11827,13 +11882,16 @@ async function revisarDrive(forzar, inicial){
       if(conocido == null && rem.ts) _marcarSincronizado(nombre, version, rem);
       if(!forzar) return;
       if(!pendientes){ avisoSync('ok', 'Ya tenés lo último de Drive'); return; }
-      if(!confirm('¿Cargar lo que está en Drive?\n\nSe pierden los cambios de este equipo que todavía no se subieron.')){ document.getElementById('sync-ok')?.classList.remove('vis'); return; }
+      if(!confirm('¿Cargar lo que está en Drive?\n\nLos cambios de este equipo que todavía no se subieron se reemplazan.')){ document.getElementById('sync-ok')?.classList.remove('vis'); return; }
+    } else if(inicial){
+      // Al abrir entra siempre lo último de Drive, sin preguntar. Si en este
+      // equipo había quedado algo sin subir, se guarda antes como respaldo.
+      _respaldoSinSubir(nombre, version, loc, pendientes);
     } else if(pendientes){
-      if(!confirm(MSJ_CONFLICTO)){
-        _marcarSincronizado(nombre, version, rem); _ultimoSubido = null;   // gana lo de acá: se sube
-        document.getElementById('sync-ok')?.classList.remove('vis');
-        programarAutoSync(); return;
-      }
+      // En medio del trabajo no se corta ni se pregunta: gana este equipo.
+      _marcarSincronizado(nombre, version, rem); _ultimoSubido = null;
+      document.getElementById('sync-ok')?.classList.remove('vis');
+      programarAutoSync(); return;
     } else if(!forzar && !inicial && _editando()){
       _ultimoPull = 0; setTimeout(()=>revisarDrive(false), 5000); return;   // no cambiar la casilla que estás escribiendo
     }
