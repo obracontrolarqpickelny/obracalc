@@ -1841,6 +1841,10 @@ td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
 .bottom-nav::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 18px; pointer-events: none;
   background: linear-gradient(to right, transparent, var(--surface)); }
 
+/* Renombrar obra */
+.obra-renombrar { margin-left: 8px; padding: 2px 8px !important; font-size: 11px !important; vertical-align: middle; }
+.obra-renombrada { opacity: .55; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -9569,12 +9573,15 @@ async function autoSync(){
       if(txt === _ultimoSubido && _driveStatus!=='error'){ _driveStatus = 'saved'; actualizarIndicadorDrive(); return; }
       avisoSync('sync', 'Sincronizando con Drive…');
       // ¿Alguien cambió la obra en Drive (celular / PC) desde la última vez?
+      let rem = await _driveLoad(_activa.nombre, _activa.version);
+      if(rem?.renombradaA && rem.renombradaA!==_activa.nombre){
+        _renombrarLocal(_activa.nombre, rem.renombradaA);
+        avisoSync('sync', `La obra ahora se llama «${_activa.nombre}» — sincronizando…`);
+        rem = await _driveLoad(_activa.nombre, _activa.version);
+      }
       const k = _syncKey(_activa.nombre, _activa.version), conocido = _syncTs()[k];
-      if(conocido != null){
-        const rem = await _driveLoad(_activa.nombre, _activa.version);
-        if(rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts){
-          if(confirm(MSJ_CONFLICTO)){ _aplicarRemoto(_activa.nombre, _activa.version, rem); avisoSync('ok', 'Traídos los cambios del otro equipo'); return; }
-        }
+      if(conocido != null && rem && rem.ts && rem.ts!==conocido && rem.ts!==snap.ts && !rem.renombradaA){
+        if(confirm(MSJ_CONFLICTO)){ _aplicarRemoto(_activa.nombre, _activa.version, rem); avisoSync('ok', 'Traídos los cambios del otro equipo'); return; }
       }
       const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
       if(ok) tildeSync('Guardado en Drive');
@@ -10241,7 +10248,8 @@ function renderProjLista(){
     const d0 = vs[0].data?.fields||{};
     const cols = vs[0].data?.columnas?.length||0, vigs=(vs[0].data?.vigas_vf?.length||0)+(vs[0].data?.vigas_vd?.length||0);
     return `<div class="obra-grupo${_activa&&_activa.nombre===nom?' act':''}">
-      <div class="obra-grupo-tit">🏗 ${obraTituloHTML(d0, nom)} <span>· ${cols} col · ${vigs} vig${(d0['obra-prop']||'').trim() && (d0['obra-prop']||'').trim()!==nom ? ` · guardada como «${_escHtml(nom)}»` : ''}</span></div>
+      <div class="obra-grupo-tit">🏗 ${obraTituloHTML(d0, nom)} <span>· ${cols} col · ${vigs} vig${(d0['obra-prop']||'').trim() && (d0['obra-prop']||'').trim()!==nom ? ` · guardada como «${_escHtml(nom)}»` : ''}</span>
+        <button class="proj-btn proj-btn-exp obra-renombrar" onclick="renombrarObra('${_q(nom)}')" title="Cambiar el nombre de la obra, acá y en Drive (el otro equipo lo toma solo)">✎ Renombrar</button></div>
       ${vs.map(p=>{
         const v = _ver(p), act = _esActiva(nom, v);
         return `<div class="obra-ver${act?' act':''}">
@@ -10293,8 +10301,15 @@ async function cargarListaDrive(){
   unicas.forEach(async (o, i)=>{
     const data = _driveTitulos[o.nombre] || await _driveLoad(o.nombre, V_PRINCIPAL);
     if(!data?.fields) return;
-    _driveTitulos[o.nombre] = {fields: data.fields};
+    _driveTitulos[o.nombre] = {fields: data.fields, renombradaA: data.renombradaA};
     const el = box.querySelector(`[data-drive-i="${i}"]`);
+    if(el && data.renombradaA){
+      const g = el.closest('.obra-grupo');
+      g.classList.add('obra-renombrada');
+      g.querySelectorAll('.proj-actions').forEach(x=>{ x.innerHTML = ''; });
+      el.innerHTML = `☁ ${_escHtml(o.nombre)} <span>→ ahora se llama «${_escHtml(data.renombradaA)}» (copia vieja)</span>`;
+      return;
+    }
     const prop = (data.fields['obra-prop']||'').trim();
     if(el) el.innerHTML = `☁ ${obraTituloHTML(data.fields, o.nombre)}`
       + (prop && prop!==o.nombre ? ` <span>· guardada como «${_escHtml(o.nombre)}»</span>` : '');
@@ -10307,6 +10322,10 @@ async function traerDeDrive(nombre, version){
   showToast('☁ Trayendo de Drive…','saving',4000);
   const data = await _driveLoad(nombre, version);
   if(!data){ showToast('⚠️ No se pudo traer la obra de Drive','',3000); return; }
+  if(data.renombradaA && data.renombradaA!==nombre){
+    showToast(`Esta obra ahora se llama «${data.renombradaA}» — trayendo esa`,'',3000);
+    return traerDeDrive(data.renombradaA, version);
+  }
   _guardarEntrada(nombre, version, data);
   _marcarSincronizado(nombre, version, data);
   renderProjLista(); cargarListaDrive();
@@ -11118,6 +11137,56 @@ function _aplicarRemoto(nombre, version, rem){
   window.scrollTo(0, wy);
   if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
 }
+// ── RENOMBRAR OBRA ───────────────────────────────────────────────────────
+// Cambia el nombre acá y en Drive (carpeta nueva). En la carpeta vieja queda
+// una copia con la marca "renombradaA": el celular / la PC que todavía la usa
+// se entera al sincronizar y pasa solo al nombre nuevo.
+function _nombreLimpio(t){ return String(t||'').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function _renombrarLocal(viejo, nuevo){
+  const list = getProyectos().filter(p=> !(p.nombre===viejo && list0Tiene(nuevo, _ver(p))));
+  function list0Tiene(n, v){ return getProyectos().some(x=>x.nombre===n && _ver(x)===v); }
+  list.forEach(p=>{ if(p.nombre===viejo) p.nombre = nuevo; });
+  setProyectos(list);
+  try{
+    const m = _syncTs();
+    Object.keys(m).forEach(k=>{ const i = k.lastIndexOf('|'); if(k.slice(0,i)===viejo){ const k2 = nuevo + k.slice(i); if(m[k2]==null) m[k2] = m[k]; delete m[k]; } });
+    localStorage.setItem(SYNC_TS_KEY, JSON.stringify(m));
+  }catch(_){}
+  if(_activa && _activa.nombre===viejo) setActiva({nombre:nuevo, version:_activa.version});
+  actualizarChipObra();
+  if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
+}
+async function renombrarObra(viejo){
+  const e0 = getProyectos().find(p=>p.nombre===viejo);
+  if(!e0) return;
+  const prop = (e0.data?.fields?.['obra-prop']||'').trim();
+  let nuevo = prompt(`Nombre nuevo para la obra "${viejo}":\n\nSe cambia en este equipo y en Drive. El otro equipo (celular o PC) lo toma solo al sincronizar.`, _nombreLimpio(prop) || viejo);
+  if(nuevo==null) return;
+  nuevo = _nombreLimpio(nuevo);
+  if(!nuevo || nuevo===viejo) return;
+  if(getProyectos().some(p=>p.nombre===nuevo)){ alert(`Ya hay una obra llamada "${nuevo}" en este equipo. Elegí otro nombre.`); return; }
+  if(DRIVE_URL){
+    showToast('☁ Revisando Drive…','saving',3000);
+    const lista = await _driveList();
+    if(lista && lista.some(o=>o.nombre===nuevo) && !confirm(`En Drive ya hay una obra "${nuevo}". Si seguís, se reemplaza por esta.\n\n¿Seguir?`)) return;
+  }
+  // La obra abierta: primero se guarda lo que está en pantalla
+  if(_activa && _activa.nombre===viejo){ _guardarEntrada(viejo, _activa.version, captureSnapshot()); saveAll(); marcarGuardado(); }
+  const versiones = getProyectos().filter(p=>p.nombre===viejo).map(p=>({v:_ver(p), data:p.data}));
+  _renombrarLocal(viejo, nuevo);
+  showToast(`✎ Obra renombrada: ${nuevo}`,'success',2500);
+  if(!DRIVE_URL) return;
+  avisoSync('sync', 'Renombrando en Drive…');
+  let ok = true;
+  for(const {v, data} of versiones){
+    ok = (await driveSyncAhora(nuevo, v, data, true, true)) && ok;
+    ok = (await _driveSave(viejo, v, {...data, ts:Date.now(), renombradaA:nuevo}, true)) && ok;
+  }
+  if(ok) tildeSync(`Renombrada en Drive: ${nuevo}`);
+  else avisoSync('err', 'Renombrada acá, pero Drive no respondió — tocá 💾 Guardar para reintentar');
+  if(document.getElementById('modalProyectos')?.classList.contains('open')){ renderProjLista(); cargarListaDrive(); }
+}
+
 async function revisarDrive(forzar){
   if(!DRIVE_URL) return;
   if(!_activa){ if(forzar){ showToast('Primero guardá la obra con nombre (💾 Guardar) o abrila desde 📂 Obras','',3500); } return; }
@@ -11130,6 +11199,13 @@ async function revisarDrive(forzar){
     const rem = await _driveLoad(nombre, version);
     if(!_esActiva(nombre, version)) return;                 // mientras tanto se abrió otra obra
     if(!rem){ if(forzar) avisoSync('err', 'No se pudo leer Drive — revisá la conexión'); return; }
+    if(rem.renombradaA && rem.renombradaA!==nombre){
+      _renombrarLocal(nombre, rem.renombradaA);
+      avisoSync('ok', `La obra ahora se llama «${rem.renombradaA}»`);
+      _pullEnCurso = false; _ultimoPull = 0;
+      setTimeout(()=>revisarDrive(forzar), 0);
+      return;
+    }
     const k = _syncKey(nombre, version), conocido = _syncTs()[k];
     const loc = _entrada(nombre, version);
     const distinto = conocido != null ? (rem.ts||0) !== conocido : (rem.ts||0) > (loc?.data?.ts || 0);
