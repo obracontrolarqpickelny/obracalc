@@ -1805,6 +1805,21 @@ body.con-drive #saveIndicator { display: none !important; }
 .col-alts input { width: 54px; font-size: 11px; }
 .col-alts input::placeholder { color: var(--text3); opacity: .7; }
 
+/* Filas que se arrastran */
+tr[data-drag] > td:first-child { position: relative; padding-left: 16px !important; }
+tr[data-drag] > td:first-child::before { content: '⠿'; position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); font-size: 13px; cursor: grab; opacity: .55; }
+tr[data-drag]:hover > td:first-child::before { opacity: 1; color: var(--accent); }
+body.arrastrando, body.arrastrando * { cursor: grabbing !important; user-select: none !important; }
+tr.drag-src { opacity: .45; background: var(--accent-dim2) !important; }
+.drag-linea { position: fixed; height: 4px; background: var(--accent); border-radius: 2px; z-index: 2000; pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+/* Cartel de sincronización */
+.sync-ok.sync-lat { border-color: var(--orange); color: var(--orange); }
+.sync-ok.sync-lat .sync-ok-ico { background: var(--orange); width: 12px; height: 12px; margin: 0 4px; animation: pulse .8s infinite; }
+.sync-ok.sync-err { border-color: var(--red); color: var(--red); }
+.sync-ok.sync-err .sync-ok-ico { background: var(--red); }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -4431,7 +4446,7 @@ function zapataRowHTML(v){
   const auto = (esManual, valAuto, txt) => esManual
     ? `<span class="zap-auto">auto ${valAuto} cm</span>` : `<span class="zap-auto">${txt}</span>`;
   const man = x => x!=null && x!=='';
-  return `<tr class="zap-row"><td></td><td colspan="10">
+  return `<tr class="zap-row" data-drag-sub="${v.id}"><td></td><td colspan="10">
     <div class="zap-box">
       <div class="zap-tit">⤓ Zapata corrida de ${_escHtml(v.denom)} <span>— el hierro de la viga no cambia</span></div>
       <div class="zap-grid">
@@ -4536,14 +4551,98 @@ function recalcSection(prefix){
 }
 
 
+// ── ARRASTRAR FILAS ──────────────────────────────────────────────────────
+// Mantener apretado el mouse sobre la fila (fuera de las casillas) y moverla
+// arriba o abajo. Una línea naranja marca dónde va a quedar. Las casillas se
+// siguen editando como siempre.
+const DRAG_TB = {
+  'col-tbody':      {arr:()=>state.columnas,             render:()=>renderColumnas()},
+  'vf-tbody':       {arr:()=>state.vigas_vf,             render:()=>{ renderVigas('vf'); calcVigaTotals(); }},
+  'vd-tbody':       {arr:()=>state.vigas_vd,             render:()=>{ renderVigas('vd'); calcVigaTotals(); }},
+  'bases-tbody':    {arr:()=>state.bases,                render:()=>renderBases()},
+  'losa-tbody':     {arr:()=>state.losas,                render:()=>renderLosas()},
+  'losa-mac-tbody': {arr:()=>state.losas_macizas||[],    render:()=>renderLosasMacizas()},
+};
+let _drag = null;
+function _dragFilas(tb){ return [...tb.querySelectorAll('tr[data-drag]')].filter(t=>t.style.display!=='none'); }
+function _dragIniciar(){
+  if(!_drag || _drag.on) return;
+  _drag.on = true;
+  _drag.tr.classList.add('drag-src');
+  tb_sub(_drag).forEach(t=>t.classList.add('drag-src'));
+  document.body.classList.add('arrastrando');
+  const l = document.createElement('div'); l.className = 'drag-linea'; document.body.appendChild(l); _drag.linea = l;
+  try{ window.getSelection()?.removeAllRanges(); }catch(_){}
+}
+function tb_sub(d){ return [...d.tb.querySelectorAll(`tr[data-drag-sub="${d.id}"]`)]; }
+function _dragFin(){
+  if(!_drag) return;
+  clearTimeout(_drag.timer); clearInterval(_drag.scroll);
+  _drag.tr.classList.remove('drag-src'); tb_sub(_drag).forEach(t=>t.classList.remove('drag-src'));
+  _drag.linea?.remove(); document.body.classList.remove('arrastrando');
+  _drag = null;
+}
+document.addEventListener('pointerdown', e=>{
+  if(e.button!==0 || _drag) return;
+  const tr = e.target.closest?.('tr[data-drag]');
+  if(!tr || !DRAG_TB[tr.parentElement?.id]) return;
+  if(e.target.closest('input,select,textarea,button,a,label,.estr-btn')) return;
+  _drag = {tr, tb:tr.parentElement, id:+tr.dataset.drag, y0:e.clientY, y:e.clientY, on:false, antes:undefined, tipo:e.pointerType||'mouse'};
+  _drag.timer = setTimeout(_dragIniciar, 250);   // mantener apretado
+});
+document.addEventListener('pointermove', e=>{
+  if(!_drag) return;
+  _drag.y = e.clientY;
+  // Con el dedo, deslizar antes de mantener apretado es hacer scroll: no se arrastra
+  if(!_drag.on){ if(Math.abs(e.clientY-_drag.y0) <= 6) return; if(_drag.tipo==='mouse') _dragIniciar(); else { _dragFin(); return; } }
+  e.preventDefault();
+  _dragMarcar();
+  // Cerca del borde de la pantalla, desplaza la página
+  clearInterval(_drag.scroll);
+  const borde = 70, h = window.innerHeight;
+  const paso = e.clientY < borde ? -14 : e.clientY > h - borde ? 14 : 0;
+  if(paso) _drag.scroll = setInterval(()=>{ if(!_drag) return; document.querySelector('.main')?.scrollBy(0, paso); window.scrollBy(0, paso); _dragMarcar(); }, 30);
+});
+function _dragMarcar(){
+  const filas = _dragFilas(_drag.tb);
+  let antes = null, ref = null;
+  for(const t of filas){ const b = t.getBoundingClientRect(); if(_drag.y < b.top + b.height/2){ antes = t; break; } }
+  if(antes){ ref = antes.getBoundingClientRect().top; }
+  else if(filas.length){
+    const ult = filas[filas.length-1], subs = [..._drag.tb.querySelectorAll(`tr[data-drag-sub="${ult.dataset.drag}"]`)];
+    ref = (subs.length ? subs[subs.length-1] : ult).getBoundingClientRect().bottom;
+  }
+  _drag.antes = antes ? +antes.dataset.drag : null;
+  const tbR = _drag.tb.getBoundingClientRect();
+  Object.assign(_drag.linea.style, {top:(ref-2)+'px', left:tbR.left+'px', width:tbR.width+'px'});
+}
+document.addEventListener('pointerup', ()=>{
+  if(!_drag) return;
+  const d = _drag;
+  if(!d.on || d.antes===undefined){ _dragFin(); return; }
+  const cfg = DRAG_TB[d.tb.id], a = cfg.arr();
+  const desde = a.findIndex(x=>x.id===d.id);
+  _dragFin();
+  if(desde < 0 || d.antes===d.id) return;
+  const [el] = a.splice(desde, 1);
+  const hasta = d.antes==null ? a.length : a.findIndex(x=>x.id===d.antes);
+  a.splice(hasta < 0 ? a.length : hasta, 0, el);
+  if(a.indexOf(el)===desde) return;
+  cfg.render();
+  scheduleAutosave();
+  showToast(`↕ ${el.denom||'Fila'} movida`,'success',1500);
+});
+document.addEventListener('pointercancel', _dragFin);
+window.addEventListener('blur', _dragFin);
+
 // ── DUPLICAR ELEMENTO ────────────────────────────────────────────────────
 function duplicarColumna(id){
   const src = state.columnas.find(x=>x.id===id);
   if(!src) return;
   const nid = ++state.nextId.col;
   const copia = {...src, id:nid, denom:src.denom+'*'};
-  state.columnas.push(copia);
-  renderColumnas();
+  state.columnas.splice(state.columnas.indexOf(src)+1, 0, copia);
+  renderColumnas(); scheduleAutosave();
   showToast('✓ Columna duplicada — editá el alto','success',2000);
 }
 function duplicarViga(tipo, id){
@@ -4552,8 +4651,8 @@ function duplicarViga(tipo, id){
   if(!src) return;
   const nid = ++state.nextId.vf;
   const copia = {...src, id:nid, denom:src.denom+'*'};
-  arr.push(copia);
-  renderVigas(tipo);
+  arr.splice(arr.indexOf(src)+1, 0, copia);
+  renderVigas(tipo); scheduleAutosave();
   showToast('✓ Viga duplicada — editá la longitud','success',2000);
 }
 function duplicarBase(id){
@@ -4561,8 +4660,8 @@ function duplicarBase(id){
   if(!src) return;
   const nid = ++state.nextId.bas;
   const copia = {...src, id:nid, denom:src.denom+'*'};
-  state.bases.push(copia);
-  renderBases();
+  state.bases.splice(state.bases.indexOf(src)+1, 0, copia);
+  renderBases(); scheduleAutosave();
   showToast('✓ Base duplicada — editá las dimensiones','success',2000);
 }
 
@@ -5244,7 +5343,7 @@ function renderColumnas(){
     // Celdas con helpers compartidos
     const lBarraLabel = lBarraCellHTML(calc1);
 
-    return `<tr data-niv="${c.nivel||''}" style="--niv:${c.nivel?nivelInfo(c.nivel).color:'transparent'};${nivelVisible('col',c.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${c.id}" data-niv="${c.nivel||''}" style="--niv:${c.nivel?nivelInfo(c.nivel).color:'transparent'};${nivelVisible('col',c.nivel)?'':'display:none;'}">
       <td style="min-width:55px;"><input value="${c.denom}" onchange="updateCol(${c.id},'denom',this.value)" style="width:52px;color:var(--accent);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(c.nivel, `updateCol(${c.id},'nivel',this.value);renderColumnas()`)}</td>
       <td class="center"><input type="number" value="${c.cantElem}" onchange="updateCol(${c.id},'cantElem',+this.value);calcColTotals()" class="qty-input"></td>
@@ -6111,7 +6210,7 @@ function renderVigas(tipo){
     const cantBarras1 = v.nBarras;
     const recorteTotal1 = parseFloat((rec1 * cantBarras1).toFixed(2));
 
-    return `<tr data-niv="${tipo==='vd'?(v.nivel||''):''}" style="--niv:${tipo==='vd'&&v.nivel?nivelInfo(v.nivel).color:'transparent'};${tipo==='vd'&&!nivelVisible('vd',v.nivel)?'display:none;':''}">
+    return `<tr data-drag="${v.id}" data-niv="${tipo==='vd'?(v.nivel||''):''}" style="--niv:${tipo==='vd'&&v.nivel?nivelInfo(v.nivel).color:'transparent'};${tipo==='vd'&&!nivelVisible('vd',v.nivel)?'display:none;':''}">
       <td><input value="${v.denom}" onchange="updateViga('${tipo}',${v.id},'denom',this.value)"
         style="width:62px;color:var(--blue);font-weight:700;font-size:12px;">
         ${tipo==='vd' ? nivelSelectHTML(v.nivel, `updateViga('vd',${v.id},'nivel',this.value)`) : ''}</td>
@@ -6421,7 +6520,7 @@ function renderBases(){
     const volHorm = b.cant * b.ancho * b.largo * b.alto;
     const bHormTipo = b.hormTipo||'H17';
     const bHt = HORM_TIPOS[bHormTipo]||HORM_TIPOS['H17'];
-    return `<tr>
+    return `<tr data-drag="${b.id}">
       <td><input value="${b.denom}" onchange="updateBase(${b.id},'denom',this.value)"
         style="width:52px;color:var(--orange);font-weight:700;font-size:12px;"></td>
       <td class="right"><input type="number" value="${b.cant}" onchange="updateBase(${b.id},'cant',+this.value);calcBases()" class="qty-input"></td>
@@ -7280,7 +7379,7 @@ function renderLosas(){
     const mallaRollos = l.cant * l.sup * 1.05 / 14.4;
     // Capa de compresión H°: sup × espesor_m
     const capCompM3 = l.cant * l.sup * ((l.capComp||7)/100);
-    return `<tr data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losa',l.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${l.id}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losa',l.nivel)?'':'display:none;'}">
       <td><input value="${l.denom}" onchange="updateLosa(${l.id},'denom',this.value)"
         style="width:52px;color:var(--purple);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(l.nivel, `updateLosa(${l.id},'nivel',this.value);renderLosas()`)}</td>
@@ -7349,7 +7448,7 @@ function renderLosasMacizas(){
     const mlTotal = l.cant * (mlX + mlY) * l.factor;
     const volHorm = l.cant * lX * lY * (l.alto/100);
     const factorLabel = l.factor===1?'simple':l.factor===1.5?'escalera (×1.5)':'doble (×2)';
-    return `<tr data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losamac',l.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${l.id}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losamac',l.nivel)?'':'display:none;'}">
       <td><input value="${l.denom}" onchange="updateLosaMac(${l.id},'denom',this.value)"
         style="width:52px;color:var(--blue);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(l.nivel, `updateLosaMac(${l.id},'nivel',this.value);renderLosasMacizas()`)}</td>
@@ -9347,20 +9446,43 @@ async function autoSync(){
     if(!_guardarEntrada(_activa.nombre, _activa.version, snap)) return;
     saveAll(); marcarGuardado();
     if(DRIVE_URL){
+      avisoSync('sync', 'Sincronizando con Drive…');
       const ok = await driveSyncAhora(_activa.nombre, _activa.version, snap, false, true);
       if(ok) tildeSync('Guardado en Drive');
+      else avisoSync('err', 'Sin conexión — quedó guardado en este equipo');
     } else tildeSync('Guardado');
     if(document.getElementById('modalProyectos')?.classList.contains('open')) renderProjLista();
   } finally { _autoSyncEnCurso = false; }
 }
 // Tilde verde abajo, discreto
-function tildeSync(txt){
+function tildeSync(txt){ avisoSync('ok', txt); }
+function avisoSync(estado, txt){
   let el = document.getElementById('sync-ok');
   if(!el){ el = document.createElement('div'); el.id = 'sync-ok'; el.className = 'sync-ok'; document.body.appendChild(el); }
-  el.innerHTML = '<span class="sync-ok-ico">✓</span>' + txt;
+  el.classList.remove('sync-lat','sync-err');
+  if(estado==='sync') el.classList.add('sync-lat');
+  if(estado==='err')  el.classList.add('sync-err');
+  el.innerHTML = '<span class="sync-ok-ico">' + (estado==='ok' ? '✓' : estado==='err' ? '!' : '') + '</span>' + _escHtml(txt);
   el.classList.add('vis');
-  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('vis'), 2200);
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('vis'), estado==='sync' ? 20000 : estado==='err' ? 4000 : 2200);
 }
+
+// Los botones (＋ agregar, ✕ quitar, ⧉ duplicar…) cambian la obra sin tocar
+// ninguna casilla: después de cada clic se compara con lo último guardado y,
+// si cambió algo, se guarda y se sube a Drive igual que al escribir.
+let _ultimoGuardado = null;
+const _sinTs = t => String(t).replace(/"ts":\d+,/, '');
+document.addEventListener('click', e=>{
+  if(!_bootDone || !e.target.closest?.('button,[onclick]')) return;
+  setTimeout(()=>{
+    try{
+      const p = _sinTs(JSON.stringify(captureSnapshot()));
+      if(_ultimoGuardado==null) _ultimoGuardado = _sinTs(localStorage.getItem(STORAGE_KEY)||'');
+      if(p !== _ultimoGuardado) scheduleAutosave();
+    }catch(_){}
+  }, 80);
+});
 
 function saveAll(){
   clearTimeout(_saveTimer);
@@ -9371,6 +9493,7 @@ function saveAll(){
     const prev = localStorage.getItem(STORAGE_KEY);
     if(prev && prev !== payload){ try{ localStorage.setItem(BACKUP_KEY, prev); }catch(_){} }
     localStorage.setItem(STORAGE_KEY, payload);
+    _ultimoGuardado = _sinTs(payload);
     _dirty = false;
     const si=document.getElementById('saveIndicator');
     si?.classList.remove('saving'); si?.classList.add('saved');
