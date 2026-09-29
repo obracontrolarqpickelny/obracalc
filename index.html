@@ -3493,7 +3493,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                   <th class="right">Cant.<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','cant')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="right">Sup. (m²)<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','sup')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="center" data-tip="12 o 16 cm">Alt. loseta<br>(cm)<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','alt')" title="Poner el mismo valor en todas las filas">⇊</button></th>
-                  <th class="center" data-tip="4.2 / 5 / 6 / 8 mm">Ø malla<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','phi')" title="Poner el mismo valor en todas las filas">⇊</button></th>
+                  <th class="center" data-tip="Capa de compresión: malla electrosoldada (rollos) o hierros cortados y atados">Armadura<br>cap. comp.<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','arm')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="right">Sep.<br>(mm)<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','sep')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="center" data-tip="Espesor capa de compresión: 5/6/7/8/9 cm">Cap. comp.<br>(cm)<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','capComp')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="center" data-tip="Tipo de hormigón para capa de compresión">H° comp.<br>tipo<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas','hormTipo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
@@ -3583,7 +3583,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <div class="card-body">
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Superficie cubierta total <span class="field-hint">m²</span></div>
+                <div class="field-label">Superficie cubierta total <span class="field-hint">m²</span> <span class="field-hint" id="techo-sup-auto"></span></div>
                 <input type="number" id="techo-sup" value="103" class="input-editable" oninput="calcTecho()">
               </div>
               <div class="field">
@@ -3595,6 +3595,9 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                 </select>
               </div>
             </div>
+            <div id="techo-sectores"></div>
+            <button type="button" class="btn-niv-add" onclick="agregarTechoSector()" style="margin:8px 0 4px;">＋ Agregar sector de cubierta (ej: Garage, Galería)</button>
+            <div id="techo-parciales"></div>
             <div class="grid-2 techo-capas">
               <div class="techo-capa" id="techo-capa-ais">
                 <div class="techo-capa-tit">Contrapiso aislante · <span id="techo-liv-nom">Pomeca</span></div>
@@ -7937,8 +7940,11 @@ function renderLosas(){
     // Losetas por m²: 1000mm / sep = nro por ml, ×ancho loseta típico 0.50m → por m²
     const losePoMl = Math.ceil(1000/l.sep);  // losetas por metro lineal
     const losetas  = Math.ceil(l.cant * l.sup * losePoMl * 1.05);
-    // Malla: rollo 2.4×6m = 14.4 m² por rollo
-    const mallaRollos = l.cant * l.sup * 1.05 / 14.4;
+    // Capa de compresión: malla electrosoldada (rollo 2,4×6 m = 14,4 m²) o
+    // hierros cortados y atados (barras en X e Y, +10 % de solapes)
+    const arm = l.arm==='hierro' ? 'hierro' : 'malla';
+    const mallaRollos = arm==='malla' ? l.cant * l.sup * 1.05 / 14.4 : 0;
+    const mlArm = arm==='hierro' ? l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10 : 0;
     // Capa de compresión H°: sup × espesor_m
     const capCompM3 = l.cant * l.sup * ((l.capComp||7)/100);
     return `<tr data-drag="${l.id}" class="${l.ok?'fila-hecha':''}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losa',l.nivel)?'':'display:none;'}">
@@ -7956,10 +7962,20 @@ function renderLosas(){
         </select>
       </td>
       <td class="center">
-        <select onchange="updateLosa(${l.id},'phi',this.value);renderLosas()"
-          style="width:52px;font-size:11px;padding:2px 3px;">
-          ${['4.2','5','6','8'].map(v=>`<option value="${v}" ${v==l.phi?'selected':''}>${v}</option>`).join('')}
+        <select onchange="updateLosa(${l.id},'arm',this.value);renderLosas()" title="Armadura de la capa de compresión"
+          style="width:104px;font-size:10px;padding:2px 3px;">
+          <option value="malla" ${arm==='malla'?'selected':''}>Malla electrosold.</option>
+          <option value="hierro" ${arm==='hierro'?'selected':''}>Hierros atados</option>
         </select>
+        <div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-top:3px;font-size:9px;color:var(--text3);">
+          Ø <select onchange="updateLosa(${l.id},'phi',this.value);renderLosas()"
+            style="width:48px;font-size:10px;padding:2px 3px;">
+            ${(arm==='hierro'?['4.2','6','8','10','12']:['4.2','5','6','8']).map(v=>`<option value="${v}" ${v==l.phi?'selected':''}>${v}</option>`).join('')}
+          </select>
+          ${arm==='hierro' ? `c/ <input type="number" value="${l.sepArm||200}" step="25" min="50"
+            onchange="updateLosa(${l.id},'sepArm',+this.value);renderLosas()"
+            style="width:44px;font-size:10px;" title="Separación entre barras"> mm` : ''}
+        </div>
       </td>
       <td class="right"><input type="number" value="${l.sep}" step="50"
         onchange="updateLosa(${l.id},'sep',+this.value);renderLosas()" style="width:55px;font-size:11px;"></td>
@@ -7976,7 +7992,9 @@ function renderLosas(){
         </select>
       </td>
       <td class="right accent">${n(losetas,0)}</td>
-      <td class="right" style="color:var(--green);">${n(mallaRollos,2)}</td>
+      <td class="right" style="color:var(--green);">${arm==='hierro'
+        ? `<span style="color:var(--orange);">${n(mlArm,1)} m<br><span style="font-size:9px;">${Math.ceil(mlArm/BARRA_COMERCIAL)} barras Ø${String(l.phi).replace('.',',')}</span></span>`
+        : n(mallaRollos,2)}</td>
       <td class="right" style="color:var(--blue);">${n(capCompM3,3)}</td>
       <td class="fila-acc"><button type="button" tabindex="-1" class="fila-ok${l.ok?' on':''}" onclick="filaOk(this,${l.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="removeLosa(${l.id})" title="Eliminar" tabindex="-1"
         style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button></td>
@@ -7989,7 +8007,7 @@ function updateLosa(id,f,v){const l=state.losas.find(x=>x.id===id);if(l)l[f]=v;}
 function removeLosa(id){if(!confirmarQuitar(state.losas.find(x=>x.id===id), 'la losa')) return; state.losas=state.losas.filter(x=>x.id!==id);renderLosas();}
 function addLosa(){
   const id=++state.nextId.losa;
-  state.losas.push({id,denom:'L'+id,cant:1,sup:5,alt:12,phi:'6',sep:150,capComp:7,hormTipo:'H17',
+  state.losas.push({id,denom:'L'+id,cant:1,sup:5,alt:12,phi:'6',sep:150,capComp:7,hormTipo:'H17',arm:'malla',sepArm:200,
     nivel: document.getElementById('losa-nivel-filtro')?.value || state.losas.at(-1)?.nivel || 'PB'});
   renderLosas();
 }
@@ -8090,28 +8108,35 @@ function calcLosasMacizas(){
 }
 
 function calcLosas(){
-  let totalLos=0, totalM6=0, totalHcomp=0;
+  let totalLos=0, totalM6=0, totalHcomp=0, totalMlArm=0;
   const losPorAlt = {12:0, 16:0};   // losetas según altura (se compran por separado)
   const byTipoLosa={};   // H17/H21/H25 → m³ capa compresión
+  const porPhiLosa={};   // Ø → ml de hierro atado (va a Hierros del Resumen)
   state.losas.forEach(l=>{
     const lPorMl = Math.ceil(1000/l.sep);
     const nLos = Math.ceil(l.cant * l.sup * lPorMl * 1.05);
     totalLos  += nLos;
     losPorAlt[+l.alt===16?16:12] += nLos;
-    totalM6   += l.cant * l.sup * 1.05 / 14.4;
+    if(l.arm==='hierro'){
+      const ml = l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10;
+      totalMlArm += ml;
+      porPhiLosa[l.phi] = (porPhiLosa[l.phi]||0) + ml;
+    } else totalM6 += l.cant * l.sup * 1.05 / 14.4;
     const volComp = l.cant * l.sup * ((l.capComp||7)/100);
     totalHcomp += volComp;
     const tipo = l.hormTipo||'H17';
     byTipoLosa[tipo] = (byTipoLosa[tipo]||0) + volComp;
   });
   setTxt('losa-total-losetas', n(totalLos,0));
-  setTxt('losa-total-m6',      n(totalM6,2));
+  setTxt('losa-total-m6', totalMlArm>0.05
+    ? (totalM6>0.005 ? `${n(totalM6,2)} rollos + ${n(totalMlArm,1)} m` : `${n(totalMlArm,1)} m · ${Math.ceil(totalMlArm/BARRA_COMERCIAL)} barras`)
+    : n(totalM6,2));
   setTxt('losa-total-hcomp',   n(totalHcomp,2)+' m³');
   setTxt('ld-losetas12', n(losPorAlt[12],0));
   setTxt('ld-losetas16', n(losPorAlt[16],0));
   setTxt('ld-malla6',    n(totalM6,2));
   state.resultados=state.resultados||{};
-  state.resultados.losa={losetas12:losPorAlt[12], losetas16:losPorAlt[16], losetas:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa};
+  state.resultados.losa={losetas12:losPorAlt[12], losetas16:losPorAlt[16], losetas:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa, porPhi:porPhiLosa, mlArm:totalMlArm};
   // Stats superiores losas
   setTxt('losa-stat-los12', n(totalLos,0));
   setTxt('losa-stat-los-unit', losPorAlt[16]>0 ? `12 cm: ${losPorAlt[12]} · 16 cm: ${losPorAlt[16]}` : 'unidades');
@@ -8121,11 +8146,12 @@ function calcLosas(){
 
   // Parciales por nivel (pretensadas + macizas)
   const porNivel = {};
-  const P = k => porNivel[k||''] || (porNivel[k||''] = {los:0, malla:0, hc:0, ml:0, hm:0});
+  const P = k => porNivel[k||''] || (porNivel[k||''] = {los:0, malla:0, hc:0, ml:0, hm:0, mlArm:0});
   state.losas.forEach(l=>{
     const p = P(l.nivel);
     p.los   += Math.ceil(l.cant * l.sup * Math.ceil(1000/l.sep) * 1.05);
-    p.malla += l.cant * l.sup * 1.05 / 14.4;
+    if(l.arm==='hierro') p.mlArm += l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10;
+    else p.malla += l.cant * l.sup * 1.05 / 14.4;
     p.hc    += l.cant * l.sup * ((l.capComp||7)/100);
   });
   (state.losas_macizas||[]).forEach(l=>{
@@ -8139,6 +8165,7 @@ function calcLosas(){
     {lbl:'Malla (rollos)', v:d=>d.malla, fmt:fmtN(2)},
     {lbl:'H° capa comp. (m³)', v:d=>d.hc, fmt:fmtN(2)},
   ];
+  if(totalMlArm>0.05) colsL.splice(2, 0, {lbl:`Hierro cap. comp.<br><span class="niv-ayuda">barras ${BARRA_COMERCIAL} m</span>`, v:d=>d.mlArm, fmt:fmtBar});
   if((state.losas_macizas||[]).length){
     colsL.push({lbl:'Hierro macizas (ml)', v:d=>d.ml, fmt:fmtN(1)});
     colsL.push({lbl:'H° macizas (m³)', v:d=>d.hm, fmt:fmtN(2)});
@@ -8149,7 +8176,69 @@ function calcLosas(){
   updateDashboard();
 }
 
+// ── SECTORES DE CUBIERTA ──────────────────────────────────────────────────
+// Igual que los sectores de contrapiso: cada zona (Garage, Galería…) con su
+// superficie y, si hace falta, sus propios espesores. Las dosificaciones son
+// las mismas para toda la cubierta. Si hay sectores, la superficie total es
+// la suma de todos y el resto de la app la sigue leyendo de 'techo-sup'.
+function agregarTechoSector(){
+  const L = state.techoSectores = state.techoSectores || [];
+  const id = L.reduce((m,x)=>Math.max(m, x.id||0), 0) + 1;
+  L.push({id, nombre:'', sup:0, aisEsp:'', carpEsp:''});
+  renderTechoSectores(); calcTecho(); scheduleAutosave();
+  setTimeout(()=>document.querySelector(`[data-k="ths-${id}-nombre"]`)?.focus(), 30);
+}
+function quitarTechoSector(id){
+  const s = (state.techoSectores||[]).find(x=>x.id===id);
+  if(!s) return;
+  if(+s.sup>0 && !confirm(`¿Quitar el sector "${(s.nombre||'').trim() || 'Sector'}" de la cubierta?`)) return;
+  state.techoSectores = state.techoSectores.filter(x=>x.id!==id);
+  renderTechoSectores(); calcTecho(); scheduleAutosave();
+}
+function techoSecCambio(id, campo, val){
+  const s = (state.techoSectores||[]).find(x=>x.id===id);
+  if(!s) return;
+  s[campo] = val;
+  calcTecho(); scheduleAutosave();
+}
+function renderTechoSectores(){
+  const box = document.getElementById('techo-sectores');
+  if(!box) return;
+  const L = state.techoSectores || [];
+  box.innerHTML = L.map(s=>`<div class="cp-sector" style="--niv:var(--blue);">
+      <div class="cp-sec-cab">
+        <input type="text" class="cp-sec-nombre" value="${_escHtml(s.nombre||'')}" placeholder="Nombre del sector (ej: Garage, Galería)"
+          data-k="ths-${s.id}-nombre" oninput="techoSecCambio(${s.id},'nombre',this.value)">
+        <button type="button" class="niv-quitar" onclick="quitarTechoSector(${s.id})" title="Quitar este sector">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><div class="field-label">Superficie <span class="field-hint">m²</span></div>
+          <input type="number" value="${s.sup ?? 0}" step="0.5" min="0" class="input-editable"
+            data-k="ths-${s.id}-sup" oninput="techoSecCambio(${s.id},'sup',+this.value)"></div>
+        <div class="field"><div class="field-label">Espesor aislante <span class="field-hint">cm · vacío = el general</span></div>
+          <input type="number" value="${s.aisEsp ?? ''}" step="1" min="0" class="input-editable" placeholder="—"
+            data-k="ths-${s.id}-aisEsp" oninput="techoSecCambio(${s.id},'aisEsp',this.value)"></div>
+        <div class="field"><div class="field-label">Espesor carpeta <span class="field-hint">cm · vacío = el general</span></div>
+          <input type="number" value="${s.carpEsp ?? ''}" step="0.5" min="0" class="input-editable" placeholder="—"
+            data-k="ths-${s.id}-carpEsp" oninput="techoSecCambio(${s.id},'carpEsp',this.value)"></div>
+      </div>
+    </div>`).join('');
+}
+
 function calcTecho(){
+  // Con sectores cargados, la superficie total es la suma: se escribe en
+  // 'techo-sup' para que el Resumen y el dashboard sigan leyendo de ahí.
+  const secs = (state.techoSectores||[]).filter(s=>+s.sup > 0);
+  const inpSup = document.getElementById('techo-sup');
+  if(secs.length && inpSup){
+    const suma = secs.reduce((t,s)=>t + (+s.sup||0), 0);
+    if(Math.abs(r('techo-sup') - suma) > 0.001) inpSup.value = Math.round(suma*100)/100;
+    inpSup.readOnly = true; inpSup.classList.add('input-calc');
+    setTxt('techo-sup-auto', '· suma de los sectores');
+  } else if(inpSup){
+    inpSup.readOnly = false; inpSup.classList.remove('input-calc');
+    setTxt('techo-sup-auto', '');
+  }
   const sup=r('techo-sup');
   const tipo=document.getElementById('techo-aislacion')?.value||'1';
   const membra = Math.ceil(sup/9)*1.1;
@@ -8168,9 +8257,15 @@ function calcTecho(){
   const capaAis = document.getElementById('techo-capa-ais');
   if(capaAis) capaAis.classList.toggle('techo-capa-off', !insul);
 
-  const volAislMezcla = insul ? sup*Math.max(r('techo-ais-esp'),0)/100 : 0;
+  // Cada zona con su espesor (vacío = el general). Sin sectores, una sola zona.
+  const espAisG = Math.max(r('techo-ais-esp'),0), espCarpG = Math.max(r('techo-carp-esp'),0);
+  const esp = (v, def) => (v===''||v==null) ? def : Math.max(+v||0, 0);
+  const zonas = secs.length
+    ? secs.map(s=>({nombre:(s.nombre||'').trim()||'Sector', sup:+s.sup||0, eAis:esp(s.aisEsp,espAisG), eCarp:esp(s.carpEsp,espCarpG)}))
+    : [{nombre:'Cubierta', sup, eAis:espAisG, eCarp:espCarpG}];
+  const volAislMezcla = insul ? zonas.reduce((t,z)=>t + z.sup*z.eAis/100, 0) : 0;
   const mA = rendMezcla({cem:r('techo-ais-cem'), alb:r('techo-ais-alb'), are:r('techo-ais-are'), liv:r('techo-ais-liv')});
-  const volCarp = sup*Math.max(r('techo-carp-esp'),0)/100;
+  const volCarp = zonas.reduce((t,z)=>t + z.sup*z.eCarp/100, 0);
   const mC = rendMezcla({cem:r('techo-carp-cem'), alb:r('techo-carp-alb'), are:r('techo-carp-are')});
 
   const portKg = volAislMezcla*mA.portKg + volCarp*mC.portKg;
@@ -8198,6 +8293,43 @@ function calcTecho(){
     + (insul && volAisl>0 ? fila(insul, ucEntero(ucK)?insulVal:n(insulVal,2), insulUnit + (ucEntero(ucK)?' ('+n(volAisl,2)+' m³)':'')) : '')
     + fila('Membrana asfáltica', n(membraUC,1), ucLabel('membrana'))
     + fila('Emulsión asfáltica', n(emulsión,1), 'litros');
+
+  // Parciales por sector: mismos materiales, zona por zona
+  const boxPar = document.getElementById('techo-parciales');
+  if(boxPar){
+    if(!secs.length) boxPar.innerHTML = '';
+    else {
+      const datos = zonas.map(z=>{
+        const vA = insul ? z.sup*z.eAis/100 : 0, vC = z.sup*z.eCarp/100;
+        return {nombre:z.nombre, sup:z.sup,
+          port: vA*mA.portKg + vC*mC.portKg, alb: vA*mA.albKg + vC*mC.albKg,
+          arena: vA*mA.arenaM3 + vC*mC.arenaM3, liv: vA*mA.livM3,
+          memb: ucDesdeBase('membrana', Math.ceil(z.sup/9)*1.1*10), emul: z.sup*0.9};
+      });
+      const suma = k => datos.reduce((t,d)=>t+d[k], 0);
+      const cols = [
+        ['Sup. (m²)', d=>n(d.sup,2)],
+        ['Cemento ('+ucLabel('portland')+')', d=>d.port>0.001 ? n(ucDesdeBase('portland',d.port),1) : '—'],
+        ['Cem. alb. ('+ucLabel('cemAlb')+')', d=>d.alb>0.001 ? n(ucDesdeBase('cemAlb',d.alb),1) : '—'],
+        ['Arena ('+ucLabel('arenaG')+')', d=>d.arena>0.0001 ? n(ucDesdeBase('arenaG',d.arena),2) : '—'],
+        ...(insul ? [[insul+' ('+ucLabel(ucK)+')', d=>d.liv>0.0001 ? n(ucEntero(ucK)?Math.ceil(ucDesdeBase(ucK,d.liv)):ucDesdeBase(ucK,d.liv), ucEntero(ucK)?0:2) : '—']] : []),
+        ['Membrana ('+ucLabel('membrana')+')', d=>n(d.memb,1)],
+        ['Emulsión (l)', d=>n(d.emul,1)],
+      ];
+      const tot = {nombre:'Total cubierta', sup:suma('sup'), port:suma('port'), alb:suma('alb'),
+        arena:suma('arena'), liv:suma('liv'), memb:suma('memb'), emul:suma('emul')};
+      boxPar.innerHTML = `<div class="niv-panel" style="margin-top:12px;">
+        <div class="niv-panel-tit">Cubierta por sector <span>— parciales y total</span></div>
+        <div class="table-wrap" style="border:none;"><table class="niv-tabla">
+          <thead><tr><th>Sector</th>${cols.map(c=>`<th class="right">${c[0]}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${datos.map(d=>`<tr><td><span class="niv-dot" style="background:var(--blue);"></span>${_escHtml(d.nombre)}</td>
+              ${cols.map(c=>`<td class="right">${c[1](d)}</td>`).join('')}</tr>`).join('')}
+            <tr class="niv-tot"><td><span class="niv-dot" style="background:var(--text3);"></span>${tot.nombre}</td>
+              ${cols.map(c=>`<td class="right">${c[1](tot)}</td>`).join('')}</tr>
+          </tbody></table></div></div>`;
+    }
+  }
   state.resultados=state.resultados||{};
   state.resultados.techo={
     horm: volCarp,                   // m³ de carpeta de nivelación
@@ -8222,6 +8354,9 @@ const COL_APLICAR = {
     cant:     [{k:'cant',     lbl:'Cantidad', num:true, step:1}],
     sup:      [{k:'sup',      lbl:'Superficie (m²)', num:true, step:0.25}],
     alt:      [{k:'alt',      lbl:'Altura de loseta (cm)', num:true, opts:[12,16]}],
+    arm:      [{k:'arm',      lbl:'Armadura capa comp.', opts:[['malla','Malla electrosoldada'],['hierro','Hierros cortados y atados']]},
+               {k:'phi',      lbl:'Ø (mm)', opts:['4.2','5','6','8','10','12']},
+               {k:'sepArm',   lbl:'Separación entre barras (mm)', num:true, step:25}],
     phi:      [{k:'phi',      lbl:'Ø malla', opts:['4.2','5','6','8']}],
     sep:      [{k:'sep',      lbl:'Separación (mm)', num:true, step:50}],
     capComp:  [{k:'capComp',  lbl:'Capa de compresión (cm)', num:true, opts:[5,6,7,8,9]}],
@@ -8862,6 +8997,7 @@ function updateDashboard(){
   sumarPhi(res.vig?.hierrosPhi);
   sumarPhi(res.bases?.hierrosPhi);
   sumarPhi(res.losaMac?.porPhi);
+  sumarPhi(res.losa?.porPhi);      // capa de compresión con hierros atados
   sumarPhi(res.cont?.porPhi);
   const phisOrden = Object.keys(hierros).sort((a,b)=>+a-+b);
   const barrasPorPhi={};
@@ -10140,6 +10276,7 @@ function applySnapshot(snap, opts){
   state.murosExtra = Array.isArray(snap.murosExtra) ? snap.murosExtra : [];
   state.listas = (snap.listas && typeof snap.listas==='object') ? snap.listas : {};
   state.cpSectores = Array.isArray(snap.cpSectores) ? snap.cpSectores : [];
+  state.techoSectores = Array.isArray(snap.techoSectores) ? snap.techoSectores : [];
   state.nivOcultos = (snap.nivOcultos && typeof snap.nivOcultos==='object') ? snap.nivOcultos : {};
   construirNivelesExtra();
 
@@ -10184,7 +10321,7 @@ function applySnapshot(snap, opts){
 // Re-render + recálculo completo, sin toast
 function renderAll(){
   pintarListas();
-  renderMurosExtra(); renderCpSectores();
+  renderMurosExtra(); renderCpSectores(); renderTechoSectores();
   renderColumnas(); renderVigas('vf'); renderVigas('vd');
   renderBases(); renderLosas(); renderLosasMacizas(); renderRecortes();
   calcHorm(); calcMortero(); calcColTotals(); calcVigaTotals();
@@ -10557,7 +10694,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.nivOcultos = {};
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {};
   return s;
 }
 
@@ -10829,6 +10966,7 @@ function captureSnapshot(){
     murosExtra: state.murosExtra||[],
     listas: state.listas||{},
     cpSectores: state.cpSectores||[],
+    techoSectores: state.techoSectores||[],
     nivOcultos: state.nivOcultos||{},
     nivSel: state.nivSel||{},
   };
