@@ -1744,6 +1744,42 @@ input, select, textarea, button { font-family: inherit; }
 #saveIndicator.saved { font-weight: 700; }
 @media (max-width: 768px) { .sync-ok { bottom: calc(64px + env(safe-area-inset-bottom)); } }
 
+/* Muros de otros espesores */
+.muro-card { margin-top: 14px; border-left: 4px solid var(--orange); }
+.muro-titulo { font-weight: 700; font-size: 14px !important; border: 1px solid transparent !important; background: transparent !important;
+  padding: 3px 6px !important; color: var(--text) !important; min-width: 220px; }
+.muro-titulo:hover, .muro-titulo:focus { border-color: var(--border2) !important; background: var(--surface2) !important; }
+.muro-dims { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.muro-dims label { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text2); }
+.muro-dims input { font-size: 12px !important; padding: 4px 6px !important; }
+
+/* Superficies por nivel (Datos de obra) */
+.sup-tabla { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12.5px; }
+.sup-tabla th { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-weight: 600; text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border2); }
+.sup-tabla td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.sup-tabla td input { width: 100% !important; }
+.sup-tabla .right { text-align: right; }
+.sup-tot { font-weight: 700; color: var(--accent); white-space: nowrap; }
+.sup-tabla tfoot td { font-weight: 800; color: var(--text); border-top: 2px solid var(--border2); border-bottom: none; }
+
+/* Totales de fundaciones */
+.fund-tot { margin-bottom: 16px; border-left: 4px solid var(--orange); }
+.fund-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fund-tabla td { padding: 7px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.fund-tabla .right { text-align: right; white-space: nowrap; }
+.fund-det { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.fund-m3 { font-weight: 700; color: var(--accent); font-size: 14px; }
+.fund-tabla tfoot td { font-weight: 800; font-size: 15px; color: var(--text); border-top: 2px solid var(--border2); border-bottom: none; }
+
+/* Pestaña marcada como lista */
+.btn-lista { font: 600 12px 'DM Sans', sans-serif; padding: 6px 11px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); }
+.btn-lista:hover { border-color: var(--green); color: var(--green); }
+.btn-lista.on { background: var(--green); border-color: var(--green); color: #fff; }
+.nav-item.lista .nav-step { background: var(--green) !important; border-color: var(--green) !important; color: #fff !important; }
+.nav-item.lista::after { content: '✓'; margin-left: 6px; color: var(--green); font-weight: 800; }
+.listas-cont { float: right; color: var(--green); font-weight: 700; letter-spacing: 0; text-transform: none; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -1931,7 +1967,7 @@ input, select, textarea, button { font-family: inherit; }
         <span class="nav-icon">🏗</span> Datos de Obra
       </div>
 
-      <div class="nav-section">Cómputo</div>
+      <div class="nav-section">Cómputo <span class="listas-cont" id="listas-cont"></span></div>
       <div class="nav-item" onclick="showPage('hormigon')"><span class="nav-step">2</span>
         <span class="nav-icon">🧪</span> Dosificaciones
       </div>
@@ -1986,6 +2022,7 @@ input, select, textarea, button { font-family: inherit; }
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="topbar-sub" id="topbar-sub">Resumen general de la obra</div>
       </div>
+      <button type="button" class="btn-lista" id="btn-lista" onclick="toggleLista()" style="display:none;" title="Marcá la pestaña como lista: queda tildada en el menú de la izquierda (se puede seguir editando)"></button>
       <div class="busq-wrap">
         <input type="search" data-busq class="no-edit-hl busq-input" placeholder="🔎 Buscar material o palabra  (Ctrl+K)" autocomplete="off"
           oninput="busqProgramar()" onkeydown="busqTecla(event)" onfocus="busqProgramar()">
@@ -2151,31 +2188,34 @@ input, select, textarea, button { font-family: inherit; }
                 <div class="obra-niveles"><span id="obra-niveles"></span><button type="button" class="btn-niv-add" onclick="agregarNivel(event)">＋ Agregar nivel</button></div>
                 <div class="niv-explica">Cada nivel que agregues suma su superficie cubierta acá abajo y aparece en Mampostería, Revoques y Contrapiso con sus casillas, y para asignar columnas, vigas y losas. Si quitás un nivel (✕) lo cargado no se borra: se oculta y vuelve al agregarlo de nuevo.</div>
               </div>
-              <div class="sup-niveles">
-                <div class="field">
-                  <div class="field-label"><span class="niv-dot" style="background:var(--blue);"></span>Sup. cubierta PB <span class="field-hint">m²</span></div>
-                  <input type="number" id="sup-pb" value="100" class="input-editable" oninput="recalcAll()">
-                </div>
-                <div class="field" data-niv-bloque="PA">
-                  <div class="field-label"><span class="niv-dot" style="background:var(--green);"></span>Sup. cubierta PA <span class="field-hint">m²</span></div>
-                  <input type="number" id="sup-pa" value="100" class="input-editable" oninput="recalcAll()">
-                </div>
-                <div class="field" data-niv-bloque="N3">
-                  <div class="field-label"><span class="niv-dot" style="background:var(--purple);"></span>Sup. cubierta 3° nivel <span class="field-hint">m²</span></div>
-                  <input type="number" id="sup-p3" value="0" class="input-editable" oninput="recalcAll()">
-                </div>
-                <div id="sup-niv-extra" style="display:contents;"></div>
-              </div>
-              <div class="field-row">
-                <div class="field">
-                  <div class="field-label">Sup. total cubierta <span class="field-hint">calculada</span></div>
-                  <input type="number" id="sup-total" class="input-calc" readonly>
-                </div>
-                <div class="field">
-                  <div class="field-label">Sup. semicubierta <span class="field-hint">m²</span></div>
-                  <input type="number" id="sup-semi" value="0" oninput="recalcAll()">
-                </div>
-              </div>
+              <table class="sup-tabla">
+                <thead><tr><th>Nivel</th><th>Cubierta <span class="field-hint">m²</span></th><th>Semicubierta <span class="field-hint">m²</span></th><th class="right">Total <span class="field-hint">m²</span></th></tr></thead>
+                <tbody>
+                    <tr>
+                      <td><span class="niv-dot" style="background:var(--blue);"></span>1° nivel · PB</td>
+                      <td><input type="number" id="sup-pb" value="100" class="input-editable" oninput="recalcAll()"></td>
+                      <td><input type="number" id="semi-pb" value="0" class="input-editable" oninput="recalcAll()"></td>
+                      <td class="right sup-tot" id="suptot-pb">—</td>
+                    </tr>
+                    <tr data-niv-bloque="PA">
+                      <td><span class="niv-dot" style="background:var(--green);"></span>2° nivel · PA</td>
+                      <td><input type="number" id="sup-pa" value="100" class="input-editable" oninput="recalcAll()"></td>
+                      <td><input type="number" id="semi-pa" value="0" class="input-editable" oninput="recalcAll()"></td>
+                      <td class="right sup-tot" id="suptot-pa">—</td>
+                    </tr>
+                    <tr data-niv-bloque="N3">
+                      <td><span class="niv-dot" style="background:var(--purple);"></span>3° nivel</td>
+                      <td><input type="number" id="sup-p3" value="0" class="input-editable" oninput="recalcAll()"></td>
+                      <td><input type="number" id="semi-p3" value="0" class="input-editable" oninput="recalcAll()"></td>
+                      <td class="right sup-tot" id="suptot-p3">—</td>
+                    </tr>
+                </tbody>
+                <tbody id="sup-niv-extra"></tbody>
+                <tfoot><tr><td>Total obra</td><td class="right" id="suptot-cub">—</td><td class="right" id="suptot-semi">—</td><td class="right sup-tot" id="suptot-total">—</td></tr></tfoot>
+              </table>
+              <!-- Totales para el resto de la app (la cubierta total es la que se usa en los cálculos) -->
+              <input type="number" id="sup-total" class="input-calc" readonly style="display:none;">
+              <input type="number" id="sup-semi" value="0" readonly style="display:none;">
               <!-- Selector viejo de cantidad de niveles: oculto, sólo para leer obras guardadas antes -->
               <select id="niveles" style="display:none;"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
             </div>
@@ -2370,6 +2410,8 @@ input, select, textarea, button { font-family: inherit; }
           <span style="font-size:14px;">🪨</span>
           <span style="font-size:11px;font-weight:600;color:var(--text2);min-width:90px;">Hormigón columnas:</span>
           <select id="col-horm-tipo" onchange="recalcSection('col')" style="flex:1;font-size:11px;">
+            <option value="H8">H° Elaborado H8</option>
+            <option value="H13">H° Elaborado H13</option>
             <option value="H17" selected>H° Elaborado H17</option>
             <option value="H21">H° Elaborado H21</option>
             <option value="H25">H° Elaborado H25</option>
@@ -2625,6 +2667,10 @@ input, select, textarea, button { font-family: inherit; }
         <div id="bases-stats-top" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
           <!-- JS renderiza tarjetas por cada tipo de H° presente + piedra + hidro -->
         </div>
+        <div class="card fund-tot">
+          <div class="card-header"><span class="card-icon">Σ</span><span class="card-title">Totales de fundaciones · m³</span></div>
+          <div class="card-body" id="fund-tot"><span style="color:var(--text3);">Calculando…</span></div>
+        </div>
         <!-- ids ocultos para retrocompatibilidad -->
         <span id="bas-stat-elab" style="display:none;"></span>
         <span id="bas-stat-elab-unit" style="display:none;"></span>
@@ -2724,6 +2770,8 @@ input, select, textarea, button { font-family: inherit; }
                     <option value="H8">H° H8 elaborado</option>
                     <option value="H13">H° H13 elaborado</option>
                     <option value="H17">H° H17 elaborado</option>
+                    <option value="H21">H° H21 elaborado</option>
+                    <option value="H25">H° H25 elaborado</option>
                   </select>
                   <div id="cim-horm-result" style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text2);margin-top:6px;">—</div>
                 </div>
@@ -2800,7 +2848,7 @@ input, select, textarea, button { font-family: inherit; }
 
         <div class="grid-2">
           <div class="card">
-            <div class="card-header"><span class="card-icon">🧱</span><span class="card-title">Superficie de mampostería</span></div>
+            <div class="card-header"><span class="card-icon">🧱</span><span class="card-title">Muro principal · <span id="mamp-muro-esp">0,17</span> m</span></div>
             <div class="card-body">
               <div class="field">
                 <div class="field-label">Sup. neta 1° nivel / PB <span class="field-hint">m²</span></div>
@@ -2827,7 +2875,11 @@ input, select, textarea, button { font-family: inherit; }
                 <input type="number" id="mamp-desp" value="5" step="1" min="0" max="30" class="input-editable" oninput="calcMamposteria()">
               </div>
               <div class="field">
-                <div class="field-label">Dimensiones del ladrillón</div>
+                <div class="field-label">Ladrillo / bloque <span class="field-hint">así figura en el Resumen</span></div>
+                <input type="text" id="mamp-lad-nombre" value="Ladrillón" class="input-editable" oninput="calcMamposteria()">
+              </div>
+              <div class="field">
+                <div class="field-label">Dimensiones del ladrillo</div>
               </div>
               <div class="field-row-3">
                 <div class="field">
@@ -2886,6 +2938,9 @@ input, select, textarea, button { font-family: inherit; }
             <div class="card-body" id="mamp-resultado"><!-- JS --></div>
           </div>
         </div>
+        <div id="muros-extra"></div>
+        <button type="button" class="btn-niv-add" style="margin:14px 0 2px;" onclick="agregarMuro()">＋ Agregar muro de otro espesor</button>
+
         <div class="card" style="margin-top:16px;">
           <div class="niv-panel">
             <div class="niv-panel-tit">Mampostería <span>— parciales por nivel, para pedidos de obra</span></div>
@@ -4896,7 +4951,7 @@ function nivelesTodos(){
 // Obras guardadas antes de esto: los niveles fijos con datos cargados quedan activos
 function inferirNivelesActivos(get){
   const val = id => parseFloat(get(id)) || 0;
-  const conDatos = suf => ['sup-','mamp-sup-','rg-int-','rg-ext-','rf-int-','rf-ext-','cr-','cp-sup-','carp-sup-'].some(p=>val(p+suf) > 0);
+  const conDatos = suf => ['sup-','semi-','mamp-sup-','rg-int-','rg-ext-','rf-int-','rf-ext-','cr-','cp-sup-','carp-sup-'].some(p=>val(p+suf) > 0);
   const filas = k => [...state.columnas, ...state.vigas_vd, ...state.losas, ...(state.losas_macizas||[])].some(o=>o.nivel===k);
   const cant = val('niveles');
   const act = [];
@@ -4908,6 +4963,18 @@ function inferirNivelesActivos(get){
 // Superficie cubierta total = suma de los niveles de la obra (el tanque no cuenta)
 function supCubiertaTotal(){
   return nivelesTodos().filter(nv=>nv.k!=='TQ').reduce((t,nv)=>t + r('sup-'+nv.suf), 0);
+}
+// Superficie por nivel: cubierta + semicubierta = total, y los totales de la obra
+function actualizarSupNiveles(){
+  let tc = 0, ts = 0;
+  const f = v => (Math.round(v*100)/100).toLocaleString('es-AR');
+  nivelesTodos().filter(nv=>nv.k!=='TQ').forEach(nv=>{
+    const c = r('sup-'+nv.suf), sm = r('semi-'+nv.suf);
+    tc += c; ts += sm;
+    setTxt('suptot-'+nv.suf, f(c+sm));
+  });
+  setTxt('suptot-cub', f(tc)); setTxt('suptot-semi', f(ts)); setTxt('suptot-total', f(tc+ts));
+  const semi = document.getElementById('sup-semi'); if(semi) semi.value = Math.round(ts*100)/100;
 }
 // Casillas de los niveles fijos que no están en la obra: se ocultan (no se borran)
 function aplicarNivelesVisibles(){
@@ -5024,8 +5091,11 @@ function construirNivelesExtra(){
       + armadura(s, v); }).join(''); }
 
   const sx = document.getElementById('sup-niv-extra');
-  if(sx){ const v = guardar(sx); sx.innerHTML = ex.map(n=>
-    campo('sup-'+n.suf, v['sup-'+n.suf], 'recalcAll()', `<span class="niv-dot" style="background:${n.color};"></span>Sup. cubierta ${_escHtml(n.largo)}`, 'm²', 0)).join(''); }
+  if(sx){ const v = guardar(sx); sx.innerHTML = ex.map(n=>`<tr>
+      <td><span class="niv-dot" style="background:${n.color};"></span>${_escHtml(n.largo)}</td>
+      <td><input type="number" id="sup-${n.suf}" value="${v['sup-'+n.suf] ?? 0}" class="input-editable" oninput="recalcAll()"></td>
+      <td><input type="number" id="semi-${n.suf}" value="${v['semi-'+n.suf] ?? 0}" class="input-editable" oninput="recalcAll()"></td>
+      <td class="right sup-tot" id="suptot-${n.suf}">—</td></tr>`).join(''); }
   aplicarNivelesVisibles();
 
   // Filtros "Mostrar" con todos los niveles
@@ -5333,6 +5403,33 @@ function showPage(id) {
   if(id==='unidades') renderUnidades();
   if(id==='recortes') renderRecortes();
   if(id==='dashboard') renderDashItems();
+  pintarListas();
+}
+
+// Pestañas marcadas como "lista": tilde verde en el menú. Es sólo una marca,
+// la pestaña se sigue pudiendo editar.
+const PAGS_LISTA = ['obra','hormigon','columnas','vigas','bases','mamposteria','revoques','contrapiso','losas','recortes','unidades'];
+function paginaActual(){ return document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard'; }
+function toggleLista(){
+  const p = paginaActual(); if(!PAGS_LISTA.includes(p)) return;
+  state.listas = state.listas || {};
+  if(state.listas[p]) delete state.listas[p]; else state.listas[p] = true;
+  pintarListas(); scheduleAutosave();
+}
+function pintarListas(){
+  const L = state.listas || {};
+  document.querySelectorAll('.nav-item').forEach(it=>{
+    const m = (it.getAttribute('onclick')||'').match(/showPage\('([^']+)'\)/);
+    it.classList.toggle('lista', !!(m && L[m[1]]));
+  });
+  const p = paginaActual(), b = document.getElementById('btn-lista');
+  if(b){
+    b.style.display = PAGS_LISTA.includes(p) ? '' : 'none';
+    b.classList.toggle('on', !!L[p]);
+    b.textContent = L[p] ? '✓ Lista' : '☐ Marcar como lista';
+  }
+  const c = document.getElementById('listas-cont');
+  if(c){ const k = PAGS_LISTA.filter(x=>L[x]).length; c.textContent = k ? `✓ ${k}/${PAGS_LISTA.length} listas` : ''; }
 }
 
 function toggleSidebar() {
@@ -6010,6 +6107,8 @@ function renderVigas(tipo){
         <select onchange="updateViga('${tipo}',${v.id},'hormTipo',this.value);calcVigaTotals()"
           style="width:100%;font-size:10px;padding:3px 4px;margin-bottom:4px;
                  border-color:${v.hormTipo==='obra'?'var(--green)':'var(--blue)'};">
+          <option value="H8" ${v.hormTipo==='H8'?'selected':''}>H8 elaborado</option>
+          <option value="H13" ${v.hormTipo==='H13'?'selected':''}>H13 elaborado</option>
           <option value="H17" ${(v.hormTipo||'H17')==='H17'?'selected':''}>H17 elaborado</option>
           <option value="H21" ${v.hormTipo==='H21'?'selected':''}>H21 elaborado</option>
           <option value="H25" ${v.hormTipo==='H25'?'selected':''}>H25 elaborado</option>
@@ -6511,52 +6610,158 @@ function calcCimientos(){
   updateDashboard();
 }
 
+// Totales de fundaciones: m³ de bases (cant × ancho × largo × alto), de
+// cimientos (H° + piedra bola) y de zapatas corridas (se cargan en Vigas)
+function renderTotFund(){
+  const el = document.getElementById('fund-tot'); if(!el) return;
+  const nombreH = t => t==='obra' ? 'H° hecho en obra' : ((HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'') + ' elaborado');
+  const porTipo = o => Object.entries(o).filter(([,v])=>v>0.0005).map(([t,v])=>`${nombreH(t)}: ${n(v,2)}`).join(' · ');
+  const bT = {}; let bVol = 0, bCant = 0;
+  (state.bases||[]).forEach(b=>{ const v = (+b.cant||0)*(+b.ancho||0)*(+b.largo||0)*(+b.alto||0); bVol += v; bCant += (+b.cant||0); const t = b.hormTipo||'H17'; bT[t] = (bT[t]||0) + v; });
+  const c = state.resultados?.cim || {};
+  const cVol = c.vol||0, cH = c.volHorm||0, cP = c.piedra||0;
+  const zT = {}; let zVol = 0, zN = 0;
+  (state.vigas_vf||[]).forEach(v=>{ if(!v.zapata) return; const vv = vigaHorm(v); zVol += vv; zN++; const t = v.techoLiviano ? 'obra' : (v.hormTipo||'H17'); zT[t] = (zT[t]||0) + vv; });
+  const fila = (nom, det, vol) => `<tr><td><b>${nom}</b><div class="fund-det">${det||''}</div></td><td class="right fund-m3">${n(vol,2)} m³</td></tr>`;
+  const tot = bVol + cVol + zVol;
+  el.innerHTML = `<table class="fund-tabla"><tbody>
+    ${fila(`Bases${bCant ? ` · ${bCant} u.` : ''}`, porTipo(bT) || 'sin bases cargadas', bVol)}
+    ${fila('Cimientos', cVol>0 ? `${nombreH(c.hormTipo||'obra')}: ${n(cH,2)}${cP>0.0005 ? ` · piedra bola: ${n(cP,2)}` : ''}` : 'sin cimientos cargados', cVol)}
+    ${zN ? fila(`Zapatas corridas · ${zN} viga${zN>1?'s':''}`, porTipo(zT) + ' · se cargan en Vigas', zVol) : ''}
+    </tbody><tfoot><tr><td>Total fundaciones</td><td class="right">${n(tot,2)} m³</td></tr></tfoot></table>`;
+}
+
 // ── MAMPOSTERÍA ──────────────────────────────────────────────────────────
-function calcMamposteria(){
-  const despPct   = r('mamp-desp') / 100;   // factor de desperdicio (editable)
-
-  const largo = r('lad-largo')||0.25;
-  const alto  = r('lad-alto') ||0.06;
-  const esp   = r('lad-esp')  ||0.17;
-  const junta = r('lad-junta')||0.03;
-
-  // Ladrillones por m² — puro geométrico, SIN desperdicio
-  const ladPm2 = 1 / ((largo + junta) * (alto + junta));
-
-  // Superficies por nivel (fijos + agregados)
-  const nivelesData = nivelesArea('mamp')
-    .map(nv => ({k:nv.k, label:nv.largo, color:nv.color, sup: r('mamp-sup-'+nv.suf)}))
-    .filter(x => x.sup > 0);
-
-  const totSup  = nivelesData.reduce((s,x)=>s+x.sup, 0);
-
-  // Ladrillones NETOS (sin desperdicio) — coherente con ladPm2 × totSup
-  const ladNetosExacto = totSup * ladPm2;
-  const ladNetos       = Math.ceil(ladNetosExacto);
-
-  // Ladrillones CON desperdicio — total a pedir
-  const ladConDesp = Math.ceil(ladNetos * (1 + despPct));
-
-  // Mortero: lo que ocupa el muro menos los ladrillones, + desperdicio.
-  // (Ladrillón 25×6×17 con junta de 3 cm y 13 % → 0,078 m³/m², el valor de la planilla.)
+// Puede haber muros de distintos espesores: el principal (casillas de la
+// tarjeta de arriba) y los que se agregan (state.murosExtra). Cada muro tiene su
+// ladrillo/bloque, sus medidas, sus superficies por nivel y sus hiladas
+// hidrófugas de PB. Mezcla, desperdicios e hidrófugo son los mismos para todos.
+function muroPrincipal(){
+  return {id:0, titulo:'Muro principal', ladNombre:(document.getElementById('mamp-lad-nombre')?.value||'').trim() || 'Ladrillón',
+    esp:r('lad-esp')||0.17, largo:r('lad-largo')||0.25, alto:r('lad-alto')||0.06, junta:r('lad-junta')||0.03,
+    sup:Object.fromEntries(nivelesArea('mamp').map(nv=>[nv.k, r('mamp-sup-'+nv.suf)])),
+    hil:r('mamp-hid-hil'), lMuros:r('mamp-hid-largo')};
+}
+function calcMuro(m){
+  const despPct  = r('mamp-desp') / 100;
   const despMort = Math.max(r('mamp-desp-mort'), 0) / 100;
-  const mortM2   = Math.max(0, esp - ladPm2*largo*alto*esp) * (1 + despMort);
-  const mortM3   = totSup * mortM2;
-  // Materiales según la mezcla de Dosificaciones
-  const mz       = mortero('mamp');
+  const largo = +m.largo || 0.25, alto = +m.alto || 0.06, esp = +m.esp || 0.17, junta = +m.junta >= 0 ? +m.junta : 0.03;
+  // Ladrillos por m² (geométrico, sin desperdicio) y mortero por m² (muro − ladrillos, + desperdicio)
+  const ladPm2 = 1 / ((largo + junta) * (alto + junta));
+  const mortM2 = Math.max(0, esp - ladPm2*largo*alto*esp) * (1 + despMort);
+  const niveles = nivelesArea('mamp').map(nv=>({k:nv.k, label:nv.largo, color:nv.color, sup:+(m.sup||{})[nv.k]||0})).filter(x=>x.sup>0);
+  const totSup = niveles.reduce((s,x)=>s+x.sup, 0);
+  const ladNetos = Math.ceil(totSup * ladPm2);
+  const ladConDesp = Math.ceil(ladNetos * (1 + despPct));
+  const mortM3 = totSup * mortM2;
+  const mz = mortero('mamp');
   // Primeras hiladas de PB con hidrófugo: cemento + arena, SIKA 1 en el agua de amasado
-  const hil    = Math.max(Math.floor(r('mamp-hid-hil')), 0);
-  const lMuros = Math.max(r('mamp-hid-largo'), 0);
-  const supH   = Math.min(r('mamp-sup-pb'), hil * (alto + junta) * lMuros);
-  const mzH    = rendMezcla({cem: r('mamp-hid-cem') || 1, are: r('mamp-hid-are')});
-  const mortH  = supH * mortM2;
-  const portH  = mortH * mzH.portKg, arenaH = mortH * mzH.arenaM3;
+  const hil = Math.max(Math.floor(+m.hil||0), 0), lMuros = Math.max(+m.lMuros||0, 0);
+  const supH = Math.min(+(m.sup||{}).PB||0, hil * (alto + junta) * lMuros);
+  const mzH = rendMezcla({cem: r('mamp-hid-cem') || 1, are: r('mamp-hid-are')});
+  const mortH = supH * mortM2;
+  const portH = mortH * mzH.portKg, arenaH = mortH * mzH.arenaM3;
   const hidroH = portH * aguaCemento() / (Math.max(r('mamp-hid-dil'), 0.1) || 10);
   const mortComun = Math.max(mortM3 - mortH, 0);
-  const albKg    = mortComun * mz.rend.albKg;
-  const portKg   = mortComun * mz.rend.portKg + portH;
-  const calKg    = mortComun * mz.rend.calKg;
-  const arenaM3  = mortComun * mz.rend.arenaM3 + arenaH;
+  const porNivel = {};
+  niveles.forEach(x=>{
+    const h = x.k==='PB' ? mortH : 0;
+    const m3 = Math.max(x.sup*mortM2 - h, 0);
+    porNivel[x.k] = {sup:x.sup, lad:x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
+      cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0};
+  });
+  return {m, mz, largo, alto, esp, junta, ladPm2, mortM2, niveles, totSup, ladNetos, ladConDesp, mortM3, despPct,
+    hil, lMuros, supH, portH, arenaH, hidroH,
+    albKg: mortComun*mz.rend.albKg, portKg: mortComun*mz.rend.portKg + portH,
+    calKg: mortComun*mz.rend.calKg, arenaM3: mortComun*mz.rend.arenaM3 + arenaH, porNivel};
+}
+
+// Muros agregados
+function agregarMuro(){
+  const ex = state.murosExtra = state.murosExtra || [];
+  const id = ex.reduce((mx,x)=>Math.max(mx, x.id||0), 0) + 1;
+  ex.push({id, titulo:'Muro de 0,10 m', ladNombre:'Ladrillo hueco 10×18×33', esp:0.10, largo:0.33, alto:0.18, junta:0.015, sup:{}, hil:0, lMuros:0});
+  renderMurosExtra(); calcMamposteria(); scheduleAutosave();
+  setTimeout(()=>document.getElementById('muro-'+id)?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+}
+function quitarMuro(id){
+  const m = (state.murosExtra||[]).find(x=>x.id===id);
+  if(!m || !confirm(`¿Quitar "${m.titulo}"? Se borran sus superficies.`)) return;
+  state.murosExtra = state.murosExtra.filter(x=>x.id!==id);
+  renderMurosExtra(); calcMamposteria(); scheduleAutosave();
+}
+function muroCambio(id, campo, val){
+  const m = (state.murosExtra||[]).find(x=>x.id===id);
+  if(!m) return;
+  if(campo.startsWith('sup:')){ m.sup = m.sup || {}; m.sup[campo.slice(4)] = +val || 0; }
+  else m[campo] = val;
+  scheduleAutosave();
+  if(campo==='titulo' || campo==='ladNombre') { calcMamposteria(); return; }
+  setTimeout(()=>{ renderMurosExtra(); calcMamposteria(); }, 0);
+}
+function renderMurosExtra(){
+  const box = document.getElementById('muros-extra');
+  if(!box) return;
+  const foco = document.activeElement?.dataset?.k;
+  const inp = (m, campo, val, step, tit, w) => `<input type="number" value="${val ?? ''}" step="${step}" min="0" data-k="mu-${m.id}-${campo}"
+      onchange="muroCambio(${m.id},'${campo}',+this.value)" title="${tit}" style="width:${w||80}px;">`;
+  box.innerHTML = (state.murosExtra||[]).map(m=>`
+    <div class="card muro-card" id="muro-${m.id}">
+      <div class="card-header">
+        <span class="card-icon">🧱</span>
+        <input type="text" class="muro-titulo no-edit-hl" value="${_escHtml(m.titulo)}" onchange="muroCambio(${m.id},'titulo',this.value)" title="Nombre del muro">
+        <button type="button" class="btn btn-secondary" style="margin-left:auto;font-size:11px;padding:4px 10px;" onclick="quitarMuro(${m.id})">✕ Quitar</button>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div>
+            <div class="field"><div class="field-label">Ladrillo / bloque <span class="field-hint">así figura en el Resumen</span></div>
+              <input type="text" value="${_escHtml(m.ladNombre)}" onchange="muroCambio(${m.id},'ladNombre',this.value)"></div>
+            <div class="field-label" style="margin:4px 0 6px;">Medidas del ladrillo y junta <span class="field-hint">m</span></div>
+            <div class="muro-dims">
+              <label>Largo ${inp(m,'largo',m.largo,0.01,'Largo del ladrillo (m)')}</label>
+              <label>Alto ${inp(m,'alto',m.alto,0.01,'Alto del ladrillo (m)')}</label>
+              <label>Espesor del muro ${inp(m,'esp',m.esp,0.01,'Espesor del muro = ancho del ladrillo (m)')}</label>
+              <label>Junta ${inp(m,'junta',m.junta,0.005,'Junta de asiento (m)')}</label>
+            </div>
+            <div class="field-label" style="margin:10px 0 6px;">Superficie neta por nivel <span class="field-hint">m²</span></div>
+            <div class="muro-dims">
+              ${nivelesArea('mamp').map(nv=>`<label><span class="niv-dot" style="background:${nv.color};"></span>${_escHtml(nv.largo)} ${inp(m,'sup:'+nv.k,(m.sup||{})[nv.k]??0,1,'Superficie neta (m²)')}</label>`).join('')}
+            </div>
+            <div class="field-label" style="margin:10px 0 6px;">Hiladas con hidrófugo — sólo PB</div>
+            <div class="muro-dims">
+              <label>Hiladas ${inp(m,'hil',m.hil,1,'Hiladas desde abajo',60)}</label>
+              <label>Largo de estos muros en PB (m) ${inp(m,'lMuros',m.lMuros,1,'Largo total (m)')}</label>
+            </div>
+          </div>
+          <div id="muro-res-${m.id}" class="muro-res"></div>
+        </div>
+      </div>
+    </div>`).join('');
+  if(foco){ const el = box.querySelector(`[data-k="${foco}"]`); if(el){ el.focus(); if(el.select) el.select(); } }
+}
+// Resumen compacto de un muro
+function muroResHTML(c){
+  const fila = (lbl, val, unit, fuerte) => `<div class="dosaje-row"${fuerte?' style="background:var(--accent-dim2);border-radius:6px;padding:6px 8px;"':''}><div class="dosaje-material"${fuerte?' style="font-weight:700;color:var(--text);"':''}>${lbl}</div><div class="dosaje-value${fuerte?'':' accent'}"${fuerte?' style="color:var(--accent);font-size:16px;"':''}>${val}</div><div class="dosaje-unit">${unit}</div></div>`;
+  const uc = (q, lbl, k) => q>0.001 ? fila(lbl, n(ucDesdeBase(k,q),1), ucLabel(k)) : '';
+  return `<div class="field-label" style="margin-bottom:8px;">${_escHtml(c.m.titulo)} · ${n(c.totSup,1)} m² · ${_escHtml(c.m.ladNombre)}</div>`
+    + fila(`${_escHtml(c.m.ladNombre)} / m²`, n(c.ladPm2,2), 'uds/m²')
+    + fila('Mortero / m²', n(c.mortM2,4), 'm³/m²')
+    + fila(`A pedir (+${(c.despPct*100).toFixed(0)}% desp.)`, c.ladConDesp.toLocaleString('es-AR'), 'unidades', true)
+    + fila('Mortero total', n(c.mortM3,2), 'm³')
+    + uc(c.albKg, 'Cem. alb.', 'cemAlb') + uc(c.portKg, 'Cemento Portland', 'portland') + uc(c.calKg, 'Cal', 'cal')
+    + fila('Arena gruesa', n(c.arenaM3,2), 'm³')
+    + (c.hidroH>0.01 ? fila('Hidrófugo (hiladas PB)', n(c.hidroH,1), 'litros') : '');
+}
+
+function calcMamposteria(){
+  const P = calcMuro(muroPrincipal());
+  const extras = (state.murosExtra||[]).map(calcMuro);
+  const todos = [P, ...extras];
+  const S = k => todos.reduce((s,c)=>s + (c[k]||0), 0);
+  const {mz, ladPm2, mortM2, niveles:nivelesData, totSup, ladNetos, ladConDesp, mortM3, despPct, hil, lMuros, supH, portH, arenaH, hidroH, alto, junta} = P;
+  // Totales de todos los muros
+  const albKg = S('albKg'), portKg = S('portKg'), calKg = S('calKg'), arenaM3 = S('arenaM3'), hidroTot = S('hidroH');
   const hidRes = document.getElementById('mamp-hid-res');
   if(hidRes) hidRes.innerHTML = !hil ? 'Sin hiladas con hidrófugo.'
     : !lMuros ? 'Cargá el largo total de muros de planta baja para calcular las hiladas.'
@@ -6566,10 +6771,12 @@ function calcMamposteria(){
        <div style="color:var(--text3);">Agua = cemento × a/c ${String(aguaCemento()).replace('.',',')} (Dosificaciones), hidrófugo 1 : ${r('mamp-hid-dil')||10}.</div>`;
   const cemAlbBol = albKg / getCemAlbKg();
   setTxt('mamp-mezcla-lbl', mz.label);
+  setTxt('mamp-muro-esp', String(P.esp).replace('.',','));
 
-  // Stats
-  setTxt('mamp-stat-lad', ladNetos.toLocaleString('es'));
-  setTxt('mamp-stat-lad-unit', `uds netas · +desp.: ${ladConDesp.toLocaleString('es')}`);
+  // Stats (todos los muros)
+  const ladTot = S('ladNetos'), ladTotDesp = S('ladConDesp');
+  setTxt('mamp-stat-lad', ladTot.toLocaleString('es'));
+  setTxt('mamp-stat-lad-unit', `uds netas${extras.length?' · todos los muros':''} · +desp.: ${ladTotDesp.toLocaleString('es')}`);
   if(mz.tipo==='2'){
     setTxt('mamp-stat-cem-lbl', 'Cem. albañilería');
     setTxt('mamp-stat-cem', n(cemAlbBol, 1));
@@ -6581,7 +6788,7 @@ function calcMamposteria(){
   }
   setTxt('mamp-stat-arena', n(arenaM3, 1));
 
-  // Materiales por m² de muro, en la presentación comercial
+  // Muro principal: detalle
   const porM2 = (kgM3, lbl) => kgM3>0.001 ? `
     <div class="dosaje-row">
       <div class="dosaje-material">${lbl} / m²</div>
@@ -6594,20 +6801,16 @@ function calcMamposteria(){
       <div class="dosaje-value accent">${n(ucDesdeBase(k, q),1)}</div>
       <div class="dosaje-unit">${ucLabel(k)}</div>
     </div>` : '';
-
-  // Tabla por nivel
   const nivelRows = nivelesData.map(x=>
     `<div class="dosaje-row" style="padding:5px 0;">
        <div class="dosaje-material" style="color:var(--text2);">${x.label}</div>
        <div class="dosaje-value" style="color:var(--text);">${x.sup.toFixed(1)} m²</div>
        <div class="dosaje-unit">${Math.ceil(x.sup * ladPm2).toLocaleString('es')} uds</div>
-     </div>`
-  ).join('');
-
+     </div>`).join('');
   document.getElementById('mamp-resultado').innerHTML=`
     <div class="field-label" style="margin-bottom:8px;">Por m² de muro — valor unitario</div>
     <div class="dosaje-row">
-      <div class="dosaje-material">Ladrillones / m²</div>
+      <div class="dosaje-material">${_escHtml(P.m.ladNombre)} / m²</div>
       <div class="dosaje-value">${n(ladPm2, 2)}</div>
       <div class="dosaje-unit">uds/m²</div>
     </div>
@@ -6630,7 +6833,7 @@ function calcMamposteria(){
     <div class="divider"></div>
     <div class="field-label" style="margin-bottom:8px;">Totales — ${totSup.toFixed(1)} m² netos</div>
     <div class="dosaje-row">
-      <div class="dosaje-material">Ladrillones netos</div>
+      <div class="dosaje-material">${_escHtml(P.m.ladNombre)} netos</div>
       <div class="dosaje-value accent">${ladNetos.toLocaleString('es')}</div>
       <div class="dosaje-unit">uds (${n(ladPm2,2)}/m² × ${totSup.toFixed(1)})</div>
     </div>
@@ -6644,37 +6847,39 @@ function calcMamposteria(){
       <div class="dosaje-value">${n(mortM3, 2)}</div>
       <div class="dosaje-unit">m³</div>
     </div>
-    ${totRow(albKg, 'Cem. Alb. total', 'cemAlb')}
-    ${totRow(portKg, 'Cemento Portland total', 'portland')}
-    ${totRow(calKg, 'Cal total', 'cal')}
+    ${totRow(P.albKg, 'Cem. Alb. total', 'cemAlb')}
+    ${totRow(P.portKg, 'Cemento Portland total', 'portland')}
+    ${totRow(P.calKg, 'Cal total', 'cal')}
     <div class="dosaje-row">
       <div class="dosaje-material">Arena total</div>
-      <div class="dosaje-value accent">${n(arenaM3, 2)}</div>
+      <div class="dosaje-value accent">${n(P.arenaM3, 2)}</div>
       <div class="dosaje-unit">m³</div>
     </div>`;
+  // Muros agregados: cada uno su resumen
+  extras.forEach(c=>{ const el = document.getElementById('muro-res-'+c.m.id); if(el) el.innerHTML = muroResHTML(c); });
+
+  // Parciales por nivel: todos los muros sumados; ladrillos por tipo aparte
+  const porNivel = {};
+  todos.forEach(c=>Object.entries(c.porNivel).forEach(([k,d])=>{
+    const p = porNivel[k] || (porNivel[k] = {sup:0, lad:0, alb:0, port:0, cal:0, arena:0, hidro:0, ladPorTipo:{}});
+    ['sup','lad','alb','port','cal','arena','hidro'].forEach(x=>{ p[x] += d[x]||0; });
+    p.ladPorTipo[c.m.ladNombre] = (p.ladPorTipo[c.m.ladNombre]||0) + d.lad;
+  }));
+  const porMuro = todos.filter(c=>c.ladConDesp>0).map(c=>({titulo:c.m.titulo, nombre:c.m.ladNombre, ladrillones:c.ladConDesp, sup:c.totSup}));
 
   state.resultados = state.resultados || {};
-  state.resultados.mamp = {ladrillones: ladConDesp, ladNetos, cemAlb: cemAlbBol, cemAlbKg: albKg,
-    portKg, calKg, arena: arenaM3, mortM3, hidroL: hidroH, supH};
+  state.resultados.mamp = {ladrillones: ladTotDesp, ladNetos: ladTot, cemAlb: cemAlbBol, cemAlbKg: albKg,
+    portKg, calKg, arena: arenaM3, mortM3: S('mortM3'), hidroL: hidroTot, supH: S('supH'), porMuro, porNivel};
 
-  // Parciales por nivel
-  const porNivel = {};
-  nivelesData.forEach(x=>{
-    const h = x.k==='PB' ? mortH : 0;               // la parte hidrófuga es de PB
-    const m3 = Math.max(x.sup * mortM2 - h, 0);
-    porNivel[x.k] = {sup:x.sup, lad: x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
-      cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0};
-  });
-  const cols = [
-    {lbl:'m²', v:d=>d.sup, fmt:fmtN(1)},
-    {lbl:'Ladrillones<br><span class="niv-ayuda">con desperdicio</span>', v:d=>d.lad, fmt:v=>v>0?`<b>${Math.ceil(v).toLocaleString('es-AR')}</b>`:'—'},
-  ];
+  const tipos = [...new Set(porMuro.map(x=>x.nombre))];
+  const cols = [{lbl:'m²', v:d=>d.sup, fmt:fmtN(1)}];
+  (tipos.length ? tipos : [P.m.ladNombre]).forEach(t=>cols.push({lbl:`${_escHtml(t)}<br><span class="niv-ayuda">con desperdicio</span>`,
+    v:d=>(d.ladPorTipo||{})[t]||0, fmt:v=>v>0?`<b>${Math.ceil(v).toLocaleString('es-AR')}</b>`:'—'}));
   if(albKg>0.01)  cols.push({lbl:'Cem. alb.',  v:d=>d.alb,  fmt:fmtUC('cemAlb')});
   if(portKg>0.01) cols.push({lbl:'Cemento',    v:d=>d.port, fmt:fmtUC('portland')});
   if(calKg>0.01)  cols.push({lbl:'Cal',        v:d=>d.cal,  fmt:fmtUC('cal')});
   cols.push({lbl:'Arena gruesa (m³)', v:d=>d.arena, fmt:fmtN(2)});
-  if(hidroH>0.01) cols.push({lbl:'Hidrófugo (L)', v:d=>d.hidro||0, fmt:fmtN(1)});
-  state.resultados.mamp.porNivel = porNivel;
+  if(hidroTot>0.01) cols.push({lbl:'Hidrófugo (L)', v:d=>d.hidro||0, fmt:fmtN(1)});
   const pn = document.getElementById('mamp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('mamp', porNivel, cols);
   updateDashboard();
@@ -6954,7 +7159,7 @@ function renderLosas(){
       <td class="center">
         <select onchange="updateLosa(${l.id},'hormTipo',this.value);calcLosas()"
           style="width:52px;font-size:10px;padding:2px 3px;border-color:var(--blue);">
-          ${['H17','H21','H25'].map(t=>`<option value="${t}" ${t===(l.hormTipo||'H17')?'selected':''}>${t}</option>`).join('')}
+          ${['H8','H13','H17','H21','H25'].map(t=>`<option value="${t}" ${t===(l.hormTipo||'H17')?'selected':''}>${t}</option>`).join('')}
         </select>
       </td>
       <td class="right accent">${n(losetas,0)}</td>
@@ -7206,7 +7411,7 @@ const COL_APLICAR = {
     phi:      [{k:'phi',      lbl:'Ø malla', opts:['4.2','5','6','8']}],
     sep:      [{k:'sep',      lbl:'Separación (mm)', num:true, step:50}],
     capComp:  [{k:'capComp',  lbl:'Capa de compresión (cm)', num:true, opts:[5,6,7,8,9]}],
-    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:['H17','H21','H25']}],
+    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:['H8','H13','H17','H21','H25']}],
   }},
   losas_macizas: {nombre:'losas macizas', arr:()=>state.losas_macizas||[], render:()=>renderLosasMacizas(), campos:{
     nivel:  [{k:'nivel', lbl:'Nivel', opts:()=>nivelesTodos().map(n=>[n.k,n.largo])}],
@@ -7229,13 +7434,13 @@ const COL_APLICAR = {
   vigas_vf: {nombre:'vigas VF/VA', arr:()=>state.vigas_vf, render:()=>renderVigas('vf'), campos:{
     seccion:  [{k:'ancho', lbl:'Ancho (cm)', num:true, step:0.5}, {k:'alto', lbl:'Alto (cm)', num:true, step:0.5}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (cm)', num:true, step:1}],
-    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
+    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H8','H8 elaborado'],['H13','H13 elaborado'],['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
   }},
   vigas_vd: {nombre:'vigas VD/VE/VC', arr:()=>state.vigas_vd, render:()=>renderVigas('vd'), campos:{
     nivel:    [{k:'nivel', lbl:'Nivel', opts:()=>nivelesTodos().map(n=>[n.k,n.largo])}],
     seccion:  [{k:'ancho', lbl:'Ancho (cm)', num:true, step:0.5}, {k:'alto', lbl:'Alto (cm)', num:true, step:0.5}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (cm)', num:true, step:1}],
-    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
+    hormTipo: [{k:'hormTipo', lbl:'Tipo de H°', opts:[['H8','H8 elaborado'],['H13','H13 elaborado'],['H17','H17 elaborado'],['H21','H21 elaborado'],['H25','H25 elaborado'],['obra','En obra']]}],
   }},
   bases: {nombre:'bases', arr:()=>state.bases, render:()=>renderBases(), campos:{
     cant:     [{k:'cant',  lbl:'Cantidad', num:true, step:1}],
@@ -7802,6 +8007,8 @@ function updateDashboard(){
   const res=state.resultados||{};
   const sup=supCubiertaTotal();
   setVal('sup-total',sup,0);
+  actualizarSupNiveles();
+  renderTotFund();
   setTxt('dash-sup',sup);
   // Nuevos stats de obra
   const prop = document.getElementById('obra-prop')?.value||'—';
@@ -8256,7 +8463,10 @@ function datosResumen(){
       U('Piedra Bola','piedra', piedraTotal, pct),
     ]},
     {el:'res-losas', titulo:'Losas y Varios', filas:[
-      U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct),
+      ...(res.mamp?.porMuro?.length
+          ? Object.entries(res.mamp.porMuro.reduce((o,m)=>{ o[m.nombre]=(o[m.nombre]||0)+m.ladrillones; return o; }, {}))
+              .map(([nom,q])=>U(nom,'ladrillon', q, pct))
+          : [U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct)]),
       U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
       U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, 1.12),
       U('Malla de losa','malla', (res.losa?.malla6||0)*14.4, 1.10),
@@ -8518,7 +8728,7 @@ const ITEM_MAT = [
   ['portland','Cemento Portland','portland'], ['cemAlb','Cemento Albañilería','cemAlb'], ['cal','Cal Hidratada Especial','cal'],
   ['yeso','Yeso','yeso'], ['H:','H° elaborado','hormElab'], ['hierro:','Hierro','hierro'],
   ['arenaG','Arena Gruesa','arenaG'], ['arenaF','Arena Fina','arenaF'], ['ripio','Ripio Clasificado','ripio'], ['piedra','Piedra Bola','piedra'],
-  ['ladrillon','Ladrillones','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'],
+  ['lad:','Ladrillos','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'],
   ['membrana','Membrana Asfáltica','membrana'], ['emulsion','Emulsión Asfáltica','emulsion'], ['pomeca','Aislación (Pomeca)','pomeca'], ['perlita','Aislación (Perlita)','perlita'],
   ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
   ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
@@ -8588,7 +8798,7 @@ function materialesPorItem(){
   // Mampostería (por nivel)
   Object.entries(res.mamp?.porNivel||{}).forEach(([k, d], i, all)=>{
     const it = nuevo(tit('Mampostería', k, all.length>1));
-    add(it,'ladrillon',d.lad); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena); add(it,'hidrofugo',d.hidro||0);
+    Object.entries(d.ladPorTipo||{'Ladrillones':d.lad}).forEach(([t,q])=>add(it,'lad:'+t,q)); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena); add(it,'hidrofugo',d.hidro||0);
   });
   // Revoques y cielorrasos (por nivel)
   Object.entries(res.rev?.porNivel||{}).forEach(([k, d], i, all)=>{
@@ -8636,7 +8846,7 @@ function materialesPorItem(){
         const q = it.m[x];
         const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pct);
         const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
-                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : lbl;
+                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : lbl;
         filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f)});
       });
     });
@@ -9058,6 +9268,8 @@ function applySnapshot(snap, opts){
   state.nivelesExtra = Array.isArray(snap.nivelesExtra) ? snap.nivelesExtra : [];
   state.nivSel = (snap.nivSel && typeof snap.nivSel==='object') ? snap.nivSel : {};
   state.nivelesActivos = Array.isArray(snap.nivelesActivos) ? snap.nivelesActivos : inferirNivelesActivos(id=>snap.fields?.[id]);
+  state.murosExtra = Array.isArray(snap.murosExtra) ? snap.murosExtra : [];
+  state.listas = (snap.listas && typeof snap.listas==='object') ? snap.listas : {};
   construirNivelesExtra();
 
   // Campos del formulario (sincrónico: el DOM estático ya existe)
@@ -9075,6 +9287,11 @@ function applySnapshot(snap, opts){
   });
   // Yeso: antes se cargaba en kg por m³ (1000); ahora en kg por m² por cm
   { const y = document.getElementById('mz-cr-t4-ykg'); if(y && +y.value > 50) y.value = (+y.value===1000) ? YESO_KG_M2CM : +y.value/100; }
+  // Semicubierta: antes era un único número → queda en PB
+  if(snap.fields && snap.fields['semi-pb']==null){
+    document.querySelectorAll('input[id^="semi-"]').forEach(el=>el.value = 0);
+    const el = document.getElementById('semi-pb'); if(el) el.value = +snap.fields['sup-semi'] || 0;
+  }
   // Obras de antes: la mezcla del hidrófugo era un solo número (1 : n)
   if(snap.fields && snap.fields['rev-hid-prop']!=null && snap.fields['rev-hid-are']==null){
     const el=document.getElementById('rev-hid-are'); if(el) el.value = snap.fields['rev-hid-prop'];
@@ -9090,6 +9307,8 @@ function applySnapshot(snap, opts){
 
 // Re-render + recálculo completo, sin toast
 function renderAll(){
+  pintarListas();
+  renderMurosExtra();
   renderColumnas(); renderVigas('vf'); renderVigas('vd');
   renderBases(); renderLosas(); renderLosasMacizas(); renderRecortes();
   calcHorm(); calcMortero(); calcColTotals(); calcVigaTotals();
@@ -9451,7 +9670,7 @@ async function abrirVersion(nombre, version){
 
 // Obra nueva vacía: sin elementos y con las superficies en cero; se conservan
 // las dosificaciones, espesores y porcentajes como punto de partida.
-const _CAMPOS_CANTIDAD = /^(sup-pb|sup-pa|sup-semi|mamp-sup-|rg-|rf-|cr-(pb|pa|p3)$|cp-sup-|carp-sup-|techo-sup$|cim-largo$)/;
+const _CAMPOS_CANTIDAD = /^(sup-|semi-|mamp-sup-|rg-|rf-|cr-(pb|pa|p3)$|cp-sup-|carp-sup-|techo-sup$|cim-largo$)/;
 function snapshotVacio(nombre){
   const s = captureSnapshot();
   Object.keys(s.fields).forEach(id=>{
@@ -9461,7 +9680,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = [];
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {};
   return s;
 }
 
@@ -9696,6 +9915,8 @@ function captureSnapshot(){
     unidades: state.unidades||{},
     nivelesExtra: state.nivelesExtra||[],
     nivelesActivos: state.nivelesActivos||[],
+    murosExtra: state.murosExtra||[],
+    listas: state.listas||{},
     nivSel: state.nivSel||{},
   };
 }
