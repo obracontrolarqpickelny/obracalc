@@ -1820,6 +1820,16 @@ tr.drag-src { opacity: .45; background: var(--accent-dim2) !important; }
 .sync-ok.sync-err { border-color: var(--red); color: var(--red); }
 .sync-ok.sync-err .sync-ok-ico { background: var(--red); }
 
+/* Fila hecha / revisada */
+.fila-ok { background: none; border: 1.5px solid var(--border2); color: transparent; border-radius: 5px; width: 18px; height: 18px;
+  font-size: 11px; font-weight: 900; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.fila-ok:hover { border-color: var(--green); color: var(--green); }
+.fila-ok.on { background: var(--green); border-color: var(--green); color: #fff; }
+tr.fila-hecha > td { background: rgba(34,160,90,.07); }
+tr.fila-hecha > td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+td.fila-acc { white-space: nowrap; }
+td.fila-acc .fila-ok { margin-right: 4px; vertical-align: middle; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -4635,6 +4645,56 @@ document.addEventListener('pointerup', ()=>{
 document.addEventListener('pointercancel', _dragFin);
 window.addEventListener('blur', _dragFin);
 
+// ── FILA HECHA / REVISADA ────────────────────────────────────────────────
+// Sólo un recordatorio: no cambia ningún cálculo. Se guarda con la obra.
+function filaOk(btn, id){
+  const tr = btn.closest('tr'), cfg = DRAG_TB[tr?.parentElement?.id];
+  const el = cfg?.arr().find(x=>x.id===id);
+  if(!el) return;
+  el.ok = !el.ok;
+  btn.classList.toggle('on', el.ok);
+  tr.classList.toggle('fila-hecha', el.ok);
+  scheduleAutosave();
+}
+// ── ELIMINAR CON CONFIRMACIÓN (la ✕ se puede tocar sin querer) ─────────────
+function confirmarQuitar(el, que){
+  if(!el) return false;
+  return confirm(`¿Eliminar ${que} "${el.denom||''}"?\n\nSe borra la fila con todos sus datos.`);
+}
+
+// ── TAB: siempre a la casilla siguiente ─────────────────────────────────
+// Varias tablas se vuelven a dibujar al cambiar un valor (niveles, alturas,
+// vigas…). Si eso pasa justo con el Tab, la casilla de destino desaparece y el
+// navegador volvía al principio. Acá se decide primero a dónde ir, se confirma
+// el valor y después se vuelve a buscar esa casilla (misma tabla, mismo lugar).
+const _FOCO_SEL = 'input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),a[href],[tabindex]';
+function _focuseables(raiz){
+  return [...(raiz||document).querySelectorAll(_FOCO_SEL)].filter(el=>el.tabIndex>=0 && el.getClientRects().length>0);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Tab' || e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+  const act = document.activeElement;
+  if(!act || act===document.body || !act.closest('.main')) return;   // modales: comportamiento normal
+  const lista = _focuseables();
+  const i = lista.indexOf(act);
+  if(i < 0) return;
+  const dest = lista[i + (e.shiftKey ? -1 : 1)];
+  if(!dest) return;
+  e.preventDefault();
+  const cont = dest.parentElement?.closest('[id]');
+  const contId = cont?.id, idx = cont ? _focuseables(cont).indexOf(dest) : -1;
+  if(act.blur) act.blur();            // confirma el valor (dispara "change", que puede redibujar)
+  const ir = tarde => {
+    let el = dest.isConnected ? dest : null;
+    if(!el && contId && idx >= 0){ const c2 = document.getElementById(contId); if(c2) el = _focuseables(c2)[idx] || null; }
+    if(!el || (tarde && document.activeElement===el)) return;
+    if(tarde && document.activeElement && document.activeElement!==document.body && document.activeElement.isConnected) return;
+    el.focus();
+    if(el.select && /^(text|number|search)$/.test(el.type||'')) { try{ el.select(); }catch(_){} }
+  };
+  ir(false); setTimeout(()=>ir(true), 0); setTimeout(()=>ir(true), 60);
+});
+
 // ── DUPLICAR ELEMENTO ────────────────────────────────────────────────────
 function duplicarColumna(id){
   const src = state.columnas.find(x=>x.id===id);
@@ -4937,8 +4997,20 @@ function closeEstriboPicker(){
 }
 
 // Phi selector HTML helper
+// Distintivo Ø1/Ø2/Ø3: con diámetro elegido toma el color del diámetro; sin él, gris
+const PHI_COLORES = {4.2:'#8fa3b8', 6:'#6a9fd8', 8:'#6db87a', 10:'#d4a853', 12:'#d4854a', 16:'#a07ecc', 20:'#e07070', 25:'#c05050'};
+function phiBadgeCss(phi){
+  const p = +phi;
+  if(!(p > 0)) return 'background:#33333355;color:var(--text3);';
+  const c = PHI_COLORES[p] || '#d4a853';
+  return `background:${c}33;color:${c};box-shadow:inset 0 0 0 1px ${c};`;
+}
+function pintarPhiBadge(sel){
+  const b = sel?.closest?.('.phi-row')?.querySelector('.phi-badge');
+  if(b) b.style.cssText = phiBadgeCss(sel.value);
+}
 function phiSelectHtml(val, onchg, sinVacio){
-  return `<select class="phi-select" onchange="${onchg}" style="width:52px;padding:3px 2px;font-size:11px;">
+  return `<select class="phi-select" onchange="pintarPhiBadge(this);${onchg}" style="width:52px;padding:3px 2px;font-size:11px;">
     ${(sinVacio ? [6,8,10,12,16,20] : [0,6,8,10,12,16,20]).map(p=>`<option value="${p}" ${p==val?'selected':''}>${p||'—'}</option>`).join('')}
   </select>`;
 }
@@ -5343,24 +5415,24 @@ function renderColumnas(){
     // Celdas con helpers compartidos
     const lBarraLabel = lBarraCellHTML(calc1);
 
-    return `<tr data-drag="${c.id}" data-niv="${c.nivel||''}" style="--niv:${c.nivel?nivelInfo(c.nivel).color:'transparent'};${nivelVisible('col',c.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${c.id}" class="${c.ok?'fila-hecha':''}" data-niv="${c.nivel||''}" style="--niv:${c.nivel?nivelInfo(c.nivel).color:'transparent'};${nivelVisible('col',c.nivel)?'':'display:none;'}">
       <td style="min-width:55px;"><input value="${c.denom}" onchange="updateCol(${c.id},'denom',this.value)" style="width:52px;color:var(--accent);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(c.nivel, `updateCol(${c.id},'nivel',this.value);renderColumnas()`)}</td>
       <td class="center"><input type="number" value="${c.cantElem}" onchange="updateCol(${c.id},'cantElem',+this.value);calcColTotals()" class="qty-input"></td>
       <td style="min-width:150px;">${colSeccionCellHTML(c)}</td>
       <td style="min-width:120px;">
         <div class="phi-row">
-          <span class="phi-badge" style="background:${PHI_COLORS[c.phi]||'#d4a853'}22;color:${PHI_COLORS[c.phi]||'#d4a853'};">Ø1</span>
+          <span class="phi-badge" style="${phiBadgeCss(c.phi)}">Ø1</span>
           ${phiSelectHtml(c.phi, `updateCol(${c.id},'phi',+this.value);calcColTotals()`)}
           <input type="number" class="phi-input" value="${c.nBarras}" onchange="updateCol(${c.id},'nBarras',+this.value);calcColTotals()" title="N° barras">
         </div>
         <div class="phi-row">
-          <span class="phi-badge" style="background:#33333388;color:var(--text3);">Ø2</span>
+          <span class="phi-badge" style="${phiBadgeCss(c.phi2)}">Ø2</span>
           ${phiSelectHtml(c.phi2||0, `updateCol(${c.id},'phi2',+this.value);calcColTotals()`)}
           <input type="number" class="phi-input" value="${c.n2||0}" onchange="updateCol(${c.id},'n2',+this.value);calcColTotals()" title="N° barras Ø2">
         </div>
         <div class="phi-row">
-          <span class="phi-badge" style="background:#33333355;color:var(--text3);">Ø3</span>
+          <span class="phi-badge" style="${phiBadgeCss(c.phi3)}">Ø3</span>
           ${phiSelectHtml(c.phi3||0, `updateCol(${c.id},'phi3',+this.value);calcColTotals()`)}
           <input type="number" class="phi-input" value="${c.n3||0}" onchange="updateCol(${c.id},'n3',+this.value);calcColTotals()" title="N° barras Ø3">
         </div>
@@ -5385,7 +5457,7 @@ function renderColumnas(){
       </td>
       <td class="right" style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--blue);">${barrasEstr}</td>
       <td class="right" style="color:var(--green);font-size:11px;">${n(horm,3)}</td>
-      <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button onclick="duplicarColumna(${c.id})" title="Duplicar fila" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeCol(${c.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
+      <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button type="button" tabindex="-1" class="fila-ok${c.ok?' on':''}" onclick="filaOk(this,${c.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="duplicarColumna(${c.id})" title="Duplicar fila" tabindex="-1" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeCol(${c.id})" title="Eliminar" tabindex="-1" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
     </tr>`;
   }).join('');
   if(foco){
@@ -5400,6 +5472,7 @@ function updateCol(id,field,val){
   if(c){c[field]=val; calcColTotals();}
 }
 function removeCol(id){
+  if(!confirmarQuitar(state.columnas.find(x=>x.id===id), 'la columna')) return;
   state.columnas=state.columnas.filter(x=>x.id!==id);
   renderColumnas();
 }
@@ -6210,26 +6283,26 @@ function renderVigas(tipo){
     const cantBarras1 = v.nBarras;
     const recorteTotal1 = parseFloat((rec1 * cantBarras1).toFixed(2));
 
-    return `<tr data-drag="${v.id}" data-niv="${tipo==='vd'?(v.nivel||''):''}" style="--niv:${tipo==='vd'&&v.nivel?nivelInfo(v.nivel).color:'transparent'};${tipo==='vd'&&!nivelVisible('vd',v.nivel)?'display:none;':''}">
+    return `<tr data-drag="${v.id}" class="${v.ok?'fila-hecha':''}" data-niv="${tipo==='vd'?(v.nivel||''):''}" style="--niv:${tipo==='vd'&&v.nivel?nivelInfo(v.nivel).color:'transparent'};${tipo==='vd'&&!nivelVisible('vd',v.nivel)?'display:none;':''}">
       <td><input value="${v.denom}" onchange="updateViga('${tipo}',${v.id},'denom',this.value)"
         style="width:62px;color:var(--blue);font-weight:700;font-size:12px;">
         ${tipo==='vd' ? nivelSelectHTML(v.nivel, `updateViga('vd',${v.id},'nivel',this.value)`) : ''}</td>
       <td style="min-width:150px;">${vigaSeccionCellHTML(v, tipo)}</td>
       <td style="min-width:130px;">
         <div class="phi-row">
-          <span class="phi-badge" style="background:${PHI_COLORS[v.phi]||'#d4a853'}22;color:${PHI_COLORS[v.phi]||'#d4a853'};">Ø1</span>
+          <span class="phi-badge" style="${phiBadgeCss(v.phi)}">Ø1</span>
           ${phiSelectHtml(v.phi,`updateViga('${tipo}',${v.id},'phi',+this.value);calcVigaTotals()`)}
           <input type="number" class="phi-input" value="${v.nBarras}"
             onchange="updateViga('${tipo}',${v.id},'nBarras',+this.value);calcVigaTotals()">
         </div>
         <div class="phi-row">
-          <span class="phi-badge" style="background:#33333388;color:var(--text3);">Ø2</span>
+          <span class="phi-badge" style="${phiBadgeCss(v.phi2)}">Ø2</span>
           ${phiSelectHtml(v.phi2||0,`updateViga('${tipo}',${v.id},'phi2',+this.value);calcVigaTotals()`)}
           <input type="number" class="phi-input" value="${v.n2||0}"
             onchange="updateViga('${tipo}',${v.id},'n2',+this.value);calcVigaTotals()">
         </div>
         <div class="phi-row">
-          <span class="phi-badge" style="background:#33333355;color:var(--text3);">Ø3</span>
+          <span class="phi-badge" style="${phiBadgeCss(v.phi3)}">Ø3</span>
           ${phiSelectHtml(v.phi3||0,`updateViga('${tipo}',${v.id},'phi3',+this.value);calcVigaTotals()`)}
           <input type="number" class="phi-input" value="${v.n3||0}"
             onchange="updateViga('${tipo}',${v.id},'n3',+this.value);calcVigaTotals()">
@@ -6282,7 +6355,7 @@ function renderVigas(tipo){
                 : n(horm,3)+' m³ '+v.hormTipo)}
         </div>
       </td>
-      <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button onclick="duplicarViga('${tipo}',${v.id})" title="Duplicar fila" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeViga('${tipo}',${v.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
+      <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button type="button" tabindex="-1" class="fila-ok${v.ok?' on':''}" onclick="filaOk(this,${v.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="duplicarViga('${tipo}',${v.id})" title="Duplicar fila" tabindex="-1" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeViga('${tipo}',${v.id})" title="Eliminar" tabindex="-1" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
     </tr>${tipo==='vf' && v.zapata ? zapataRowHTML(v) : ''}`;
   }).join('');
   if(foco){
@@ -6302,6 +6375,7 @@ function updateViga(tipo,id,field,val){
   }
 }
 function removeViga(tipo,id){
+  if(!confirmarQuitar((tipo==='vf'?state.vigas_vf:state.vigas_vd).find(x=>x.id===id), 'la viga')) return;
   if(tipo==='vf') state.vigas_vf=state.vigas_vf.filter(x=>x.id!==id);
   else state.vigas_vd=state.vigas_vd.filter(x=>x.id!==id);
   renderVigas(tipo); calcVigaTotals();
@@ -6520,7 +6594,7 @@ function renderBases(){
     const volHorm = b.cant * b.ancho * b.largo * b.alto;
     const bHormTipo = b.hormTipo||'H17';
     const bHt = HORM_TIPOS[bHormTipo]||HORM_TIPOS['H17'];
-    return `<tr data-drag="${b.id}">
+    return `<tr data-drag="${b.id}" class="${b.ok?'fila-hecha':''}">
       <td><input value="${b.denom}" onchange="updateBase(${b.id},'denom',this.value)"
         style="width:52px;color:var(--orange);font-weight:700;font-size:12px;"></td>
       <td class="right"><input type="number" value="${b.cant}" onchange="updateBase(${b.id},'cant',+this.value);calcBases()" class="qty-input"></td>
@@ -6549,8 +6623,9 @@ function renderBases(){
       </td>
       <td class="right" style="color:var(--blue);font-size:11px;">${n(volHorm,3)}</td>
       <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;">
-        <button onclick="duplicarBase(${b.id})" title="Duplicar" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button>
-        <button onclick="removeBase(${b.id})" title="Eliminar" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button>
+        <button type="button" tabindex="-1" class="fila-ok${b.ok?' on':''}" onclick="filaOk(this,${b.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button>
+        <button onclick="duplicarBase(${b.id})" title="Duplicar" tabindex="-1" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button>
+        <button onclick="removeBase(${b.id})" title="Eliminar" tabindex="-1" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -6558,7 +6633,7 @@ function renderBases(){
 }
 
 function updateBase(id,f,v){const b=state.bases.find(x=>x.id===id);if(b)b[f]=v;}
-function removeBase(id){state.bases=state.bases.filter(x=>x.id!==id);renderBases();}
+function removeBase(id){if(!confirmarQuitar(state.bases.find(x=>x.id===id), 'la base')) return; state.bases=state.bases.filter(x=>x.id!==id);renderBases();}
 function addBase(){
   const id=++state.nextId.bas;
   state.bases.push({id,denom:'B'+id,cant:1,ancho:0.70,largo:0.70,alto:0.70,phi:8,sep:150,phi2:8,sep2:150,hormTipo:'H17'});
@@ -7379,7 +7454,7 @@ function renderLosas(){
     const mallaRollos = l.cant * l.sup * 1.05 / 14.4;
     // Capa de compresión H°: sup × espesor_m
     const capCompM3 = l.cant * l.sup * ((l.capComp||7)/100);
-    return `<tr data-drag="${l.id}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losa',l.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${l.id}" class="${l.ok?'fila-hecha':''}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losa',l.nivel)?'':'display:none;'}">
       <td><input value="${l.denom}" onchange="updateLosa(${l.id},'denom',this.value)"
         style="width:52px;color:var(--purple);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(l.nivel, `updateLosa(${l.id},'nivel',this.value);renderLosas()`)}</td>
@@ -7416,7 +7491,7 @@ function renderLosas(){
       <td class="right accent">${n(losetas,0)}</td>
       <td class="right" style="color:var(--green);">${n(mallaRollos,2)}</td>
       <td class="right" style="color:var(--blue);">${n(capCompM3,3)}</td>
-      <td><button onclick="removeLosa(${l.id})"
+      <td class="fila-acc"><button type="button" tabindex="-1" class="fila-ok${l.ok?' on':''}" onclick="filaOk(this,${l.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="removeLosa(${l.id})" title="Eliminar" tabindex="-1"
         style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button></td>
     </tr>`;
   }).join('');
@@ -7424,7 +7499,7 @@ function renderLosas(){
 }
 
 function updateLosa(id,f,v){const l=state.losas.find(x=>x.id===id);if(l)l[f]=v;}
-function removeLosa(id){state.losas=state.losas.filter(x=>x.id!==id);renderLosas();}
+function removeLosa(id){if(!confirmarQuitar(state.losas.find(x=>x.id===id), 'la losa')) return; state.losas=state.losas.filter(x=>x.id!==id);renderLosas();}
 function addLosa(){
   const id=++state.nextId.losa;
   state.losas.push({id,denom:'L'+id,cant:1,sup:5,alt:12,phi:'6',sep:150,capComp:7,hormTipo:'H17',
@@ -7448,7 +7523,7 @@ function renderLosasMacizas(){
     const mlTotal = l.cant * (mlX + mlY) * l.factor;
     const volHorm = l.cant * lX * lY * (l.alto/100);
     const factorLabel = l.factor===1?'simple':l.factor===1.5?'escalera (×1.5)':'doble (×2)';
-    return `<tr data-drag="${l.id}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losamac',l.nivel)?'':'display:none;'}">
+    return `<tr data-drag="${l.id}" class="${l.ok?'fila-hecha':''}" data-niv="${l.nivel||''}" style="--niv:${l.nivel?nivelInfo(l.nivel).color:'transparent'};${nivelVisible('losamac',l.nivel)?'':'display:none;'}">
       <td><input value="${l.denom}" onchange="updateLosaMac(${l.id},'denom',this.value)"
         style="width:52px;color:var(--blue);font-weight:700;font-size:12px;">
         ${nivelSelectHTML(l.nivel, `updateLosaMac(${l.id},'nivel',this.value);renderLosasMacizas()`)}</td>
@@ -7486,7 +7561,7 @@ function renderLosasMacizas(){
       </td>
       <td class="right accent" style="font-size:11px;">${n(mlTotal,1)}</td>
       <td class="right" style="color:var(--blue);font-size:11px;">${n(volHorm,3)}</td>
-      <td><button onclick="removeLosaMac(${l.id})"
+      <td class="fila-acc"><button type="button" tabindex="-1" class="fila-ok${l.ok?' on':''}" onclick="filaOk(this,${l.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="removeLosaMac(${l.id})" title="Eliminar" tabindex="-1"
         style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button></td>
     </tr>`;
   }).join('');
@@ -7495,6 +7570,7 @@ function renderLosasMacizas(){
 
 function updateLosaMac(id,f,v){const l=(state.losas_macizas||[]).find(x=>x.id===id);if(l)l[f]=v;}
 function removeLosaMac(id){
+  if(!confirmarQuitar((state.losas_macizas||[]).find(x=>x.id===id), 'la losa maciza')) return;
   state.losas_macizas=(state.losas_macizas||[]).filter(x=>x.id!==id);
   renderLosasMacizas();
 }
