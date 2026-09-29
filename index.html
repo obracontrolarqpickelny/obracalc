@@ -3463,7 +3463,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
             <div class="stat-unit" id="losa-stat-los-unit">unidades</div>
           </div>
           <div class="stat green">
-            <div class="stat-label">Malla electrosoldada 6</div>
+            <div class="stat-label">Malla SIMA · paneles</div>
             <div class="stat-value" id="losa-stat-m6">—</div>
             <div class="stat-unit">rollos 2.4×6</div>
           </div>
@@ -4032,8 +4032,8 @@ const UC_DEF = [
   {k:'ladrillon', grupo:'Losas y varios', mat:'Ladrillones',           base:'unidad', pres:'unidad',cont:1},
   {k:'loseta',    grupo:'Losas y varios', mat:'Losetas 12 cm',         base:'unidad', pres:'unidad',cont:1},
   {k:'loseta16',  grupo:'Losas y varios', mat:'Losetas 16 cm',         base:'unidad', pres:'unidad',cont:1},
-  {k:'malla',     grupo:'Losas y varios', mat:'Malla de losa',         base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
-  {k:'mallaSima', grupo:'Losas y varios', mat:'Malla SIMA (contrapiso)', base:'m²',   pres:'panel 2,40×6,00', cont:14.4},
+  {k:'malla',     grupo:'Losas y varios', mat:'Malla SIMA · losas',    base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
+  {k:'mallaSima', grupo:'Losas y varios', mat:'Malla SIMA',            base:'m²',     pres:'panel 2,40×6,00', cont:14.4},
   {k:'membrana',  grupo:'Losas y varios', mat:'Membrana asfáltica',    base:'m²',     pres:'rollo', cont:10},
   {k:'emulsion',  grupo:'Losas y varios', mat:'Emulsión asfáltica',    base:'litros', pres:'litros',cont:1,    sug:[1,4,18,20]},
   {k:'pomeca',    grupo:'Losas y varios', mat:'Pomeca',                base:'m³',     pres:'m³',    cont:1},
@@ -4940,7 +4940,7 @@ function _selResultado(tb, ids){
     });
     if(l12) extra.push({q:l12, mat:'Losetas 12 cm', cant:n(l12,0)+' u.'});
     if(l16) extra.push({q:l16, mat:'Losetas 16 cm', cant:n(l16,0)+' u.'});
-    if(malla) extra.push({q:malla, mat:'Malla de losa', cant:n(malla,1)+' m²', com:`${n(malla/14.4,1)} paneles`});
+    if(malla) extra.push({q:malla, mat:'Malla SIMA', cant:n(malla,1)+' m²', com:`${n(malla/14.4,1)} paneles`});
   } else if(tb==='losa-mac-tbody'){
     arr.forEach(l=>add('H17', l.cant * l.ancho * l.largo * (l.alto/100)));
   }
@@ -7774,10 +7774,17 @@ function calcRevoques(){
 // "otros sectores" (state.cpSectores: garaje armado, galería…) en cualquier
 // nivel, con su espesor, su H° (o el mismo que el resto) y su armadura:
 // malla SIMA (paneles 2,40 × 6,00) o hierro cortado y atado.
-const MALLAS_SIMA = [
-  ['Q92',  'Q92 · Ø4,2 c/15'], ['Q131', 'Q131 · Ø5 c/15'], ['Q188', 'Q188 · Ø6 c/15'],
-  ['Q257', 'Q257 · Ø7 c/15'], ['Q335', 'Q335 · Ø8 c/15'],
-];
+// Malla electrosoldada: es la misma en losas y en contrapiso. Se nombra siempre
+// igual, con código, diámetro y medida de celda: "Malla SIMA Q188 · Ø6 · 15×15".
+const SIMA_INFO = {
+  Q92:{phi:'4,2', celda:15}, Q131:{phi:'5', celda:15}, Q188:{phi:'6', celda:15},
+  Q257:{phi:'7', celda:15},  Q335:{phi:'8', celda:15},
+};
+const mallaNom = t => { const i = SIMA_INFO[t]; return i ? `Malla SIMA ${t} · Ø${i.phi} · ${i.celda}×${i.celda}` : `Malla SIMA ${t||''}`.trim(); };
+const MALLAS_SIMA = Object.keys(SIMA_INFO).map(t=>[t, mallaNom(t)]);
+// Las losas se cargaban sólo con el Ø de la malla: se traduce al código que le corresponde
+const SIMA_POR_PHI = {'4.2':'Q92', '5':'Q131', '6':'Q188', '7':'Q257', '8':'Q335'};
+const mallaDeLosa = l => l.malla || SIMA_POR_PHI[String(l.phi)] || 'Q188';
 const SIMA_SOLAPE = 1.10;   // +10 % de m² de malla por solapes entre paneles
 function calcContrapiso(){
   const ec = r('carp-esp')/100;
@@ -7837,7 +7844,7 @@ function calcContrapiso(){
     ${fila('Cemento carpeta', n(ucDesdeB25('portland',cemCarp),1), ucLabel('portland'), 'border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;')}
     ${fila('Arena carpeta', n(arCarp,2), 'm³')}
     ${Object.entries(porPhiCp).sort((a,b)=>+a[0]-+b[0]).map(([p,ml])=>fila(`Armadura Ø${String(p).replace('.',',')}`, n(ml,1)+' m', `${Math.ceil(ml/BARRA_COMERCIAL)} barras ${BARRA_COMERCIAL} m`)).join('')}
-    ${Object.entries(mallas).map(([t,m2])=>fila(`Malla SIMA ${t}`, n(m2,1)+' m²', `${n(ucDesdeBase('mallaSima', m2),1)} ${ucLabel('mallaSima')}`)).join('')}
+    ${Object.entries(mallas).map(([t,m2])=>fila(mallaNom(t), n(m2,1)+' m²', `${n(ucDesdeBase('mallaSima', m2),1)} ${ucLabel('mallaSima')}`)).join('')}
     <div class="dosaje-row" style="border-top:1px solid var(--border2);background:var(--accent-dim2);border-radius:6px;padding:8px;margin-top:6px;">
       <div class="dosaje-material" style="font-weight:700;color:var(--text)">Cemento total</div>
       <div class="dosaje-value accent">${n(ucDesdeB25('portland',cemCp+cemCarp),1)}</div>
@@ -7858,7 +7865,7 @@ function calcContrapiso(){
   setTxt('cont-stat-ripio', n(ripCp,2));
   sectores.forEach(x=>setTxt('cps-res-'+x.sector.id,
     `${n(x.vol,2)} m³${x.elab ? ' H° '+x.tipoH : ' en obra'}`
-    + (x.mallaM2 ? ` · malla ${x.malla}: ${n(x.mallaM2,1)} m² ≈ ${Math.ceil(ucDesdeBase('mallaSima', x.mallaM2))} paneles` : '')
+    + (x.mallaM2 ? ` · ${mallaNom(x.malla)}: ${n(x.mallaM2,1)} m² ≈ ${Math.ceil(ucDesdeBase('mallaSima', x.mallaM2))} paneles` : '')
     + (x.mlArm ? ` · Ø${String(x.phi).replace('.',',')}: ${n(x.mlArm,1)} m ≈ ${Math.ceil(x.mlArm/BARRA_COMERCIAL)} barras` : '')));
 
   // Parciales por nivel (los otros sectores se suman a su nivel)
@@ -8021,13 +8028,18 @@ function renderLosas(){
           <option value="hierro" ${arm==='hierro'?'selected':''}>Hierros atados</option>
         </select>
         <div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-top:3px;font-size:9px;color:var(--text3);">
-          Ø <select onchange="updateLosa(${l.id},'phi',this.value);renderLosas()"
-            style="width:48px;font-size:10px;padding:2px 3px;">
-            ${(arm==='hierro'?['4.2','6','8','10','12']:['4.2','5','6','8']).map(v=>`<option value="${v}" ${v==l.phi?'selected':''}>${v}</option>`).join('')}
-          </select>
-          ${arm==='hierro' ? `c/ <input type="number" value="${l.sepArm||200}" step="25" min="50"
-            onchange="updateLosa(${l.id},'sepArm',+this.value);renderLosas()"
-            style="width:44px;font-size:10px;" title="Separación entre barras"> mm` : ''}
+          ${arm==='malla'
+            ? `<select onchange="updateLosa(${l.id},'malla',this.value);renderLosas()" title="${_escHtml(mallaNom(mallaDeLosa(l)))}"
+                 style="width:104px;font-size:10px;padding:2px 3px;">
+                 ${Object.keys(SIMA_INFO).map(t=>`<option value="${t}" ${t===mallaDeLosa(l)?'selected':''}>${t} · Ø${SIMA_INFO[t].phi} · ${SIMA_INFO[t].celda}×${SIMA_INFO[t].celda}</option>`).join('')}
+               </select>`
+            : `Ø <select onchange="updateLosa(${l.id},'phi',this.value);renderLosas()"
+                 style="width:48px;font-size:10px;padding:2px 3px;">
+                 ${['4.2','6','8','10','12'].map(v=>`<option value="${v}" ${v==l.phi?'selected':''}>${v}</option>`).join('')}
+               </select>
+               c/ <input type="number" value="${l.sepArm||200}" step="25" min="50"
+                 onchange="updateLosa(${l.id},'sepArm',+this.value);renderLosas()"
+                 style="width:44px;font-size:10px;" title="Separación entre barras"> mm`}
         </div>
       </td>
       <td class="right"><input type="number" value="${l.sep}" step="50"
@@ -8047,7 +8059,7 @@ function renderLosas(){
       <td class="right accent">${n(losetas,0)}</td>
       <td class="right" style="color:var(--green);">${arm==='hierro'
         ? `<span style="color:var(--orange);">${n(mlArm,1)} m<br><span style="font-size:9px;">${Math.ceil(mlArm/BARRA_COMERCIAL)} barras Ø${String(l.phi).replace('.',',')}</span></span>`
-        : n(mallaRollos,2)}</td>
+        : `${n(mallaRollos,2)}<br><span style="font-size:9px;color:var(--text3);">${mallaDeLosa(l)}</span>`}</td>
       <td class="right" style="color:var(--blue);">${n(capCompM3,3)}</td>
       <td class="fila-acc"><button type="button" tabindex="-1" class="fila-ok${l.ok?' on':''}" onclick="filaOk(this,${l.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="removeLosa(${l.id})" title="Eliminar" tabindex="-1"
         style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button></td>
@@ -8165,6 +8177,7 @@ function calcLosas(){
   const losPorAlt = {12:0, 16:0};   // losetas según altura (se compran por separado)
   const byTipoLosa={};   // H17/H21/H25 → m³ capa compresión
   const porPhiLosa={};   // Ø → ml de hierro atado (va a Hierros del Resumen)
+  const mallasLosa={};   // código SIMA → m² (mismo criterio que contrapiso)
   state.losas.forEach(l=>{
     const lPorMl = Math.ceil(1000/l.sep);
     const nLos = Math.ceil(l.cant * l.sup * lPorMl * 1.05);
@@ -8174,7 +8187,11 @@ function calcLosas(){
       const ml = l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10;
       totalMlArm += ml;
       porPhiLosa[l.phi] = (porPhiLosa[l.phi]||0) + ml;
-    } else totalM6 += l.cant * l.sup * 1.05 / 14.4;
+    } else {
+      totalM6 += l.cant * l.sup * 1.05 / 14.4;
+      const t = mallaDeLosa(l);
+      mallasLosa[t] = (mallasLosa[t]||0) + l.cant * l.sup * 1.05;
+    }
     const volComp = l.cant * l.sup * ((l.capComp||7)/100);
     totalHcomp += volComp;
     const tipo = l.hormTipo||'H17';
@@ -8189,7 +8206,7 @@ function calcLosas(){
   setTxt('ld-losetas16', n(losPorAlt[16],0));
   setTxt('ld-malla6',    n(totalM6,2));
   state.resultados=state.resultados||{};
-  state.resultados.losa={losetas12:losPorAlt[12], losetas16:losPorAlt[16], losetas:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa, porPhi:porPhiLosa, mlArm:totalMlArm};
+  state.resultados.losa={losetas12:losPorAlt[12], losetas16:losPorAlt[16], losetas:totalLos, malla6:totalM6, hComp:totalHcomp, byTipo:byTipoLosa, porPhi:porPhiLosa, mlArm:totalMlArm, mallas:mallasLosa};
   // Stats superiores losas
   setTxt('losa-stat-los12', n(totalLos,0));
   setTxt('losa-stat-los-unit', losPorAlt[16]>0 ? `12 cm: ${losPorAlt[12]} · 16 cm: ${losPorAlt[16]}` : 'unidades');
@@ -9482,8 +9499,11 @@ function datosResumen(){
           : [U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct)]),
       U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
       U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, 1.12),
-      U('Malla de losa','malla', (res.losa?.malla6||0)*14.4, 1.10),
-      ...Object.entries(res.cont?.mallas||{}).map(([t,m2])=>U('Malla SIMA '+t,'mallaSima', m2, 1, 'contrapiso · con solapes')),
+      // Malla electrosoldada: losas y contrapiso son lo mismo, se suman por código
+      ...Object.entries((()=>{ const m={};
+          Object.entries(res.losa?.mallas||{}).forEach(([t,m2])=>m[t]=(m[t]||0)+m2*1.10);
+          Object.entries(res.cont?.mallas||{}).forEach(([t,m2])=>m[t]=(m[t]||0)+m2);
+          return m; })()).map(([t,m2])=>U(mallaNom(t),'mallaSima', m2, 1)),
       U('Membrana Asfáltica','membrana', membrana*10, 1.05),
       U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
       ...aisl,
@@ -9742,7 +9762,7 @@ const ITEM_MAT = [
   ['portland','Cemento Portland','portland'], ['cemAlb','Cemento Albañilería','cemAlb'], ['cal','Cal Hidratada Especial','cal'],
   ['yeso','Yeso','yeso'], ['H:','H° elaborado','hormElab'], ['hierro:','Hierro','hierro'],
   ['arenaG','Arena Gruesa','arenaG'], ['arenaF','Arena Fina','arenaF'], ['ripio','Ripio Clasificado','ripio'], ['piedra','Piedra Bola','piedra'],
-  ['lad:','Ladrillos','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla de losa','malla'], ['msima:','Malla SIMA','mallaSima'],
+  ['lad:','Ladrillos','ladrillon'], ['loseta','Losetas 12 cm','loseta'], ['loseta16','Losetas 16 cm','loseta16'], ['malla','Malla SIMA','malla'], ['msima:','Malla SIMA','mallaSima'],
   ['membrana','Membrana Asfáltica','membrana'], ['emulsion','Emulsión Asfáltica','emulsion'], ['pomeca','Aislación (Pomeca)','pomeca'], ['perlita','Aislación (Perlita)','perlita'],
   ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
   ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
@@ -9962,6 +9982,8 @@ function htmlPdfResumen(datos, subtitulo, notasExtra){
     +'.notas{margin-top:18px;border:1px solid #fde68a;border-left:3px solid #D97706;background:#fffbeb;padding:8px 10px}'
     +'.notas .t{font-size:8px;font-weight:700;color:#b45309;letter-spacing:.6px;margin-bottom:4px}'
     +'.notas p{margin:3px 0;font-size:7.8pt;color:#444;line-height:1.45}'
+    +'.notas p.items-comp{margin-top:6px;padding-top:5px;border-top:1px dashed #fcd34d;font-size:6.8pt;color:#666;line-height:1.4}'
+    +'.notas p.items-comp b{color:#b45309}'
     +'@media print{.no-print{display:none!important}}'
     +'</style></head><body>'
     +`<h1>CÓMPUTO DE MATERIALES <span>—</span> ${_escHtml(obra.toUpperCase())}</h1>`
@@ -9971,6 +9993,13 @@ function htmlPdfResumen(datos, subtitulo, notasExtra){
     +'<div class="cierre">'
     +'<div class="notas"><div class="t">NOTAS</div>'
     +[...(notasExtra||[]), ...NOTAS_RESUMEN].map(t=>`<p>· ${_escHtml(t)}</p>`).join('')
+    +(()=>{ // qué ítems de la obra entraron en este cómputo
+       let items = [];
+       try{ items = (materialesPorItem().secciones||[]).map(s=>s.titulo).filter(Boolean); }catch(e){}
+       return items.length
+         ? `<p class="items-comp"><b>ÍTEMS COMPUTADOS (${items.length}):</b> ${_escHtml(items.join(' · '))}</p>`
+         : '';
+     })()
     +'</div>'
     +'<div style="margin-top:28px;border-top:2px solid #eee;padding-top:12px;font-size:10px;color:#999;text-align:center">ObraCalc — Cómputo de Obra</div>'
     +'<div class="page-footer" style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;border-top:2px solid #D97706;padding-top:12px">'
