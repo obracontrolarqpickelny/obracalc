@@ -1886,6 +1886,14 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .vf-res { padding: 6px 0 4px; }
 @media (max-width: 768px) { .selp-cuerpo { grid-template-columns: 1fr; } .selp-acc { margin-left: 0; } }
 
+/* Niveles por pestaña */
+.niv-cab { justify-content: flex-start; }
+.niv-cab > button.niv-quitar { margin-left: 4px; }
+.niv-cab > button.niv-quitar:first-of-type { margin-left: auto; }
+.niv-solo { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text3);
+  border: 1px solid var(--border2); border-radius: 8px; padding: 1px 6px; margin-left: 6px; }
+.field-label .niv-quitar { margin-left: 6px; padding: 0 4px; font-size: 11px; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -5559,8 +5567,15 @@ const NIV_COLORES = ['#e05c5c', '#14b8a6', '#eab308', '#ec4899', '#64748b', '#8b
 // PB siempre; PA, 3° y Tanque sólo si están en la obra (state.nivelesActivos)
 function nivelActivo(k){ return k==='PB' || (state.nivelesActivos||[]).includes(k); }
 function nivelesTodos(){
-  return [...NIVELES_BASE.filter(n=>nivelActivo(n.k)), ...(state.nivelesExtra||[]).map(x=>({...x, suf:x.k.toLowerCase()}))];
+  return [...NIVELES_BASE.filter(n=>nivelActivo(n.k)), ...(state.nivelesExtra||[]).filter(x=>!x.solo).map(x=>({...x, suf:x.k.toLowerCase()}))];
 }
+// Niveles "de una sola pestaña" (ej: Garage, Veredines en Contrapiso): no aparecen en las demás
+const _extrasSolo = pag => (state.nivelesExtra||[]).filter(x=>x.solo===pag).map(x=>({...x, suf:x.k.toLowerCase()}));
+const _nivelesConSolo = () => [...nivelesTodos(), ...(state.nivelesExtra||[]).filter(x=>x.solo).map(x=>({...x, suf:x.k.toLowerCase()}))];
+// Niveles quitados de una pestaña (sólo se ocultan ahí; lo cargado no se borra)
+const AREA_PAG = {'page-mamposteria':'mamp', 'page-revoques':'rev', 'page-contrapiso':'cp'};
+const AREA_NOM = {mamp:'Mampostería', rev:'Revoques', cp:'Contrapiso / Carpeta'};
+const nivOculto = (area, k) => !!area && ((state.nivOcultos||{})[area]||[]).includes(k);
 // Obras guardadas antes de esto: los niveles fijos con datos cargados quedan activos
 function inferirNivelesActivos(get){
   const val = id => parseFloat(get(id)) || 0;
@@ -5591,11 +5606,52 @@ function actualizarSupNiveles(){
 }
 // Casillas de los niveles fijos que no están en la obra: se ocultan (no se borran)
 function aplicarNivelesVisibles(){
-  document.querySelectorAll('[data-niv-bloque]').forEach(el=>{ el.style.display = nivelActivo(el.dataset.nivBloque) ? '' : 'none'; });
+  document.querySelectorAll('[data-niv-bloque]').forEach(el=>{
+    const k = el.dataset.nivBloque, area = AREA_PAG[el.closest('.page')?.id];
+    const base = NIVELES_BASE.some(b=>b.k===k);
+    el.style.display = ((base ? nivelActivo(k) : true) && !nivOculto(area, k)) ? '' : 'none';
+    if(area && !el.dataset.nivX){
+      const cab = el.querySelector('.niv-cab') || el.querySelector('.field-label');
+      if(!cab) return;
+      el.dataset.nivX = '1';
+      if(!base){
+        const e = document.createElement('button');
+        e.type = 'button'; e.className = 'niv-quitar niv-ren'; e.textContent = '✎'; e.title = 'Cambiar el nombre de este nivel';
+        e.onclick = ()=>renombrarNivel(k); cab.appendChild(e);
+      }
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'niv-quitar'; b.textContent = '✕';
+      b.title = 'Quitar este nivel sólo de esta pestaña (lo cargado no se borra y vuelve si lo agregás de nuevo)';
+      b.onclick = ()=>quitarNivelDe(area, k); cab.appendChild(b);
+    }
+  });
+}
+function quitarNivelDe(area, k){
+  const n = nivelInfo(k), solo = (state.nivelesExtra||[]).some(x=>x.k===k && x.solo);
+  if(!confirm(`¿Quitar «${n.largo}» de ${AREA_NOM[area]}?\n\n${solo ? 'Es un nivel sólo de esta pestaña.' : 'Sigue en las demás pestañas.'} Lo cargado acá no se borra: vuelve si lo agregás de nuevo con ＋ Agregar nivel.`)) return;
+  state.nivOcultos = state.nivOcultos || {};
+  state.nivOcultos[area] = [...new Set([...(state.nivOcultos[area]||[]), k])];
+  construirNivelesExtra(); renderAll(); scheduleAutosave();
+  showToast(`«${n.largo}» quitado de ${AREA_NOM[area]} — ＋ Agregar nivel para volver a ponerlo`,'success',3000);
+}
+function mostrarNivelEn(area, k){
+  document.getElementById('niv-menu')?.remove();
+  state.nivOcultos = state.nivOcultos || {};
+  state.nivOcultos[area] = (state.nivOcultos[area]||[]).filter(x=>x!==k);
+  construirNivelesExtra(); renderAll(); scheduleAutosave();
+  showToast(`↩ «${nivelInfo(k).largo}» de nuevo en ${AREA_NOM[area]}, con lo que tenía cargado`,'success',2600);
+}
+function renombrarNivel(k){
+  const x = (state.nivelesExtra||[]).find(e=>e.k===k);
+  if(!x) return;
+  const nom = prompt('Nombre del nivel:', x.largo);
+  if(nom==null || !nom.trim()) return;
+  x.largo = nom.trim().slice(0,30); x.corto = nom.trim().slice(0,10);
+  construirNivelesExtra(); renderAll(); scheduleAutosave();
 }
 // Niveles con casillas de superficie en cada pestaña (el tanque sólo en mampostería)
-function nivelesArea(pag){ return nivelesTodos().filter(x=>x.k!=='TQ' || pag==='mamp'); }
-const nivelInfo = k => nivelesTodos().find(x=>x.k===k) || {k:'', corto:'s/n', largo:'Sin nivel', color:'var(--text3)'};
+function nivelesArea(pag){ return [...nivelesTodos(), ..._extrasSolo(pag)].filter(x=>(x.k!=='TQ' || pag==='mamp') && !nivOculto(pag, x.k)); }
+const nivelInfo = k => _nivelesConSolo().find(x=>x.k===k) || {k:'', corto:'s/n', largo:'Sin nivel', color:'var(--text3)'};
 function nivelSelectHTML(val, onchg){
   return `<select class="nivel-select" data-niv="${val||''}" onchange="${onchg}" title="Nivel">
     <option value="" ${!val?'selected':''}>— nivel —</option>
@@ -5612,9 +5668,14 @@ function nivelVisible(lista, niv){
 function agregarNivel(ev){
   document.getElementById('niv-menu')?.remove();
   const faltan = NIVELES_BASE.filter(nv=>!nivelActivo(nv.k));
+  const area = AREA_PAG[ev?.currentTarget?.closest?.('.page')?.id];
+  const ocultos = area ? [...nivelesTodos(), ..._extrasSolo(area)].filter(x=>nivOculto(area, x.k) && (x.k!=='TQ' || area==='mamp')) : [];
   const m = document.createElement('div');
   m.id = 'niv-menu'; m.className = 'colapl-pop niv-menu';
-  m.innerHTML = '<div class="colapl-tit">Agregar nivel a la obra</div>'
+  m.innerHTML = (ocultos.length ? `<div class="colapl-tit">Volver a poner en ${AREA_NOM[area]}</div>`
+      + ocultos.map(nv=>`<button type="button" class="niv-op" onclick="mostrarNivelEn('${area}','${nv.k}')"><span class="niv-dot" style="background:${nv.color};"></span>↩ ${_escHtml(nv.largo)}</button>`).join('') : '')
+    + (area ? `<div class="colapl-tit">Sólo para ${AREA_NOM[area]}</div><button type="button" class="niv-op" onclick="nivelConNombre('${area}')">✎ Nivel con nombre, sólo en esta pestaña${area==='cp' ? ' (ej: Garage, Veredines)' : ''}…</button>` : '')
+    + '<div class="colapl-tit">Agregar nivel a la obra (todas las pestañas)</div>'
     + faltan.map(nv=>`<button type="button" class="niv-op" onclick="activarNivel('${nv.k}')"><span class="niv-dot" style="background:${nv.color};"></span>${nv.largo}</button>`).join('')
     + '<button type="button" class="niv-op" onclick="nivelConNombre()">✎ Otro nivel, con nombre…</button>';
   document.body.appendChild(m);
@@ -5636,17 +5697,19 @@ function activarNivel(k){
   scheduleAutosave();
   showToast(`＋ ${nivelInfo(k).largo} agregado — ya aparece en todas las pestañas`,'success',2600);
 }
-function nivelConNombre(){
+function nivelConNombre(solo){
   document.getElementById('niv-menu')?.remove();
   const ex = state.nivelesExtra = state.nivelesExtra || [];
   let num = 4; while(ex.some(x=>x.k==='N'+num)) num++;
-  const nombre = prompt('Nombre del nivel nuevo (ej: 4° nivel, Subsuelo, Terraza):', num+'° nivel');
+  const nombre = prompt(solo ? `Nombre (sólo para ${AREA_NOM[solo]}, ej: Garage, Veredines):` : 'Nombre del nivel nuevo (ej: 4° nivel, Subsuelo, Terraza):', solo ? '' : num+'° nivel');
   if(nombre==null || !nombre.trim()) return;
-  ex.push({k:'N'+num, corto:nombre.trim().slice(0,10), largo:nombre.trim().slice(0,30), color:NIV_COLORES[ex.length % NIV_COLORES.length]});
+  const nv = {k:'N'+num, corto:nombre.trim().slice(0,10), largo:nombre.trim().slice(0,30), color:NIV_COLORES[ex.length % NIV_COLORES.length]};
+  if(solo) nv.solo = solo;
+  ex.push(nv);
   construirNivelesExtra();
   renderAll();
   scheduleAutosave();
-  showToast(`＋ Nivel "${nombre.trim()}" agregado — ya aparece en todas las pestañas`,'success',3000);
+  showToast(solo ? `＋ "${nombre.trim()}" agregado sólo en ${AREA_NOM[solo]}` : `＋ Nivel "${nombre.trim()}" agregado — ya aparece en todas las pestañas`,'success',3000);
 }
 function quitarNivel(k){
   const n = nivelInfo(k);
@@ -5671,6 +5734,7 @@ function quitarNivel(k){
 // (así el autoguardado toma sus ids) y cada vez que cambia la lista.
 function construirNivelesExtra(){
   const ex = nivelesTodos().filter(x=>!NIVELES_BASE.some(b=>b.k===x.k));
+  const exDe = area => [...ex, ..._extrasSolo(area)];
   const guardar = cont => { const v = {}; cont?.querySelectorAll('input[id],select[id]').forEach(i=>v[i.id]=i.value); return v; };
   const armadura = (s, v) => {
     const op = (id, opciones, def) => opciones.map(([val,lbl])=>`<option value="${val}" ${String(v[id] ?? def)===String(val)?'selected':''}>${lbl}</option>`).join('');
@@ -5682,26 +5746,26 @@ function construirNivelesExtra(){
   const campo = (id, val, onin, lbl, hint, def) =>
     `<div class="field"><div class="field-label">${lbl}${hint?` <span class="field-hint">${hint}</span>`:''}</div>
       <input type="number" id="${id}" value="${val ?? def}" class="input-editable" oninput="${onin}"></div>`;
-  const cab = n => `<div class="niv-cab" style="--niv:${n.color};">${_escHtml(n.largo)}
-      <button type="button" class="niv-quitar" onclick="quitarNivel('${n.k}')" title="Quitar este nivel">✕</button></div>`;
+  const cab = n => `<div class="niv-cab" style="--niv:${n.color};">${_escHtml(n.largo)}${n.solo ? ' <span class="niv-solo">sólo acá</span>' : ''}</div>`;
 
   const m = document.getElementById('mamp-niv-extra');
-  if(m){ const v = guardar(m); m.innerHTML = ex.map(n=>
-    campo('mamp-sup-'+n.suf, v['mamp-sup-'+n.suf], 'calcMamposteria()', `<span class="niv-dot" style="background:${n.color};"></span>Sup. neta ${_escHtml(n.largo)}`, 'm²', 0)).join(''); }
+  if(m){ const v = guardar(m); m.innerHTML = exDe('mamp').map(n=>
+    campo('mamp-sup-'+n.suf, v['mamp-sup-'+n.suf], 'calcMamposteria()', `<span class="niv-dot" style="background:${n.color};"></span>Sup. neta ${_escHtml(n.largo)}`, 'm²', 0)
+      .replace('<div class="field">', `<div class="field" data-niv-bloque="${n.k}">`)).join(''); }
 
   const rv = document.getElementById('rev-niv-extra');
-  if(rv){ const v = guardar(rv); rv.innerHTML = ex.map(n=>{ const s=n.suf, c='calcRevoques()';
-    return cab(n)
+  if(rv){ const v = guardar(rv); rv.innerHTML = exDe('rev').map(n=>{ const s=n.suf, c='calcRevoques()';
+    return `<div data-niv-bloque="${n.k}">` + cab(n)
       + `<div class="field-row">${campo('rg-int-'+s, v['rg-int-'+s], c, 'R. Grueso Int.', '', 0)}${campo('rg-ext-'+s, v['rg-ext-'+s], c, 'R. Grueso Ext.', '', 0)}</div>`
       + `<div class="field-row">${campo('rf-int-'+s, v['rf-int-'+s], c, 'R. Fino Int.', '', 0)}${campo('rf-ext-'+s, v['rf-ext-'+s], c, 'R. Fino Ext.', '', 0)}</div>`
-      + `<div class="field-row">${campo('crg-'+s, v['crg-'+s], c, 'Cielorraso grueso', 'm²', 0)}${campo('cr-'+s, v['cr-'+s], c, 'Cielorraso fino', 'm²', 0)}</div>`; }).join(''); }
+      + `<div class="field-row">${campo('crg-'+s, v['crg-'+s], c, 'Cielorraso grueso', 'm²', 0)}${campo('cr-'+s, v['cr-'+s], c, 'Cielorraso fino', 'm²', 0)}</div></div>`; }).join(''); }
 
   const cp = document.getElementById('cp-niv-extra');
-  if(cp){ const v = guardar(cp); cp.innerHTML = ex.map(n=>{ const s=n.suf, c='calcContrapiso()';
-    return cab(n)
+  if(cp){ const v = guardar(cp); cp.innerHTML = exDe('cp').map(n=>{ const s=n.suf, c='calcContrapiso()';
+    return `<div data-niv-bloque="${n.k}">` + cab(n)
       + `<div class="field-row">${campo('cp-sup-'+s, v['cp-sup-'+s], c, 'Sup. contrapiso', 'm²', 0)}${campo('cp-esp-'+s, v['cp-esp-'+s], c, 'Espesor', 'cm', 10)}</div>`
       + `<div class="field-row">${campo('carp-sup-'+s, v['carp-sup-'+s], c, 'Sup. carpeta', 'm²', 0)}<div class="field"></div></div>`
-      + armadura(s, v); }).join(''); }
+      + armadura(s, v) + '</div>'; }).join(''); }
 
   const sx = document.getElementById('sup-niv-extra');
   if(sx){ const v = guardar(sx); sx.innerHTML = ex.map(n=>`<tr>
@@ -5729,7 +5793,7 @@ function construirNivelesExtra(){
 // porNivel: {nivel: datos} · cols: [{lbl, v:datos→número, fmt:número→html}]
 // ☑ en cada nivel: se suman en la fila "Pedido parcial".
 function _ordenNiv(keys){
-  const L = nivelesTodos();
+  const L = _nivelesConSolo();
   return keys.sort((a,b)=>{ const ia=L.findIndex(x=>x.k===a), ib=L.findIndex(x=>x.k===b); return (ia<0?99:ia)-(ib<0?99:ib); });
 }
 function tablaNivelesHTML(id, porNivel, cols){
@@ -10073,6 +10137,7 @@ function applySnapshot(snap, opts){
   state.murosExtra = Array.isArray(snap.murosExtra) ? snap.murosExtra : [];
   state.listas = (snap.listas && typeof snap.listas==='object') ? snap.listas : {};
   state.cpSectores = Array.isArray(snap.cpSectores) ? snap.cpSectores : [];
+  state.nivOcultos = (snap.nivOcultos && typeof snap.nivOcultos==='object') ? snap.nivOcultos : {};
   construirNivelesExtra();
 
   // Campos del formulario (sincrónico: el DOM estático ya existe)
@@ -10489,7 +10554,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = [];
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.nivOcultos = {};
   return s;
 }
 
@@ -10761,6 +10826,7 @@ function captureSnapshot(){
     murosExtra: state.murosExtra||[],
     listas: state.listas||{},
     cpSectores: state.cpSectores||[],
+    nivOcultos: state.nivOcultos||{},
     nivSel: state.nivSel||{},
   };
 }
