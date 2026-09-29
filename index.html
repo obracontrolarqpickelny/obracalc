@@ -1799,6 +1799,12 @@ body.con-drive #saveIndicator { display: none !important; }
 .cp-sector .cp-arm { flex-wrap: wrap; }
 .cp-sec-res { font-size: 11px; color: var(--text2); margin-top: 6px; }
 
+/* Columnas: altura libre (H°) y total (hierro) */
+.col-alts label { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin: 2px 0; }
+.col-alts label span { font-size: 9px; font-weight: 700; color: var(--text3); width: 16px; text-align: left; }
+.col-alts input { width: 54px; font-size: 11px; }
+.col-alts input::placeholder { color: var(--text3); opacity: .7; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2313,7 +2319,7 @@ body.con-drive #saveIndicator { display: none !important; }
 
               <div class="divider"></div>
               <div class="field-label" style="margin-bottom:6px;">Dosajes habituales <span class="field-hint">cemento : arena : piedra · editable · tocá para usar</span></div>
-              <textarea id="dos-sug" rows="4" oninput="renderSugHorm()" title="Ayuda memoria: un dosaje por renglón, ej: 1:2:3">1:2:3
+              <textarea id="dos-sug" rows="4" spellcheck="false" oninput="renderSugHorm()" title="Ayuda memoria: un dosaje por renglón, ej: 1:2:3">1:2:3
 1:2,5:3,5
 1:3:3
 1:3:4
@@ -2459,7 +2465,7 @@ body.con-drive #saveIndicator { display: none !important; }
                   <th class="center">Cant.<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','cantElem')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th style="min-width:150px" data-tip="Sección de hormigón según plano. Debajo: medida exterior del estribo y recubrimiento que resulta">Sección (cm)<br><span style="text-transform:none;letter-spacing:0;">según plano</span></th>
                   <th style="min-width:130px">Armadura · Ø / n° barras</th>
-                  <th class="right" data-tip="Altura libre del elemento">Alt.<br>libre (m)<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','alt')" title="Poner el mismo valor en todas las filas">⇊</button></th>
+                  <th class="right" data-tip="Libre: con ella se calcula el hormigón · Total: de fondo de zanja a cara superior de la viga superior; con ella se calcula el hierro (+ pata inferior 25 cm + anclaje 60Ø)">Alt. (m)<br><span style="font-weight:400;">libre H°</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','alt')" title="Poner la misma altura libre en todas las filas">⇊</button><br><span style="font-weight:400;">total hierro</span><button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','altT')" title="Poner la misma altura total en todas las filas">⇊</button></th>
                   <th class="right" data-tip="Alt + 0.25m pata + 60×Ø anclaje, redondeado ↑ a 0.50m">L. barra<br>CIRSOC ↑</th>
                   <th class="right" data-tip="Sobrante por redondeo por barra">Recorte/<br>barra (m)</th>
                   <th style="min-width:120px">Tipo estribo · Ø · sep<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','estribo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
@@ -4851,6 +4857,10 @@ function phiSelectHtml(val, onchg, sinVacio){
 // bruto = alt + 0.25m (pata H°limpieza) + 60×Ø (anclaje inferior)
 // Si bruto > 12m → empalme: +100×Ø por cada empalme necesario
 // lTramo = round-up a 0.50m
+// Columnas: el hormigón se calcula con la altura libre (c.alt) y el hierro con
+// la altura total (c.altT: fondo de zanja → cara superior de la viga superior).
+// Sin altura total cargada, el hierro usa la altura libre (como antes).
+function colAltHierro(c){ return +c.altT > 0 ? +c.altT : (+c.alt || 0); }
 function lBarraCIRSOC(alt, phi_mm){
   const L = BARRA_COMERCIAL;
   const anclaje = 60  * phi_mm / 1000;
@@ -5222,7 +5232,7 @@ function renderColumnas(){
   tbody.innerHTML = state.columnas.map(c=>{
 
     // L. Barra con empalmes si corresponde
-    const calc1 = lBarraCIRSOC(c.alt, c.phi||12);
+    const calc1 = lBarraCIRSOC(colAltHierro(c), c.phi||12);
     const { lTramo: lCIRSOC, empalmes: nEmpalmes, bruto: brutoPhi1, recorte: recortePorBarra } = calc1;
 
     const perim = estriboPerim(c);
@@ -5256,12 +5266,13 @@ function renderColumnas(){
           <input type="number" class="phi-input" value="${c.n3||0}" onchange="updateCol(${c.id},'n3',+this.value);calcColTotals()" title="N° barras Ø3">
         </div>
       </td>
-      <td class="right">
-        <input type="number" value="${c.alt}" step="0.1" min="0.5"
-          onchange="updateCol(${c.id},'alt',+this.value);calcColTotals()"
-          style="width:50px;font-size:11px;" title="Altura libre del elemento">
+      <td class="right col-alts">
+        <label title="Altura libre: con ella se calcula el hormigón"><span>H°</span><input type="number" value="${c.alt}" step="0.1" min="0.5"
+          onchange="updateCol(${c.id},'alt',+this.value);renderColumnas()" data-k="col-${c.id}-alt"></label>
+        <label title="Altura total para el hierro: de fondo de zanja a cara superior de la viga superior. A la barra se le suma la pata inferior de 25 cm y el anclaje de 60 × Ø. Vacío = igual a la altura libre."><span>Fe</span><input type="number" value="${+c.altT>0 ? c.altT : ''}" placeholder="${c.alt}" step="0.1" min="0.5"
+          onchange="updateCol(${c.id},'altT',this.value==='' ? null : +this.value);renderColumnas()" data-k="col-${c.id}-altT"></label>
       </td>
-      <td class="right" style="font-family:'DM Sans',sans-serif;">${lBarraLabel}</td>
+      <td class="right" style="font-family:'DM Sans',sans-serif;" title="Hierro: alt. total ${colAltHierro(c).toFixed(2)} + pata inferior 0,25 + anclaje 60Ø ${(60*(c.phi||12)/1000).toFixed(2)} = ${calc1.bruto.toFixed(2)} m → redondeado a ${calc1.lTramo.toFixed(2)} m">${lBarraLabel}</td>
       <td class="right" style="font-family:'DM Sans',sans-serif;">${recorteCellHTML(recortePorBarra, c.cantElem * c.nBarras)}</td>
       <td class="center" style="min-width:110px;">
         <button class="estr-btn" onclick="openEstriboPicker('col',${c.id})" title="Cambiar tipo de estribo">
@@ -5309,7 +5320,7 @@ function calcColTotals(){
   let totalHorm = 0;
 
   state.columnas.forEach(c=>{
-    const calc1 = lBarraCIRSOC(c.alt, c.phi||12);
+    const calc1 = lBarraCIRSOC(colAltHierro(c), c.phi||12);
     const { lTramo: lCIRSOC, recorte: recortePorBarra } = calc1;
 
     // PRINCIPAL Ø1
@@ -5328,7 +5339,7 @@ function calcColTotals(){
     // SECUNDARIOS Ø2, Ø3
     [[c.phi2,c.n2],[c.phi3,c.n3]].forEach(([phi,nb])=>{
       if(!phi || !nb) return;
-      const calcSec = lBarraCIRSOC(c.alt, phi);
+      const calcSec = lBarraCIRSOC(colAltHierro(c), phi);
       const { lTramo: lSec, recorte: recSec } = calcSec;
       const totalB = c.cantElem * nb;
       if(!hierrosPhi[phi]) hierrosPhi[phi]={ml:0,barras:0,recortesML:0,recorteLong:0};
@@ -5356,7 +5367,7 @@ function calcColTotals(){
     niv.n += c.cantElem; niv.horm += c.cantElem * colArea(c) * c.alt;
     const addN = (p, ml) => { if(p && ml) niv.phi[p] = (niv.phi[p]||0) + ml; };
     if(c.phi && c.nBarras) addN(c.phi, c.cantElem*c.nBarras*lCIRSOC);
-    [[c.phi2,c.n2],[c.phi3,c.n3]].forEach(([p,nb])=>{ if(p && nb) addN(p, c.cantElem*nb*lBarraCIRSOC(c.alt,p).lTramo); });
+    [[c.phi2,c.n2],[c.phi3,c.n3]].forEach(([p,nb])=>{ if(p && nb) addN(p, c.cantElem*nb*lBarraCIRSOC(colAltHierro(c),p).lTramo); });
     addN(c.phiEstr, mlEstr);
   });
   const nivDiv = document.getElementById('col-niveles');
@@ -5434,6 +5445,7 @@ function showPage(id) {
   if(id==='unidades') renderUnidades();
   if(id==='recortes') renderRecortes();
   if(id==='dashboard') renderDashItems();
+  if(id==='hormigon') document.querySelectorAll('#dos-sug, .mort-sug textarea').forEach(autoAlto);
   pintarListas();
 }
 
@@ -5883,7 +5895,14 @@ function parseSugMortero(linea){
   if(/cem/.test(pref) && ps.length===2) return {tipo:'3', partes:{cem:ps[0], are:ps[1]}, txt:l};
   return null;
 }
-function autoAlto(ta){ if(!ta) return; ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+// Alto según los renglones. Con la pestaña oculta no hay medidas (scrollHeight 0):
+// quedan los renglones y al mostrar la pestaña se vuelve a ajustar.
+function autoAlto(ta){
+  if(!ta) return;
+  ta.rows = Math.max(1, ta.value.split('\n').length);
+  if(!ta.offsetParent || !ta.scrollHeight){ ta.style.height = ''; return; }
+  ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px';
+}
 function renderSugChips(k){
   const ta = document.getElementById('mz-sug-'+k), box = document.getElementById('mz-sugc-'+k);
   autoAlto(ta);
@@ -5959,7 +5978,7 @@ function construirMorteros(){
       <td><select id="${M.sel}" onchange="morteroCambio()" style="width:100%;font-size:11px;">${opts}</select></td>
       <td>${paneles}</td>
       <td class="mort-sug">
-        <textarea id="mz-sug-${M.k}" rows="3" oninput="renderSugChips('${M.k}')" title="Ayuda memoria: una mezcla por renglón (ej: Cem. alb. 1:5 · Cem.+cal ¼:1:4 · Cemento 1:3 · Yeso 1000)">${MORT_SUG[M.k]||''}</textarea>
+        <textarea id="mz-sug-${M.k}" rows="3" spellcheck="false" oninput="renderSugChips('${M.k}')" title="Ayuda memoria: una mezcla por renglón (ej: Cem. alb. 1:5 · Cem.+cal ¼:1:4 · Cemento 1:3 · Yeso 1000)">${MORT_SUG[M.k]||''}</textarea>
         <div class="sug-chips" id="mz-sugc-${M.k}"></div>
       </td>
       <td class="right mort-res" id="mort-m3-${M.k}">—</td>
@@ -7561,7 +7580,8 @@ const COL_APLICAR = {
   columnas: {nombre:'columnas', arr:()=>state.columnas, render:()=>renderColumnas(), campos:{
     nivel:    [{k:'nivel', lbl:'Nivel', opts:()=>nivelesTodos().map(n=>[n.k,n.largo])}],
     cantElem: [{k:'cantElem', lbl:'Cantidad', num:true, step:1}],
-    alt:      [{k:'alt',      lbl:'Altura libre (m)', num:true, step:0.1}],
+    alt:      [{k:'alt',      lbl:'Altura libre H° (m)', num:true, step:0.1}],
+    altT:     [{k:'altT',     lbl:'Altura total hierro (m)', num:true, step:0.1}],
     estribo:  [{k:'phiEstr',  lbl:'Ø estribo', num:true, opts:_PHIS}, {k:'sepEstr', lbl:'Separación (mm)', num:true, step:10}],
   }},
   vigas_vf: {nombre:'vigas VF/VA', arr:()=>state.vigas_vf, render:()=>renderVigas('vf'), campos:{
@@ -7721,10 +7741,10 @@ function piezasObra(){
   state.columnas.forEach(c=>{
     const b = {item:'Columna', pag:'columnas', tabla:'tabla-columnas', denom:c.denom, nivel:c.nivel};
     [[c.phi,c.nBarras,'Ø1'],[c.phi2,c.n2,'Ø2'],[c.phi3,c.n3,'Ø3']].forEach(([p,nb,et])=>{
-      if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(c.alt, p).lTramo, c.cantElem*nb);
+      if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(colAltHierro(c), p).lTramo, c.cantElem*nb);
     });
     if(c.phiEstr){
-      const nE = Math.ceil((lBarraCIRSOC(c.alt, c.phi||12).lTramo*1000)/c.sepEstr);
+      const nE = Math.ceil((lBarraCIRSOC(colAltHierro(c), c.phi||12).lTramo*1000)/c.sepEstr);
       add({...b, phi:+c.phiEstr, parte:'estribos'}, estriboPerim(c), c.cantElem*nE);
     }
   });
@@ -7869,10 +7889,10 @@ function recortesObra(){
   state.columnas.forEach(c=>{
     const b = {item:'Columnas', pag:'columnas', tabla:'tabla-columnas', denom:c.denom, nivel:c.nivel};
     [[c.phi,c.nBarras,'Ø1'],[c.phi2,c.n2,'Ø2'],[c.phi3,c.n3,'Ø3']].forEach(([p,nb,et])=>{
-      if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(c.alt, p), c.cantElem*nb);
+      if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(colAltHierro(c), p), c.cantElem*nb);
     });
     if(c.phiEstr){
-      const nE = Math.ceil((lBarraCIRSOC(c.alt, c.phi||12).lTramo*1000)/c.sepEstr);
+      const nE = Math.ceil((lBarraCIRSOC(colAltHierro(c), c.phi||12).lTramo*1000)/c.sepEstr);
       add({...b, phi:+c.phiEstr, parte:'estribos'}, _cortesBarra(estriboPerim(c), c.cantElem*nE));
     }
   });
@@ -8047,7 +8067,7 @@ function optimizarCortes(){
   state.columnas.forEach(c=>{
     [[c.phi,c.nBarras],[c.phi2,c.n2],[c.phi3,c.n3]].forEach(([p,nb])=>{
       if(p==phi && nb>0){
-        const lB = lBarraCIRSOC(c.alt, p).lTramo;
+        const lB = lBarraCIRSOC(colAltHierro(c), p).lTramo;
         for(let i=0;i<(c.cantElem*nb);i++) piezasObra.push({long:lB,origen:`${c.denom} Ø${p}`});
       }
     });
@@ -10110,7 +10130,7 @@ async function exportarExcel(){
   h1('DETALLE DE COLUMNAS');
   rows.push(['Denom.','Cant.','Sección (cm)','Estribo ext. (cm)','Recub. (cm)','Alt.libre (m)','L.barra CIRSOC (m)','Ø princ.','N°barras','m³ H°']);
   state.columnas.forEach(c=>{
-    const calc=lBarraCIRSOC(c.alt,c.phi||12);
+    const calc=lBarraCIRSOC(colAltHierro(c),c.phi||12);
     const horm=c.cantElem*colArea(c)*c.alt;
     const d0=estriboDimVals(c)[0]||{a:0,b:0};
     rows.push([c.denom,c.cantElem,colSeccTxt(c),`${x(d0.a,1)}×${x(d0.b,1)}`,x(recubResultante(c),1),x(c.alt),x(calc.lTramo),`Ø${c.phi}`,c.nBarras,x(horm,3)]);
@@ -10493,7 +10513,7 @@ function iaManejarError(e, elPensando){
 function iaContextoActual(){
   const compact = (arr, campos) => (arr||[]).map(o=>{ const r={}; campos.forEach(c=>{ if(o[c]!==undefined) r[c]=o[c]; }); return r; });
   return {
-    columnas: compact(state.columnas, ['denom','cantElem','phi','nBarras','phi2','n2','phi3','n3','alt','forma','secA','secB','espA','espB','recub','gancho','phiEstr','sepEstr','estribType']),
+    columnas: compact(state.columnas, ['denom','cantElem','phi','nBarras','phi2','n2','phi3','n3','alt','altT','forma','secA','secB','espA','espB','recub','gancho','phiEstr','sepEstr','estribType']),
     vigas_vf: compact(state.vigas_vf, ['denom','phi','nBarras','phi2','n2','longLibre','ancho','alto','phiEstr','sepEstr','estribType','hormTipo']),
     vigas_vd: compact(state.vigas_vd, ['denom','phi','nBarras','phi2','n2','longLibre','ancho','alto','phiEstr','sepEstr','estribType','hormTipo']),
     bases: compact(state.bases, ['denom','cant','ancho','largo','alto','phi','sep','phi2','sep2','hormTipo']),
@@ -10512,6 +10532,7 @@ Entidades válidas: columna, viga_vf, viga_vd, base, losa, losa_maciza.
 Campos por entidad:
 - columna: denom (ej "C1"), cantElem (cant. de columnas iguales), phi/nBarras (Ø principal en mm: 6,8,10,12,16,20 — y cant. de barras), phi2/n2 y phi3/n3 (armaduras secundarias, 0 si no hay), alt (altura libre en m), forma ('cuad'|'rect'|'L'|'T'|'circ'), secA/secB (SECCIÓN DE HORMIGÓN SEGÚN PLANO en cm; en 'cuad' y 'circ' sólo secA — lado o diámetro), espA/espB (sólo L y T: en L ancho del brazo vertical / alto del brazo horizontal; en T ancho del alma / espesor del ala), recub (recubrimiento al estribo en cm, default 2), gancho (cm de ganchos por estribo, ambos extremos), phiEstr/sepEstr (estribo: Ø en mm y separación en mm), estribType (1=rectangular simple, 2=+trabante, 3=+estribo interior, 6=circular, 7=cuadrado, 11=sección L, 12=sección T — default 1, o el de la forma).
   IMPORTANTE: secA/secB es la medida de la COLUMNA, no del estribo. El estribo exterior se calcula solo como sección − 2×recub. Si el usuario te da la medida del estribo (ej "estribos de 15x15" en una columna de 20x20), NO la pongas en secA/secB: poné la sección de la columna y deducí recub = (20−15)/2 = 2.5. Si sólo te da una medida y no queda claro si es de la columna o del estribo, preguntá.
+- columna (alturas): alt = altura libre (m, para el hormigón); altT = altura total para el hierro (m, de fondo de zanja a cara superior de la viga superior; opcional, vacío = alt). A la barra se le suma pata 0,25 m + anclaje 60Ø.
 - viga_vf / viga_vd: denom, phi/nBarras (+ phi2/n2 opcional), phiEstr/sepEstr, longLibre (luz libre en m), ancho/alto (sección en cm), estribType, hormTipo ('H8'|'H13'|'H17'|'H21'|'H25'|'obra'), techoLiviano (bool).
 - base: denom, cant, ancho/largo/alto (en METROS), phi/sep (armadura principal), phi2/sep2 (secundaria opcional), hormTipo.
 - losa: denom, cant, sup (superficie en m²), alt (espesor total en cm), phi/sep (malla), capComp (capa de compresión en cm), hormTipo.
