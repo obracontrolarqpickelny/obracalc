@@ -1911,6 +1911,32 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   border: 1px solid var(--border2); border-radius: 8px; padding: 1px 6px; margin-left: 6px; }
 .field-label .niv-quitar { margin-left: 6px; padding: 0 4px; font-size: 11px; }
 
+/* Recortes: hierro a comprar, optimizado o no */
+.rec-compra-card { margin-bottom: 16px; }
+.rec-modo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.rec-modo-op { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 10px 14px; border: 2px solid var(--border2); border-radius: 10px; cursor: pointer; }
+.rec-modo-op input { accent-color: var(--green); width: 16px; height: 16px; }
+.rec-modo-op b { font-size: 14px; }
+.rec-modo-op span { flex-basis: 100%; font-size: 11.5px; color: var(--text3); padding-left: 24px; }
+.rec-modo-op.on { border-color: var(--green); background: rgba(34,160,90,.07); }
+.rc-grande { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.rc-grande > div { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface2); }
+.rc-grande span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); font-weight: 700; }
+.rc-grande b { display: block; font-size: 24px; font-weight: 800; color: var(--text); margin-top: 2px; }
+.rc-grande em { display: block; font-style: normal; font-size: 11px; color: var(--text2); }
+.rc-grande .rc-ok { border-color: var(--green); } .rc-grande .rc-ok b { color: var(--green); }
+.rc-tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.rc-tabla th { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); padding: 6px 8px; border-bottom: 1px solid var(--border2); }
+.rc-tabla td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rc-tabla td div { font-size: 10.5px; color: var(--text3); }
+.rc-tabla .rc-sel { background: rgba(34,160,90,.08); }
+.rc-tabla th.rc-sel { color: var(--green); }
+.rc-tabla .rc-ah b { color: var(--green); }
+.rc-tabla .rc-pedir b { color: var(--accent); font-size: 14px; }
+.rc-tabla tfoot td { font-weight: 800; border-top: 2px solid var(--border2); border-bottom: none; }
+.rc-nota { font-size: 11px; color: var(--text3); margin-top: 8px; }
+@media (max-width: 768px) { .rc-grande { grid-template-columns: 1fr 1fr; } .rec-modo { grid-template-columns: 1fr; } }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -3667,31 +3693,17 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <div class="edit-guide-tip">Reduce el desperdicio</div>
         </div>
 
-        <div class="alert alert-green">
-          <span class="alert-icon">✅</span>
-          <div>Para cada diámetro: cuántas barras hacen falta cortando cada pieza por separado, cuántas aprovechando los sobrantes, <b>qué sobrante va a qué pieza</b> y qué recortes quedan sin lugar. El Resumen pide las barras del plan aprovechado. Tocá el nombre de una pieza para ir a ella.</div>
-        </div>
-
-        <div class="grid-4" style="margin-bottom:16px;">
-          <div class="stat">
-            <div class="stat-label">Barras ahorradas</div>
-            <div class="stat-value" id="rec-stat-disp">0</div>
-            <div class="stat-unit">aprovechando sobrantes</div>
-          </div>
-          <div class="stat green">
-            <div class="stat-label">Metros ahorrados</div>
-            <div class="stat-value" id="rec-stat-ml">0</div>
-            <div class="stat-unit">metros lineales</div>
-          </div>
-          <div class="stat blue">
-            <div class="stat-label">Recortes sin ubicar</div>
-            <div class="stat-value" id="rec-stat-reut">0</div>
-            <div class="stat-unit" id="rec-stat-reut-unit">piezas</div>
-          </div>
-          <div class="stat orange">
-            <div class="stat-label">Desperdicio</div>
-            <div class="stat-value" id="rec-stat-ahorro">—</div>
-            <div class="stat-unit">del hierro comprado</div>
+        <div class="card rec-compra-card">
+          <div class="card-header"><span class="card-icon">🔩</span><span class="card-title">Hierro a comprar · barras de <span class="uc-barra">12</span> m</span></div>
+          <div class="card-body">
+            <div class="rec-modo">
+              <label class="rec-modo-op"><input type="radio" name="rec-modo" value="sin" onchange="setOptimizar(false)">
+                <b>Sin optimizar</b><span>cada pieza se corta de barras nuevas; los sobrantes se descartan</span></label>
+              <label class="rec-modo-op"><input type="radio" name="rec-modo" value="con" onchange="setOptimizar(true)">
+                <b>Optimizado</b><span>los sobrantes de unas piezas se usan para cortar otras</span></label>
+            </div>
+            <input type="checkbox" id="rec-optimizar" checked style="display:none;">
+            <div id="rec-compra"></div>
           </div>
         </div>
 
@@ -3755,7 +3767,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
             </div>
           </div>
           <div style="padding:12px;">
-            <div class="rec-sub">Plan de corte por diámetro</div>
+            <div class="rec-sub">Detalle por diámetro · qué sobrante va a qué pieza</div>
             <div id="recortes-plan"></div>
             <details class="rec-det">
               <summary>Ver el detalle pieza por pieza, cortando cada elemento por separado (sin aprovechar sobrantes)</summary>
@@ -3767,32 +3779,6 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           </div>
         </div>
 
-        <!-- Optimización -->
-        <div class="card" style="margin-top:16px;">
-          <div class="card-header"><span class="card-icon">🧮</span><span class="card-title">Optimización de corte · Ø seleccionado</span></div>
-          <div class="card-body">
-            <div class="field-row" style="align-items:flex-end;gap:10px;">
-              <div class="field">
-                <div class="field-label">Diámetro a optimizar</div>
-                <select id="opt-phi">
-                  <option value="6">Ø 6</option>
-                  <option value="8">Ø 8</option>
-                  <option value="10" selected>Ø 10</option>
-                  <option value="12">Ø 12</option>
-                  <option value="16">Ø 16</option>
-                </select>
-              </div>
-              <div class="field">
-                <div class="field-label">Piezas a cortar (long. m)</div>
-                <input type="text" id="opt-piezas" placeholder="Ej: 1.2, 1.2, 0.8, 0.8, 2.5">
-              </div>
-              <div class="field" style="margin-bottom:14px;">
-                <button class="btn btn-primary" onclick="optimizarCortes()">Optimizar</button>
-              </div>
-            </div>
-            <div id="opt-resultado" style="font-family:'DM Sans',sans-serif;font-size:12px;"></div>
-          </div>
-        </div>
       </div>
 
       <!-- ══════════════ RESUMEN TOTAL ══════════════ -->
@@ -4950,7 +4936,7 @@ function _selResultado(tb, ids){
 function _hierrosHTML(plan){
   const fs = Object.values(plan).sort((a,b)=>a.phi-b.phi);
   if(!fs.length) return '<div class="hm-vacio">Sin hierros</div>';
-  return `<table class="hm-tabla"><tbody>${fs.map(d=>`<tr><td><b>Ø${String(d.phi).replace('.',',')}</b></td><td class="right">${n(d.ml,1)} ml</td><td class="right hm-com">${d.barrasCon} barras ${BARRA_COMERCIAL} m</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="hm-tabla"><tbody>${fs.map(d=>`<tr><td><b>Ø${String(d.phi).replace('.',',')}</b></td><td class="right">${n(d.ml,1)} ml</td><td class="right hm-com">${_barrasPlan(d)} barras ${BARRA_COMERCIAL} m</td></tr>`).join('')}</tbody></table>`;
 }
 function _selPanel(tb){
   const tbody = document.getElementById(tb);
@@ -4978,7 +4964,7 @@ function _selPanel(tb){
   p.innerHTML = `<div class="selp-cab"><b>Selección: ${S.size} de ${total} ${nom}</b><span>resultados sólo de las tildadas${m3 ? ` · ${n(m3,2)} m³ de H°` : ''}</span>${acciones}</div>
     <div class="selp-cuerpo">
       <div><div class="selp-t">🪨 Hormigón y materiales</div>${hormMatHTML(r.porTipo, {extra: r.extra})}</div>
-      <div><div class="selp-t">🔩 Hierros · con aprovechamiento de sobrantes</div>${_hierrosHTML(r.plan)}</div>
+      <div><div class="selp-t">🔩 Hierros · ${optimizarCortesOn() ? 'optimizado' : 'sin optimizar'}</div>${_hierrosHTML(r.plan)}</div>
     </div>`;
 }
 function _selPanelesActualizar(){ Object.keys(_sel).forEach(tb=>{ if(_sel[tb].size) _selPanel(tb); }); }
@@ -8841,6 +8827,7 @@ function renderRecortes(){
   const filtEst = document.getElementById('rec-filtro-estado')?.value||'all';
   const plan = planCortes();
   renderPlanCortes(plan, filtPhi);
+  renderCompraHierro(plan);
   const todos = recortesObra();
   const lista = todos.filter(x=>filtPhi==='all' || x.phi==filtPhi);
   const peso = (phi, ml) => (PESO_HIERRO[phi]||0.617)*ml;
@@ -8912,13 +8899,67 @@ function eliminarRecorte(id){
   state.recortes=state.recortes.filter(x=>x.id!==id);
   renderRecortes(); scheduleAutosave();
 }
+// ¿Se aprovechan los sobrantes? (casilla oculta con id: se guarda con la obra)
+function optimizarCortesOn(){ return document.getElementById('rec-optimizar')?.checked !== false; }
+const _barrasPlan = d => optimizarCortesOn() ? d.barrasCon : d.barrasSin;
+function setOptimizar(v){
+  const c = document.getElementById('rec-optimizar'); if(c) c.checked = !!v;
+  updateDashboard(); renderRecortes(); scheduleAutosave();
+  showToast(v ? '♻ Optimizado: el Resumen pide las barras aprovechando sobrantes' : 'Sin optimizar: el Resumen pide cortando cada pieza por separado','success',2600);
+}
+// Cuadro "Hierro a comprar": por diámetro, sin optimizar vs optimizado
+function renderCompraHierro(plan){
+  const el = document.getElementById('rec-compra');
+  if(!el) return;
+  const on = optimizarCortesOn();
+  document.querySelectorAll('input[name="rec-modo"]').forEach(x=>{ x.checked = (x.value==='con')===on; x.closest('.rec-modo-op')?.classList.toggle('on', x.checked); });
+  document.querySelectorAll('.uc-barra').forEach(x=>{ x.textContent = String(BARRA_COMERCIAL).replace('.',','); });
+  const B = BARRA_COMERCIAL, pct = r('res-pct')/100 + 1;
+  const P = Object.values(plan).sort((a,b)=>a.phi-b.phi);
+  if(!P.length){ el.innerHTML = '<div class="obras-vacio">Sin hierros cargados.</div>'; return; }
+  const kg = (phi, m) => (PESO_HIERRO[phi]||0.617) * m;
+  const T = {ml:0, sin:0, con:0, dSin:0, dCon:0, kgAh:0, pedir:0};
+  const fila = d => {
+    const dSin = d.barrasSin*B - d.ml, dCon = d.barrasCon*B - d.ml, ah = d.barrasSin - d.barrasCon;
+    const elegidas = on ? d.barrasCon : d.barrasSin, pedir = Math.ceil(elegidas * pct - 1e-9);
+    T.ml += d.ml; T.sin += d.barrasSin; T.con += d.barrasCon; T.dSin += dSin; T.dCon += dCon; T.kgAh += kg(d.phi, ah*B); T.pedir += pedir;
+    const pc = (dd, bb) => bb ? n(dd/(bb*B)*100,1) : '0';
+    return `<tr>
+      <td><span class="recorte-phi ${phiClass(d.phi)}">Ø${String(d.phi).replace('.',',')}</span></td>
+      <td class="right">${n(d.ml,0)} m</td>
+      <td class="right ${on?'':'rc-sel'}"><b>${d.barrasSin}</b> barras<div>desperdicio ${n(dSin,0)} m · ${pc(dSin, d.barrasSin)} %</div></td>
+      <td class="right ${on?'rc-sel':''}"><b>${d.barrasCon}</b> barras<div>desperdicio ${n(dCon,0)} m · ${pc(dCon, d.barrasCon)} %</div></td>
+      <td class="right rc-ah">${ah>0 ? `<b>−${ah}</b> barras<div>${n(kg(d.phi, ah*B),0)} kg</div>` : '<span class="muted">—</span>'}</td>
+      <td class="right rc-pedir"><b>${pedir}</b> barras</td>
+    </tr>`;
+  };
+  const filas = P.map(fila).join('');
+  const pc = (dd, bb) => bb ? n(dd/(bb*B)*100,1) : '0';
+  const elegidas = on ? T.con : T.sin, desp = on ? T.dCon : T.dSin;
+  el.innerHTML = `
+    <div class="rc-grande">
+      <div><span>Barras a comprar (${on ? 'optimizado' : 'sin optimizar'})</span><b>${elegidas}</b></div>
+      <div><span>Desperdicio inevitable</span><b>${n(desp,0)} m</b><em>${pc(desp, elegidas)} % del hierro comprado</em></div>
+      <div class="${T.sin-T.con>0?'rc-ok':''}"><span>Optimizando se ahorran</span><b>${T.sin-T.con} barras</b><em>${n(T.kgAh,0)} kg · el desperdicio baja de ${pc(T.dSin, T.sin)} % a ${pc(T.dCon, T.con)} %</em></div>
+      <div><span>A pedir con el incremento del ${n((pct-1)*100,0)} %</span><b>${T.pedir}</b><em>así figuran en el Resumen</em></div>
+    </div>
+    <div class="table-wrap" style="border:none;"><table class="rc-tabla">
+      <thead><tr><th>Ø</th><th class="right">Hierro necesario</th><th class="right ${on?'':'rc-sel'}">Sin optimizar</th><th class="right ${on?'rc-sel':''}">Optimizado</th><th class="right">Ahorro</th><th class="right">A pedir (+${n((pct-1)*100,0)} %)</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td>Total</td><td class="right">${n(T.ml,0)} m</td>
+        <td class="right ${on?'':'rc-sel'}"><b>${T.sin}</b> barras<div>${n(T.dSin,0)} m · ${pc(T.dSin, T.sin)} %</div></td>
+        <td class="right ${on?'rc-sel':''}"><b>${T.con}</b> barras<div>${n(T.dCon,0)} m · ${pc(T.dCon, T.con)} %</div></td>
+        <td class="right rc-ah"><b>−${T.sin-T.con}</b> barras</td><td class="right rc-pedir"><b>${T.pedir}</b> barras</td></tr></tfoot>
+    </table></div>
+    <div class="rc-nota">El desperdicio es el hierro que se compra y no se usa (barras enteras − metros necesarios). "A pedir" = barras de la opción elegida × el incremento del Resumen, redondeado para arriba.</div>`;
+}
 function updateRecortesStats(plan){
   plan = plan || planCortes();
   const P = Object.values(plan);
   const ahorro = P.reduce((t,d)=>t + d.barrasSin - d.barrasCon, 0);
   let cant = 0, ml = 0;
   P.forEach(d=>Object.entries(d.quedan).forEach(([l,c])=>{ cant += c; ml += l*c; }));
-  const comprado = P.reduce((t,d)=>t + d.barrasCon*BARRA_COMERCIAL, 0);
+  const comprado = P.reduce((t,d)=>t + _barrasPlan(d)*BARRA_COMERCIAL, 0);
   setTxt('rec-stat-disp', ahorro.toLocaleString('es-AR'));
   setTxt('rec-stat-ml', n(ahorro*BARRA_COMERCIAL,0));
   setTxt('rec-stat-reut', cant.toLocaleString('es-AR'));
@@ -9095,7 +9136,7 @@ function updateDashboard(){
   const plan = planCortes();
   state._planCortes = plan;
   phisOrden.forEach(phi=>{
-    const barras = plan[phi] ? plan[phi].barrasCon : Math.ceil(hierros[phi]/BARRA_COMERCIAL);
+    const barras = plan[phi] ? _barrasPlan(plan[phi]) : Math.ceil(hierros[phi]/BARRA_COMERCIAL);
     barrasPorPhi[phi]=barras;
     totalBarras+=barras;
   });
@@ -9485,7 +9526,7 @@ function datosResumen(){
   // Hierros: se piden por barra — sin metros lineales (base = metros)
   const barras = Object.keys(hierros).filter(p=>(hierros[p]||0)>0.1).sort((a,b)=>+a-+b)
     .map(p=>U(`Hierro Ø${String(p).replace('.',',')}`, 'hierro', (state._barrasPorPhi?.[p] ?? Math.ceil((hierros[p]||0)/BARRA_COMERCIAL))*BARRA_COMERCIAL, pct,
-      'barras según el plan de corte (aprovechando sobrantes)'));
+      optimizarCortesOn() ? 'barras del plan de corte optimizado (aprovechando sobrantes)' : 'barras cortando cada pieza por separado (sin optimizar)'));
 
   // Aislación del techo: cantidad base en m³, presentación según Pomeca o Perlita
   const aisl = (techo.insul && techo.volAisl>0)
@@ -9804,7 +9845,7 @@ function materialesPorItem(){
   };
   const hierro = (it, filtro) => {
     const pl = planCortes(piezas.filter(filtro));
-    Object.values(pl).forEach(d=>add(it, 'hierro:'+d.phi, d.barrasCon*B));
+    Object.values(pl).forEach(d=>add(it, 'hierro:'+d.phi, _barrasPlan(d)*B));
   };
   const acc = (it, vol) => { add(it,'al14',vol*ACCESORIOS_M3.al14); add(it,'al17',vol*ACCESORIOS_M3.al17); add(it,'cl2',vol*ACCESORIOS_M3.cl2); add(it,'cl25',vol*ACCESORIOS_M3.cl25); };
   const grupos = arr => { const g = {}; arr.forEach(o=>{ (g[o.nivel||''] ||= []).push(o); }); return _ordenNiv(Object.keys(g)).map(k=>[k, g[k]]); };
