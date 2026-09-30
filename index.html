@@ -1957,6 +1957,22 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .col-estr b { font-size: 13px; }
 .col-estr div { font-size: 9.5px; color: var(--text3); }
 
+/* Mampostería armada y antepechos */
+.arm-muro { margin-top: 12px; padding: 8px 10px; border: 1px dashed var(--border2); border-radius: 8px; }
+.arm-muro.on { border-style: solid; border-color: var(--accent); background: var(--accent-dim2); }
+.arm-on { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; cursor: pointer; font-size: 12.5px; }
+.arm-on span { font-size: 11px; color: var(--text3); }
+.arm-muro .muro-dims { margin-top: 8px; }
+.arm-res { font-size: 11px; color: var(--text2); margin-top: 6px; }
+.ant-ayuda { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+.ant-mort { font-size: 12px; margin-bottom: 8px; }
+.ant-tabla { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ant-tabla th { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); padding: 5px 6px; text-align: left; border-bottom: 1px solid var(--border2); }
+.ant-tabla td { padding: 5px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.ant-tabla .right { text-align: right; }
+.ant-res { font-size: 11px; color: var(--text2); white-space: normal !important; }
+.ant-tot { font-size: 12px; margin-top: 8px; color: var(--text2); }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -3160,6 +3176,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                 </div>
                 <div class="hid-calc" id="mamp-hid-res">—</div>
               </div>
+              <div id="mamp-arm-0"></div>
             </div>
           </div>
 
@@ -3170,6 +3187,17 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
         </div>
         <div id="muros-extra"></div>
         <button type="button" class="btn-niv-add" style="margin:14px 0 2px;" onclick="agregarMuro()">＋ Agregar muro de otro espesor</button>
+
+        <div class="card" style="margin-top:16px;" id="antepechos-card">
+          <div class="card-header"><span class="card-icon">🪟</span><span class="card-title">Antepechos armados</span>
+            <button type="button" class="btn btn-secondary" style="margin-left:auto;font-size:11px;padding:4px 10px;" onclick="agregarAntepecho()">＋ Agregar antepecho</button></div>
+          <div class="card-body">
+            <div class="ant-ayuda">Hilada armada bajo las ventanas: largo por nivel, hierros y estribos tipo C. Su mortero va con cemento y arena (se descuenta del mortero común del muro).</div>
+            <div class="ant-mort" id="antepechos-mort"></div>
+            <div id="antepechos-body"></div>
+            <div class="ant-tot" id="antepechos-tot"></div>
+          </div>
+        </div>
 
         <div class="card" style="margin-top:16px;">
           <div class="niv-panel">
@@ -4129,7 +4157,7 @@ const HORM_TIPOS = {
   'mano':{label:'Llenado a mano (sin H°)', portKgM3:0, arenaM3:0, ripioM3:0},
 };
 // Datos de alambre y clavos por m³ H armado (todos los rubros)
-const ACCESORIOS_M3 = {al14:2, al17:2, cl2:1, cl25:1}; // kg/m³
+const ACCESORIOS_M3 = {al14:3.5, al17:3.5, cl2:1, cl25:1}; // kg/m³ de H° armado
  // m
 
 // ── TIPOS DE ESTRIBO ────────────────────────────────────────────────────────
@@ -7412,6 +7440,106 @@ function renderTotFund(){
     </tbody><tfoot><tr><td>Total fundaciones</td><td class="right">${n(tot,2)} m³</td></tr></tfoot></table>`;
 }
 
+// ── MAMPOSTERÍA ARMADA Y ANTEPECHOS ──────────────────────────────────────
+// Muro armado: cada N hiladas, n hierros de Ø en la junta + estribos tipo C
+// (atan los hierros de ambas caras). Las hiladas armadas llevan mortero de
+// cemento y arena (sin cemento de albañilería ni cal): esa parte del mortero se
+// descuenta del común y se calcula con su propio dosaje.
+// Antepechos: ml por nivel, con sus hierros y estribos C, y su hilada también
+// con cemento y arena.
+const ARM_DEF = {on:false, cada:4, nBar:2, phi:6, phiC:4.2, sepC:50, cem:1, are:3};
+const ANT_DEF = {nivel:'PB', ml:0, nBar:2, phi:8, phiC:4.2, sepC:30, esp:''};
+const SOLAPE_JUNTA = 1.10;        // +10 % por empalmes de los hierros de junta
+function armDe(id){
+  if(id===0){ state.mampArmP = {...ARM_DEF, ...(state.mampArmP||{})}; return state.mampArmP; }
+  const m = (state.murosExtra||[]).find(x=>x.id===id);
+  if(!m) return null;
+  m.arm = {...ARM_DEF, ...(m.arm||{})};
+  return m.arm;
+}
+function armCambio(id, campo, val){
+  const a = armDe(id); if(!a) return;
+  a[campo] = val;
+  scheduleAutosave();
+  setTimeout(()=>{ renderArmMuros(); if(id) renderMurosExtra(); calcMamposteria(); }, 0);
+}
+// Largo de un estribo C: el ancho del muro (menos 2 cm por lado) + un gancho de 10Ø en cada punta
+const largoC = (esp, phiC) => Math.max((+esp||0.17) - 0.04, 0.05) + 2 * 10 * (+phiC||4.2) / 1000;
+function armHTML(id, a){
+  const num = (campo, step, w) => `<input type="number" value="${a[campo] ?? ''}" step="${step}" min="0" data-k="arm-${id}-${campo}"
+      onchange="armCambio(${id},'${campo}',+this.value)" style="width:${w||54}px;">`;
+  const sel = (campo, vals) => `<select data-k="arm-${id}-${campo}" onchange="armCambio(${id},'${campo}',+this.value)">${vals.map(v=>`<option value="${v}" ${String(v)===String(a[campo])?'selected':''}>${String(v).replace('.',',')}</option>`).join('')}</select>`;
+  return `<div class="arm-muro${a.on?' on':''}">
+    <label class="arm-on"><input type="checkbox" ${a.on?'checked':''} onchange="armCambio(${id},'on',this.checked)">
+      <b>Muro armado</b><span>hierros en las juntas cada tantas hiladas</span></label>
+    ${a.on ? `<div class="muro-dims">
+      <label>Cada ${num('cada',1,48)} hiladas</label>
+      <label>${num('nBar',1,44)} hierros Ø ${sel('phi',[4.2,6,8,10,12])}</label>
+      <label>Estribos C Ø ${sel('phiC',[4.2,6,8])} cada ${num('sepC',5)} cm</label>
+      <label>Mortero de esas hiladas: cemento ${num('cem',0.25,44)} : arena ${num('are',0.5,44)}</label>
+    </div><div class="arm-res" id="arm-res-${id}"></div>` : ''}
+  </div>`;
+}
+function renderArmMuros(){
+  const el = document.getElementById('mamp-arm-0');
+  if(el) el.innerHTML = armHTML(0, armDe(0));
+}
+// Filas del resultado de un muro armado
+function armResHTML(c){
+  const A = c.armado; if(!A) return '';
+  const fila = (lbl, val, unit) => `<div class="dosaje-row"><div class="dosaje-material">${lbl}</div><div class="dosaje-value accent">${val}</div><div class="dosaje-unit">${unit}</div></div>`;
+  return `<div class="field-label" style="margin:10px 0 6px;">Armadura · cada ${A.cada} hiladas · ${n(A.mlHil,1)} m de hilada armada</div>`
+    + fila(`Hierro Ø${String(A.phi).replace('.',',')} (${A.nBar} por hilada, +10 % empalmes)`, n(A.mlBar,1)+' m', `${Math.ceil(A.mlBar/BARRA_COMERCIAL)} barras ${BARRA_COMERCIAL} m`)
+    + fila(`Estribos C Ø${String(A.phiC).replace('.',',')} de ${n(A.lC,2)} m`, A.nC.toLocaleString('es-AR')+' u.', `${n(A.nC*A.lC,1)} m`)
+    + fila(`Mortero cemento ${fmtParte(A.cem)}:${fmtParte(A.are)} (hiladas armadas)`, n(A.mortA,2)+' m³', `${n(ucDesdeBase('portland', A.mortA*A.mzA.portKg),1)} ${ucLabel('portland')}`);
+}
+
+// Antepechos
+function agregarAntepecho(){
+  const L = state.antepechos = state.antepechos || [];
+  const id = L.reduce((m,x)=>Math.max(m, x.id||0), 0) + 1;
+  L.push({id, ...ANT_DEF});
+  renderAntepechos(); calcMamposteria(); scheduleAutosave();
+  setTimeout(()=>document.querySelector(`[data-k="ant-${id}-ml"]`)?.focus(), 30);
+}
+function quitarAntepecho(id){
+  const a = (state.antepechos||[]).find(x=>x.id===id);
+  if(!a || (+a.ml>0 && !confirm(`¿Quitar el antepecho de ${n(a.ml,1)} ml?`))) return;
+  state.antepechos = state.antepechos.filter(x=>x.id!==id);
+  renderAntepechos(); calcMamposteria(); scheduleAutosave();
+}
+function antCambio(id, campo, val){
+  if(id===0){ state.antepMort = {cem:1, are:3, ...(state.antepMort||{}), [campo]:val}; scheduleAutosave(); calcMamposteria(); return; }
+  const a = (state.antepechos||[]).find(x=>x.id===id); if(!a) return;
+  a[campo] = val;
+  scheduleAutosave();
+  setTimeout(()=>{ renderAntepechos(); calcMamposteria(); }, 0);
+}
+function renderAntepechos(){
+  const box = document.getElementById('antepechos-body');
+  if(!box) return;
+  const M = {cem:1, are:3, ...(state.antepMort||{})};
+  const dos = document.getElementById('antepechos-mort');
+  if(dos) dos.innerHTML = `Mortero de la hilada del antepecho: cemento
+    <input type="number" value="${M.cem}" step="0.25" min="0" onchange="antCambio(0,'cem',+this.value)" style="width:48px;"> : arena
+    <input type="number" value="${M.are}" step="0.5" min="0" onchange="antCambio(0,'are',+this.value)" style="width:48px;">`;
+  const L = state.antepechos || [];
+  const op = (vals, v) => vals.map(x=>`<option value="${x}" ${String(x)===String(v)?'selected':''}>${String(x).replace('.',',')}</option>`).join('');
+  const num = (a, campo, step, w, ph) => `<input type="number" value="${a[campo] ?? ''}" step="${step}" min="0" data-k="ant-${a.id}-${campo}" ${ph?`placeholder="${ph}"`:''}
+      onchange="antCambio(${a.id},'${campo}',this.value===''?'':+this.value)" style="width:${w}px;">`;
+  box.innerHTML = L.length ? `<div class="table-wrap" style="border:none;"><table class="ant-tabla">
+    <thead><tr><th>Nivel</th><th class="right">Largo (ml)</th><th>Hierros</th><th>Estribos C</th><th class="right">Espesor muro (m)</th><th>Resultado</th><th></th></tr></thead>
+    <tbody>${L.map(a=>`<tr>
+      <td>${nivelSelectHTML(a.nivel, `antCambio(${a.id},'nivel',this.value)`)}</td>
+      <td class="right">${num(a,'ml',0.5,70)}</td>
+      <td>${num(a,'nBar',1,44)} × Ø <select onchange="antCambio(${a.id},'phi',+this.value)">${op([4.2,6,8,10,12], a.phi)}</select></td>
+      <td>Ø <select onchange="antCambio(${a.id},'phiC',+this.value)">${op([4.2,6,8], a.phiC)}</select> c/ ${num(a,'sepC',5,50)} cm</td>
+      <td class="right">${num(a,'esp',0.01,64, String(r('lad-esp')||0.17).replace('.',','))}</td>
+      <td class="ant-res" id="ant-res-${a.id}">—</td>
+      <td><button type="button" class="niv-quitar" onclick="quitarAntepecho(${a.id})" title="Quitar">✕</button></td>
+    </tr>`).join('')}</tbody></table></div>` : '<div class="hm-vacio" style="padding:6px 0;">Sin antepechos cargados.</div>';
+}
+
 // ── MAMPOSTERÍA ──────────────────────────────────────────────────────────
 // Puede haber muros de distintos espesores: el principal (casillas de la
 // tarjeta de arriba) y los que se agregan (state.murosExtra). Cada muro tiene su
@@ -7421,7 +7549,7 @@ function muroPrincipal(){
   return {id:0, titulo:'Muro principal', ladNombre:(document.getElementById('mamp-lad-nombre')?.value||'').trim() || 'Ladrillón',
     esp:r('lad-esp')||0.17, largo:r('lad-largo')||0.25, alto:r('lad-alto')||0.06, junta:r('lad-junta')||0.03,
     sup:Object.fromEntries(nivelesArea('mamp').map(nv=>[nv.k, r('mamp-sup-'+nv.suf)])),
-    hil:r('mamp-hid-hil'), lMuros:r('mamp-hid-largo')};
+    hil:r('mamp-hid-hil'), lMuros:r('mamp-hid-largo'), arm: armDe(0)};
 }
 function calcMuro(m){
   const despPct  = r('mamp-desp') / 100;
@@ -7443,18 +7571,40 @@ function calcMuro(m){
   const mortH = supH * mortM2;
   const portH = mortH * mzH.portKg, arenaH = mortH * mzH.arenaM3;
   const hidroH = portH * aguaCemento() / (Math.max(r('mamp-hid-dil'), 0.1) || 10);
-  const mortComun = Math.max(mortM3 - mortH, 0);
+  // Muro armado: 1 de cada "cada" hiladas lleva hierros; su mortero, cemento y arena
+  const Aa = m.arm && m.arm.on ? m.arm : null;
+  let armado = null;
+  if(Aa){
+    const cada = Math.max(Math.round(+Aa.cada||4), 1), cem = +Aa.cem||1, are = +Aa.are>=0 ? +Aa.are : 3;
+    armado = {cada, fr:1/cada, nBar:Math.max(Math.round(+Aa.nBar||2), 1), phi:+Aa.phi||6, phiC:+Aa.phiC||4.2,
+      sepC:Math.max(+Aa.sepC||50, 5)/100, cem, are, mzA: rendMezcla({cem, are}), lC: largoC(esp, +Aa.phiC||4.2),
+      mlHil:0, mlBar:0, nC:0, mortA:0, porNivel:{}};
+  }
+  const fr = armado ? armado.fr : 0;
+  const mortComun = Math.max(mortM3 - mortH, 0) * (1 - fr);
   const porNivel = {};
   niveles.forEach(x=>{
     const h = x.k==='PB' ? mortH : 0;
-    const m3 = Math.max(x.sup*mortM2 - h, 0);
-    porNivel[x.k] = {sup:x.sup, lad:x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
-      cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0};
+    const m3t = Math.max(x.sup*mortM2 - h, 0), m3 = m3t * (1 - fr), m3A = m3t * fr;
+    const d = {sup:x.sup, lad:x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
+      cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0, arm:{}};
+    if(armado){
+      const mlHil = x.sup / (alto + junta) / armado.cada;          // metros de hilada armada
+      const mlBar = mlHil * armado.nBar * SOLAPE_JUNTA;
+      const nC = Math.ceil(mlHil / armado.sepC - 1e-9);
+      armado.mlHil += mlHil; armado.mlBar += mlBar; armado.nC += nC; armado.mortA += m3A;
+      armado.porNivel[x.k] = {mlBar, nC};
+      d.port += m3A * armado.mzA.portKg; d.arena += m3A * armado.mzA.arenaM3;
+      d.arm[armado.phi] = (d.arm[armado.phi]||0) + mlBar;
+      d.arm[armado.phiC] = (d.arm[armado.phiC]||0) + nC * armado.lC;
+    }
+    porNivel[x.k] = d;
   });
+  const mortA = armado ? armado.mortA : 0;
   return {m, mz, largo, alto, esp, junta, ladPm2, mortM2, niveles, totSup, ladNetos, ladConDesp, mortM3, despPct,
-    hil, lMuros, supH, portH, arenaH, hidroH,
-    albKg: mortComun*mz.rend.albKg, portKg: mortComun*mz.rend.portKg + portH,
-    calKg: mortComun*mz.rend.calKg, arenaM3: mortComun*mz.rend.arenaM3 + arenaH, porNivel};
+    hil, lMuros, supH, portH, arenaH, hidroH, armado,
+    albKg: mortComun*mz.rend.albKg, portKg: mortComun*mz.rend.portKg + portH + (armado ? mortA*armado.mzA.portKg : 0),
+    calKg: mortComun*mz.rend.calKg, arenaM3: mortComun*mz.rend.arenaM3 + arenaH + (armado ? mortA*armado.mzA.arenaM3 : 0), porNivel};
 }
 
 // Muros agregados
@@ -7514,6 +7664,7 @@ function renderMurosExtra(){
               <label>Hiladas ${inp(m,'hil',m.hil,1,'Hiladas desde abajo',60)}</label>
               <label>Largo de estos muros en PB (m) ${inp(m,'lMuros',m.lMuros,1,'Largo total (m)')}</label>
             </div>
+            ${armHTML(m.id, armDe(m.id))}
           </div>
           <div id="muro-res-${m.id}" class="muro-res"></div>
         </div>
@@ -7532,7 +7683,8 @@ function muroResHTML(c){
     + fila('Mortero total', n(c.mortM3,2), 'm³')
     + uc(c.albKg, 'Cem. alb.', 'cemAlb') + uc(c.portKg, 'Cemento Portland', 'portland') + uc(c.calKg, 'Cal', 'cal')
     + fila('Arena gruesa', n(c.arenaM3,2), 'm³')
-    + (c.hidroH>0.01 ? fila('Hidrófugo (hiladas PB)', n(c.hidroH,1), 'litros') : '');
+    + (c.hidroH>0.01 ? fila('Hidrófugo (hiladas PB)', n(c.hidroH,1), 'litros') : '')
+    + armResHTML(c);
 }
 
 function calcMamposteria(){
@@ -7542,7 +7694,42 @@ function calcMamposteria(){
   const S = k => todos.reduce((s,c)=>s + (c[k]||0), 0);
   const {mz, ladPm2, mortM2, niveles:nivelesData, totSup, ladNetos, ladConDesp, mortM3, despPct, hil, lMuros, supH, portH, arenaH, hidroH, alto, junta} = P;
   // Totales de todos los muros
-  const albKg = S('albKg'), portKg = S('portKg'), calKg = S('calKg'), arenaM3 = S('arenaM3'), hidroTot = S('hidroH');
+  let albKg = S('albKg'), portKg = S('portKg'), calKg = S('calKg'), arenaM3 = S('arenaM3');
+  const hidroTot = S('hidroH');
+  // Antepechos: su hilada va con cemento y arena (se cambia por el mortero común)
+  const AM = {cem:1, are:3, ...(state.antepMort||{})};
+  const mzAnt = rendMezcla({cem:+AM.cem||1, are:+AM.are>=0 ? +AM.are : 3});
+  const ants = (state.antepechos||[]).filter(a=>+a.ml>0).map(a=>{
+    const esp = +a.esp || P.esp, ml = +a.ml, phiC = +a.phiC||4.2, sepC = Math.max(+a.sepC||30, 5)/100;
+    const vol = ml * P.mortM2 * (esp / P.esp) * (P.alto + P.junta);       // mortero de una hilada
+    const x = {a, k:a.nivel||'', ml, esp, phi:+a.phi||8, phiC, nBar:Math.max(Math.round(+a.nBar||2),1),
+      mlBar: ml * Math.max(Math.round(+a.nBar||2),1) * SOLAPE_JUNTA, nC: Math.ceil(ml / sepC - 1e-9) + 1, lC: largoC(esp, phiC), vol,
+      d:{alb:-vol*mz.rend.albKg, cal:-vol*mz.rend.calKg, port:vol*(mzAnt.portKg - mz.rend.portKg), arena:vol*(mzAnt.arenaM3 - mz.rend.arenaM3)}};
+    albKg += x.d.alb; calKg += x.d.cal; portKg += x.d.port; arenaM3 += x.d.arena;
+    const el = document.getElementById('ant-res-'+a.id);
+    if(el) el.innerHTML = `${n(x.mlBar,1)} m Ø${String(x.phi).replace('.',',')} · ${x.nC} estribos C Ø${String(phiC).replace('.',',')} de ${n(x.lC,2)} m`;
+    return x;
+  });
+  albKg = Math.max(albKg, 0); calKg = Math.max(calKg, 0);
+  document.querySelectorAll('.ant-res').forEach(el=>{ if(!ants.some(x=>'ant-res-'+x.a.id===el.id)) el.textContent = '—'; });
+  const antTot = document.getElementById('antepechos-tot');
+  if(antTot) antTot.innerHTML = ants.length ? `Total antepechos: <b>${n(ants.reduce((s2,x)=>s2+x.ml,0),1)} ml</b> · mortero cemento ${fmtParte(+AM.cem||1)}:${fmtParte(+AM.are>=0?+AM.are:3)} ${n(ants.reduce((s2,x)=>s2+x.vol,0),3)} m³` : '';
+  // Hierros de muros armados y antepechos → plan de corte (barras enteras + estribos C)
+  const armPiezas = [], porPhi = {};
+  const addPhi = (p, ml) => { if(ml>0) porPhi[p] = (porPhi[p]||0) + ml; };
+  const pieza = (o) => armPiezas.push({pag:'mamposteria', ...o});
+  todos.forEach(c=>{ const A = c.armado; if(!A) return;
+    Object.entries(A.porNivel).forEach(([k, d])=>{
+      if(d.mlBar>0){ pieza({item:'Mampostería armada', denom:c.m.titulo, nivel:k, phi:A.phi, L:BARRA_COMERCIAL, N:Math.ceil(d.mlBar/BARRA_COMERCIAL), entera:true, parte:`${A.nBar} hierros cada ${A.cada} hiladas`}); addPhi(A.phi, d.mlBar); }
+      if(d.nC>0){ pieza({item:'Mampostería armada', denom:c.m.titulo, nivel:k, phi:A.phiC, L:Math.round(A.lC*1000)/1000, N:d.nC, parte:'estribos C'}); addPhi(A.phiC, d.nC*A.lC); }
+    });
+    const el = document.getElementById('arm-res-'+(c.m.id||0));
+    if(el) el.innerHTML = `${n(A.mlHil,1)} m de hilada armada → ${n(A.mlBar,1)} m Ø${String(A.phi).replace('.',',')} · ${A.nC.toLocaleString('es-AR')} estribos C · ${n(A.mortA,2)} m³ de mortero cemento ${fmtParte(A.cem)}:${fmtParte(A.are)}`;
+  });
+  ants.forEach(x=>{
+    pieza({item:'Antepecho', denom:`${n(x.ml,1)} ml`, nivel:x.k, phi:x.phi, L:BARRA_COMERCIAL, N:Math.ceil(x.mlBar/BARRA_COMERCIAL), entera:true, parte:`${x.nBar} hierros`}); addPhi(x.phi, x.mlBar);
+    pieza({item:'Antepecho', denom:`${n(x.ml,1)} ml`, nivel:x.k, phi:x.phiC, L:Math.round(x.lC*1000)/1000, N:x.nC, parte:'estribos C'}); addPhi(x.phiC, x.nC*x.lC);
+  });
   const hidRes = document.getElementById('mamp-hid-res');
   if(hidRes) hidRes.innerHTML = !hil ? 'Sin hiladas con hidrófugo.'
     : !lMuros ? 'Cargá el largo total de muros de planta baja para calcular las hiladas.'
@@ -7635,22 +7822,29 @@ function calcMamposteria(){
       <div class="dosaje-material">Arena total</div>
       <div class="dosaje-value accent">${n(P.arenaM3, 2)}</div>
       <div class="dosaje-unit">m³</div>
-    </div>`;
+    </div>
+    ${armResHTML(P)}`;
   // Muros agregados: cada uno su resumen
   extras.forEach(c=>{ const el = document.getElementById('muro-res-'+c.m.id); if(el) el.innerHTML = muroResHTML(c); });
 
   // Parciales por nivel: todos los muros sumados; ladrillos por tipo aparte
   const porNivel = {};
   todos.forEach(c=>Object.entries(c.porNivel).forEach(([k,d])=>{
-    const p = porNivel[k] || (porNivel[k] = {sup:0, lad:0, alb:0, port:0, cal:0, arena:0, hidro:0, ladPorTipo:{}});
+    const p = porNivel[k] || (porNivel[k] = {sup:0, lad:0, alb:0, port:0, cal:0, arena:0, hidro:0, ladPorTipo:{}, arm:{}});
     ['sup','lad','alb','port','cal','arena','hidro'].forEach(x=>{ p[x] += d[x]||0; });
     p.ladPorTipo[c.m.ladNombre] = (p.ladPorTipo[c.m.ladNombre]||0) + d.lad;
+    Object.entries(d.arm||{}).forEach(([ph, ml])=>{ p.arm[ph] = (p.arm[ph]||0) + ml; });
   }));
+  ants.forEach(x=>{
+    const p = porNivel[x.k] || (porNivel[x.k] = {sup:0, lad:0, alb:0, port:0, cal:0, arena:0, hidro:0, ladPorTipo:{}, arm:{}});
+    ['alb','cal','port','arena'].forEach(q=>{ p[q] = Math.max(p[q] + x.d[q], 0); });
+    p.arm[x.phi] = (p.arm[x.phi]||0) + x.mlBar; p.arm[x.phiC] = (p.arm[x.phiC]||0) + x.nC*x.lC;
+  });
   const porMuro = todos.filter(c=>c.ladConDesp>0).map(c=>({titulo:c.m.titulo, nombre:c.m.ladNombre, ladrillones:c.ladConDesp, sup:c.totSup}));
 
   state.resultados = state.resultados || {};
   state.resultados.mamp = {ladrillones: ladTotDesp, ladNetos: ladTot, cemAlb: cemAlbBol, cemAlbKg: albKg,
-    portKg, calKg, arena: arenaM3, mortM3: S('mortM3'), hidroL: hidroTot, supH: S('supH'), porMuro, porNivel};
+    portKg, calKg, arena: arenaM3, mortM3: S('mortM3'), hidroL: hidroTot, supH: S('supH'), porMuro, porNivel, armPiezas, porPhi};
 
   const tipos = [...new Set(porMuro.map(x=>x.nombre))];
   const cols = [{lbl:'m²', v:d=>d.sup, fmt:fmtN(1)}];
@@ -7661,6 +7855,7 @@ function calcMamposteria(){
   if(calKg>0.01)  cols.push({lbl:'Cal',        v:d=>d.cal,  fmt:fmtUC('cal')});
   cols.push({lbl:'Arena gruesa (m³)', v:d=>d.arena, fmt:fmtN(2)});
   if(hidroTot>0.01) cols.push({lbl:'Hidrófugo (L)', v:d=>d.hidro||0, fmt:fmtN(1)});
+  Object.keys(porPhi).sort((a,b)=>+a-+b).forEach(ph=>cols.push({lbl:`Armadura Ø${String(ph).replace('.',',')}<br><span class="niv-ayuda">barras ${BARRA_COMERCIAL} m</span>`, v:d=>(d.arm||{})[ph]||0, fmt:fmtBar}));
   const pn = document.getElementById('mamp-niveles');
   if(pn) pn.innerHTML = tablaNivelesHTML('mamp', porNivel, cols);
   updateDashboard();
@@ -8683,6 +8878,8 @@ function piezasObra(){
     if(+l.phiX) add({...b, phi:+l.phiX, parte:'malla X'}, l.ancho, Math.round(l.cant*nBX*l.factor));
     if(+l.phiY) add({...b, phi:+l.phiY, parte:'malla Y'}, l.largo, Math.round(l.cant*nBY*l.factor));
   });
+  // Mampostería armada y antepechos: hierros de junta (barras enteras) + estribos C
+  (state.resultados?.mamp?.armPiezas||[]).forEach(p=>P.push({...p}));
   // Losas pretensadas: capa de compresión armada con hierro atado → barras enteras
   // (antes sólo sumaba metros: si el Ø ya lo usaba otro elemento, no entraba en las barras a pedir)
   state.losas.forEach(l=>{
@@ -9202,6 +9399,7 @@ function updateDashboard(){
   sumarPhi(res.losaMac?.porPhi);
   sumarPhi(res.losa?.porPhi);      // capa de compresión con hierros atados
   sumarPhi(res.cont?.porPhi);
+  sumarPhi(res.mamp?.porPhi);       // muros armados y antepechos
   const phisOrden = Object.keys(hierros).sort((a,b)=>+a-+b);
   const barrasPorPhi={};
   let totalBarras=0;
@@ -9638,8 +9836,8 @@ function datosResumen(){
       ...aisl,
       U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoques y hiladas hidrófugas de PB'),
       U('Hidrófugo de masa','hidroMasa', hidrBases+hidrCim, 1, 'bases + cim.'),
-      U('Alambre N°14','alambre', acc.al14, 1.05, '2 kg/m³ H° armado'),
-      U('Alambre N°17','alambre', acc.al17, 1.05, '2 kg/m³ H° armado'),
+      U('Alambre N°14','alambre', acc.al14, 1.05, '3,5 kg/m³ H° armado'),
+      U('Alambre N°17','alambre', acc.al17, 1.05, '3,5 kg/m³ H° armado'),
       U('Clavos punta París 2"','clavos', acc.cl2, 1.05, '1 kg/m³ H° armado'),
       U('Clavos punta París 2½"','clavos', acc.cl25, 1.05, '1 kg/m³ H° armado'),
     ]},
@@ -10004,6 +10202,7 @@ function materialesPorItem(){
   // Mampostería (por nivel)
   Object.entries(res.mamp?.porNivel||{}).forEach(([k, d], i, all)=>{
     const it = nuevo(tit('Mampostería', k, all.length>1), 'mamp');
+    hierro(it, p=>(p.item==='Mampostería armada' || p.item==='Antepecho') && mismoNiv(k)(p));
     Object.entries(d.ladPorTipo||{'Ladrillones':d.lad}).forEach(([t,q])=>add(it,'lad:'+t,q)); add(it,'cemAlb',d.alb); add(it,'portland',d.port); add(it,'cal',d.cal); add(it,'arenaG',d.arena); add(it,'hidrofugo',d.hidro||0);
   });
   // Revoques y cielorrasos (por nivel)
@@ -10542,6 +10741,9 @@ function applySnapshot(snap, opts){
   state.cpSectores = Array.isArray(snap.cpSectores) ? snap.cpSectores : [];
   state.techoSectores = Array.isArray(snap.techoSectores) ? snap.techoSectores : [];
   state.nivOcultos = (snap.nivOcultos && typeof snap.nivOcultos==='object') ? snap.nivOcultos : {};
+  state.mampArmP = snap.mampArmP || null;
+  state.antepechos = Array.isArray(snap.antepechos) ? snap.antepechos : [];
+  state.antepMort = snap.antepMort || null;
   construirNivelesExtra();
 
   // Campos del formulario (sincrónico: el DOM estático ya existe)
@@ -10587,7 +10789,7 @@ function applySnapshot(snap, opts){
 // Re-render + recálculo completo, sin toast
 function renderAll(){
   pintarListas();
-  renderMurosExtra(); renderCpSectores(); pctTabsCambio(); renderTechoSectores();
+  renderMurosExtra(); renderCpSectores(); pctTabsCambio(); renderArmMuros(); renderAntepechos(); renderTechoSectores();
   renderColumnas(); renderVigas('vf'); renderVigas('vd');
   renderBases(); renderLosas(); renderLosasMacizas(); renderRecortes();
   calcHorm(); calcMortero(); calcColTotals(); calcVigaTotals();
@@ -10960,7 +11162,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true;
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.mampArmP = null; s.antepechos = []; s.antepMort = null; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true;
   return s;
 }
 
@@ -11234,6 +11436,7 @@ function captureSnapshot(){
     cpSectores: state.cpSectores||[],
     techoSectores: state.techoSectores||[],
     nivOcultos: state.nivOcultos||{},
+    mampArmP: state.mampArmP||null, antepechos: state.antepechos||[], antepMort: state.antepMort||null,
     nivSel: state.nivSel||{},
   };
 }
