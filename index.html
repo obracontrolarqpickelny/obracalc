@@ -1953,6 +1953,10 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 
 .stat-det { font-size: 10.5px; color: var(--text3); margin-top: 3px; }
 
+.col-estr { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--blue); white-space: nowrap; }
+.col-estr b { font-size: 13px; }
+.col-estr div { font-size: 9.5px; color: var(--text3); }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -2651,7 +2655,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                   <th class="right" data-tip="Alt + 0.25m pata + 60×Ø anclaje, redondeado ↑ a 0.50m">L. barra<br>CIRSOC ↑</th>
                   <th class="right" data-tip="Sobrante por redondeo por barra">Recorte/<br>barra (m)</th>
                   <th style="min-width:120px">Tipo estribo · Ø · sep<button type="button" class="col-apl" onclick="colAplAbrir(event,'columnas','estribo')" title="Poner el mismo valor en todas las filas">⇊</button></th>
-                  <th class="right">Barras<br>est.</th>
+                  <th class="right" data-tip="Cuántos estribos lleva la fila (cantidad de columnas × estribos por columna), cuántos metros suman y cuántas barras comerciales hacen falta para cortarlos">Estribos<br><span style="font-weight:400;text-transform:none;letter-spacing:0;">barras a comprar</span></th>
                   <th class="right">m³ H°</th>
                   <th></th>
                 </tr>
@@ -5999,7 +6003,7 @@ function renderColumnas(){
           <input type="number" value="${c.sepEstr}" onchange="updateCol(${c.id},'sepEstr',+this.value);calcColTotals()" class="sep-input" title="Separación mm">
         </div>
       </td>
-      <td class="right" style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--blue);">${barrasEstr}</td>
+      <td class="right col-estr" title="${c.cantElem * nEstr} estribos Ø${c.phiEstr} de ${perim.toFixed(2)} m = ${n(c.cantElem*nEstr*perim,1)} m → ${barrasEstr} barras de ${BARRA_COMERCIAL} m"><b>${barrasEstr}</b> barras<div>${(c.cantElem * nEstr).toLocaleString('es-AR')} estribos Ø${c.phiEstr}</div><div>${n(c.cantElem*nEstr*perim,0)} m</div></td>
       <td class="right" style="color:var(--green);font-size:11px;">${n(horm,3)}</td>
       <td style="display:flex;flex-direction:column;gap:3px;padding:4px 2px;"><button type="button" tabindex="-1" class="fila-ok${c.ok?' on':''}" onclick="filaOk(this,${c.id})" title="Marcar esta fila como hecha / revisada (sólo recordatorio)">✓</button><button onclick="duplicarColumna(${c.id})" title="Duplicar fila" tabindex="-1" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;line-height:1;">⧉</button><button onclick="removeCol(${c.id})" title="Eliminar" tabindex="-1" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;">✕</button></td>
     </tr>`;
@@ -6880,7 +6884,7 @@ function renderVigas(tipo){
             onchange="updateViga('${tipo}',${v.id},'sepEstr',+this.value);calcVigaTotals()"
             class="sep-input" title="Sep cm">
         </div>
-        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${barrasEstr} barras estr.</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;" title="${nEstr} estribos de ${perim.toFixed(2)} m = ${n(mlEstr,1)} m">${nEstr} estribos → ${barrasEstr} barras de ${BARRA_COMERCIAL} m</div>
       </td>
       <td class="right">
         <input type="number" value="${v.longLibre}" step="0.05"
