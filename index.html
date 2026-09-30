@@ -5621,9 +5621,11 @@ function supSemiTotal(){
 // Texto de superficies para el PDF y el resumen en texto
 function textoSuperficies(){
   const f = v => (Math.round(v*100)/100).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/,00$/,'');
+  // La semicubierta se anota tal cual se cargó en Datos de Obra: ya viene
+  // reducida al 50 %, la app no la vuelve a dividir.
   const cub = supCubiertaTotal(), semi = supSemiTotal();
   if(semi <= 0.004) return `Cubierta: ${f(cub)} m²`;
-  return `Cubierta: ${f(cub)} m² · Semicubierta: ${f(semi)} m² (50 % = ${f(semi/2)} m²) · Total: ${f(cub + semi/2)} m²`;
+  return `Cubierta: ${f(cub)} m² · Semicubierta: ${f(semi)} m² (al 50 %) · Total: ${f(cub + semi)} m²`;
 }
 // Superficie por nivel: cubierta + semicubierta = total, y los totales de la obra
 function actualizarSupNiveles(){
@@ -9573,9 +9575,9 @@ function calcResumen(){
   // Arriba: el total computable y, debajo, cómo se compone
   const _cub = supCubiertaTotal(), _semi = supSemiTotal();
   const _f = v => (Math.round(v*100)/100).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/,00$/,'');
-  setTxt('res-sup', _f(_cub + _semi/2));
+  setTxt('res-sup', _f(_cub + _semi));
   setTxt('res-sup-det', _semi > 0.004
-    ? `m² · cubierta ${_f(_cub)} + semicubierta ${_f(_semi)} al 50 % (${_f(_semi/2)})`
+    ? `m² · cubierta ${_f(_cub)} + semicubierta ${_f(_semi)} (al 50 %)`
     : 'm² cubiertos');
   setTxt('res-incr', r('res-pct'));
   setTxt('res-rec', n(d.mlRec,1));
