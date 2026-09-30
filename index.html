@@ -1951,6 +1951,8 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .rc-largo-inp { width: 70px !important; padding: 4px 6px !important; font-weight: 700; }
 .rc-largo-ayuda { flex-basis: 100%; font-size: 11px; color: var(--text3); }
 
+.stat-det { font-size: 10.5px; color: var(--text3); margin-top: 3px; }
+
 /* ═══ CELULAR ═══════════════════════════════════════════════════════════
    Las tablas anchas se desplazan de costado dentro de su tarjeta (la página
    no se estira), la primera columna queda fija, la barra de arriba es compacta
@@ -3535,7 +3537,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <div class="stat green">
             <div class="stat-label">Malla SIMA · paneles</div>
             <div class="stat-value" id="losa-stat-m6">—</div>
-            <div class="stat-unit">rollos 2.4×6</div>
+            <div class="stat-unit">paneles 2,40×6,00</div>
           </div>
           <div class="stat orange">
             <div class="stat-label">H° capa compresión</div>
@@ -7271,29 +7273,6 @@ function calcBases(){
   // Stats dinámicos — una tarjeta por tipo H° + piedra + hidro
   setTxt('bases-total-horm', n(totalHorm,2)+' m³');
   const HORM_COLORS = {H8:'var(--text3)',H13:'var(--green)',H17:'var(--blue)',H21:'var(--accent)',H25:'var(--orange)',obra:'var(--purple)',mano:'var(--red)'};
-  const statsDiv = document.getElementById('bases-stats-top');
-  if(statsDiv){
-    let cards = '';
-    Object.entries(byTipo).filter(([,v])=>v>0.001).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([tipo,vol])=>{
-      const color = HORM_COLORS[tipo]||'var(--accent)';
-      const label = HORM_TIPOS[tipo]?.label||tipo;
-      cards += `<div class="stat" style="flex:1;min-width:120px;border-top:2px solid ${color};">
-        <div class="stat-label">${label}</div>
-        <div class="stat-value" style="color:${color};">${n(vol,2)}</div>
-        <div class="stat-unit">m³</div>
-      </div>`;
-    });
-    // piedra (si aplica) y hidrófugo
-    if(totalHidroLts>0.1){
-      cards += `<div class="stat" style="flex:1;min-width:120px;border-top:2px solid var(--blue);">
-        <div class="stat-label">Hidrófugo de masa</div>
-        <div class="stat-value" style="color:var(--blue);">${n(totalHidroLts,1)}</div>
-        <div class="stat-unit">litros</div>
-      </div>`;
-    }
-    statsDiv.innerHTML = cards || '<div style="color:var(--text3);font-size:12px;padding:8px;">Sin datos</div>';
-  }
-
   // Panel hierros por Ø
   const rDiv = document.getElementById('bases-resumen-phi');
   if(rDiv){
@@ -7358,25 +7337,6 @@ function calcCimientos(){
   setTxt('cim-piedra', n(piedra,2));
   setTxt('cim-horm', n(volHorm,2));
   setTxt('cim-vol', n(vol,2));
-  // piedra bola la agrega calcBases vía updateDashboard; aquí actualizamos la tarjeta inline
-  // (bas-stat-piedra es hidden, la tarjeta de piedra se muestra en el contexto de cimientos)
-  const cimStatDiv = document.getElementById('bases-stats-top');
-  if(cimStatDiv && piedra>0.01){
-    // Buscar si ya hay tarjeta de piedra, si no agregar
-    if(!cimStatDiv.querySelector('[data-tipo="piedra"]')){
-      const pCard = document.createElement('div');
-      pCard.className='stat';
-      pCard.setAttribute('data-tipo','piedra');
-      pCard.style.cssText='flex:1;min-width:120px;border-top:2px solid var(--text3);';
-      pCard.innerHTML='<div class="stat-label">Piedra bola</div>'
-        +'<div class="stat-value" id="bas-stat-piedra2" style="color:var(--text3);">'+n(piedra,2)+'</div>'
-        +'<div class="stat-unit">m³</div>';
-      cimStatDiv.appendChild(pCard);
-    } else {
-      const el=cimStatDiv.querySelector('[data-tipo="piedra"] .stat-value');
-      if(el) el.textContent=n(piedra,2);
-    }
-  }
   const cimHidroEl = document.getElementById('cim-hidro-result');
   if(cimHidroEl) cimHidroEl.textContent = hidro>0 ? `${n(hidro,1)} litros hidrófugo de masa` : '—';
 
@@ -7396,7 +7356,30 @@ function calcCimientos(){
     vol, piedra, hormElab, volHorm, hormTipo,
     arenaM3, ripioM3, cemBol25, hidro
   };
+  renderStatsFund();
   updateDashboard();
+}
+
+// Tarjetas de arriba de Bases y Cimientos: TODO lo de la pestaña (bases + cimientos),
+// con el desglose debajo de cada número (antes sólo contaban las bases)
+function renderStatsFund(){
+  const el = document.getElementById('bases-stats-top');
+  if(!el) return;
+  const res = state.resultados || {}, B = res.bases || {}, C = res.cim || {};
+  const COL = {H8:'var(--text3)',H13:'var(--green)',H17:'var(--blue)',H21:'var(--accent)',H25:'var(--orange)',obra:'var(--purple)'};
+  const tipos = {};
+  Object.entries(B.byTipo||{}).forEach(([t,v])=>{ if(v>0.0005) (tipos[t] ||= {b:0,c:0}).b += v; });
+  if(C.volHorm>0.0005){ const t = C.hormTipo==='mano' ? 'obra' : (C.hormTipo||'obra'); (tipos[t] ||= {b:0,c:0}).c += C.volHorm; }
+  const card = (lbl, val, unid, color, det) => `<div class="stat" style="flex:1;min-width:150px;border-top:2px solid ${color};">
+      <div class="stat-label">${lbl}</div><div class="stat-value" style="color:${color};">${val}</div>
+      <div class="stat-unit">${unid}</div>${det ? `<div class="stat-det">${det}</div>` : ''}</div>`;
+  const det = (b, c) => [b>0.0005 ? `bases ${n(b,2)}` : '', c>0.0005 ? `cimientos ${n(c,2)}` : ''].filter(Boolean).join(' + ');
+  let html = Object.entries(tipos).sort((a,b)=>a[0].localeCompare(b[0])).map(([t,x])=>
+    card(t==='obra' ? 'H° hecho en obra' : (HORM_TIPOS[t]?.label||t), n(x.b+x.c,2), 'm³', COL[t]||'var(--accent)', det(x.b, x.c))).join('');
+  if(C.piedra>0.0005) html += card('Piedra bola', n(C.piedra,2), 'm³ · cimientos ciclópeos', 'var(--text3)');
+  const hb = B.hidro||0, hc = C.hidro||0;
+  if(hb+hc>0.1) html += card('Hidrófugo de masa', n(hb+hc,1), 'litros', 'var(--blue)', det(hb, hc));
+  el.innerHTML = html || '<div style="color:var(--text3);font-size:12px;padding:8px;">Sin datos</div>';
 }
 
 // Totales de fundaciones: m³ de bases (cant × ancho × largo × alto), de
@@ -8990,13 +8973,17 @@ function renderCompraHierro(plan){
   document.querySelectorAll('input[name="rec-modo"]').forEach(x=>{ x.checked = (x.value==='con')===on; x.closest('.rec-modo-op')?.classList.toggle('on', x.checked); });
   document.querySelectorAll('.rc-largo-inp').forEach(x=>{ if(document.activeElement!==x) x.value = BARRA_COMERCIAL; });
   const B = BARRA_COMERCIAL, pct = r('res-pct')/100 + 1;
+  // Con % por pestaña, cada Ø lleva el mismo incremento que en el Resumen
+  const fT = hayPctTabs() ? factoresPorMaterial() : null;
+  const pctPhi = phi => (fT && fT['hierro:'+phi]) || pct;
+  const txtPct = fT ? 'con el % de cada pestaña' : `+${n((pct-1)*100,0)} %`;
   const P = Object.values(plan).sort((a,b)=>a.phi-b.phi);
   if(!P.length){ el.innerHTML = '<div class="obras-vacio">Sin hierros cargados.</div>'; return; }
   const kg = (phi, m) => (PESO_HIERRO[phi]||0.617) * m;
   const T = {ml:0, sin:0, con:0, dSin:0, dCon:0, kgAh:0, pedir:0};
   const fila = d => {
     const dSin = d.barrasSin*B - d.ml, dCon = d.barrasCon*B - d.ml, ah = d.barrasSin - d.barrasCon;
-    const elegidas = on ? d.barrasCon : d.barrasSin, pedir = Math.ceil(elegidas * pct - 1e-9);
+    const elegidas = on ? d.barrasCon : d.barrasSin, pedir = Math.ceil(elegidas * pctPhi(d.phi) - 1e-9);
     T.ml += d.ml; T.sin += d.barrasSin; T.con += d.barrasCon; T.dSin += dSin; T.dCon += dCon; T.kgAh += kg(d.phi, ah*B); T.pedir += pedir;
     const pc = (dd, bb) => bb ? n(dd/(bb*B)*100,1) : '0';
     return `<tr>
@@ -9016,10 +9003,10 @@ function renderCompraHierro(plan){
       <div><span>Barras a comprar (${on ? 'optimizado' : 'sin optimizar'})</span><b>${elegidas}</b></div>
       <div><span>Desperdicio inevitable</span><b>${n(desp,0)} m</b><em>${pc(desp, elegidas)} % del hierro comprado</em></div>
       <div class="${T.sin-T.con>0?'rc-ok':''}"><span>Optimizando se ahorran</span><b>${T.sin-T.con} barras</b><em>${n(T.kgAh,0)} kg · el desperdicio baja de ${pc(T.dSin, T.sin)} % a ${pc(T.dCon, T.con)} %</em></div>
-      <div><span>A pedir con el incremento del ${n((pct-1)*100,0)} %</span><b>${T.pedir}</b><em>así figuran en el Resumen</em></div>
+      <div><span>A pedir (${txtPct})</span><b>${T.pedir}</b><em>así figuran en el Resumen</em></div>
     </div>
     <div class="table-wrap" style="border:none;"><table class="rc-tabla">
-      <thead><tr><th>Ø</th><th class="right">Hierro necesario</th><th class="right ${on?'':'rc-sel'}">Sin optimizar</th><th class="right ${on?'rc-sel':''}">Optimizado</th><th class="right">Ahorro</th><th class="right">A pedir (+${n((pct-1)*100,0)} %)</th></tr></thead>
+      <thead><tr><th>Ø</th><th class="right">Hierro necesario</th><th class="right ${on?'':'rc-sel'}">Sin optimizar</th><th class="right ${on?'rc-sel':''}">Optimizado</th><th class="right">Ahorro</th><th class="right">A pedir (${txtPct})</th></tr></thead>
       <tbody>${filas}</tbody>
       <tfoot><tr><td>Total</td><td class="right">${n(T.ml,0)} m</td>
         <td class="right ${on?'':'rc-sel'}"><b>${T.sin}</b> barras<div>${n(T.dSin,0)} m · ${pc(T.dSin, T.sin)} %</div></td>
@@ -9428,7 +9415,7 @@ function updateDashboard(){
       rows += msec('Losas pretensadas','⬜');
       if(los12>0) rows += mrow('Losetas 12 cm', Math.ceil(los12).toLocaleString('es'), 'unidades', 'var(--blue)');
       if(los16>0) rows += mrow('Losetas 16 cm', Math.ceil(los16).toLocaleString('es'), 'unidades', 'var(--blue)');
-      if(m6>0)    rows += mrow('Malla electrosoldada 6', n(m6,2), 'rollos 2.4×6', 'var(--blue)');
+      if(m6>0)    rows += mrow('Malla electrosoldada', n(m6,2), 'paneles 2,40×6,00', 'var(--blue)');
       if(hComp>0) rows += mrow('H° capa de compresión', n(hComp,2), 'm³', 'var(--blue)');
     }
 
