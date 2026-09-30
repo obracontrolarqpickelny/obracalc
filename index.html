@@ -5509,6 +5509,11 @@ function phiSelectHtml(val, onchg, sinVacio){
 // Columnas: el hormigón se calcula con la altura libre (c.alt) y el hierro con
 // la altura total (c.altT: fondo de zanja → cara superior de la viga superior).
 // Sin altura total cargada, el hierro usa la altura libre (como antes).
+// Estribos: en la altura total de la columna (fondo de zanja → cara superior de la
+// viga superior, sin la pata ni el anclaje de las barras) y en la luz libre de la
+// viga. Uno en cada punta: altura ÷ separación + 1.
+function nEstribosCol(c){ const h = colAltHierro(c), s = (+c.sepEstr||150)/1000; return h>0 && s>0 ? Math.ceil(h/s - 1e-9) + 1 : 0; }
+function nEstribosViga(v){ const L = +v.longLibre||0, s = (+v.sepEstr||20)/100; return L>0 && s>0 ? Math.ceil(L/s - 1e-9) + 1 : 0; }
 function colAltHierro(c){ return +c.altT > 0 ? +c.altT : (+c.alt || 0); }
 function lBarraCIRSOC(alt, phi_mm){
   const L = BARRA_COMERCIAL;
@@ -5955,7 +5960,7 @@ function renderColumnas(){
     const { lTramo: lCIRSOC, empalmes: nEmpalmes, bruto: brutoPhi1, recorte: recortePorBarra } = calc1;
 
     const perim = estriboPerim(c);
-    const nEstr  = Math.ceil((lCIRSOC*1000)/c.sepEstr);   // separación en mm
+    const nEstr  = nEstribosCol(c);   // separación en mm
     const horm = c.cantElem * colArea(c) * c.alt;
     const barrasEstr = Math.ceil((c.cantElem * nEstr * perim) / BARRA_COMERCIAL);
     const tipoInfo = ESTRIBO_TIPOS.find(t=>t.id===(c.estribType||1));
@@ -6073,7 +6078,7 @@ function calcColTotals(){
     });
     // ESTRIBOS — medidas exteriores del estribo (sección − 2 × recubrimiento)
     const perim = estriboPerim(c);
-    const nEstr = Math.ceil((lCIRSOC*1000)/c.sepEstr);   // separación en mm
+    const nEstr = nEstribosCol(c);   // separación en mm
     const mlEstr = c.cantElem * nEstr * perim;
     if(!hierrosPhi[c.phiEstr]) hierrosPhi[c.phiEstr]={ml:0,barras:0,recortesML:0,recorteLong:0};
     hierrosPhi[c.phiEstr].ml += mlEstr;
@@ -6832,7 +6837,7 @@ function renderVigas(tipo){
     const { lTramo: lV1, empalmes: emp1, bruto: br1, recorte: rec1 } = calc1;
 
     const perim  = vigaPerim(v);
-    const nEstr  = Math.ceil((v.longLibre*100)/v.sepEstr);
+    const nEstr  = nEstribosViga(v);
     const mlEstr = nEstr * perim;
     const barrasEstr = Math.ceil((mlEstr) / BARRA_COMERCIAL);
 
@@ -6994,7 +6999,7 @@ function calcHierrosPhi(arr){
     // estribos
     const a=v.ancho||20, b=v.alto||20;
     const perim = vigaPerim(v);
-    const nE = Math.ceil((v.longLibre*100)/v.sepEstr);
+    const nE = nEstribosViga(v);
     const mlEstr = nE*perim;
     if(!phi[v.phiEstr]) phi[v.phiEstr]={ml:0,barras:0};
     phi[v.phiEstr].ml += mlEstr;
@@ -7040,7 +7045,7 @@ function calcVigaTotals(){
     arr.forEach(v=>{
       const a=v.ancho||20, b=v.alto||20;
       const perim = vigaPerim(v);
-      const nE = Math.ceil((v.longLibre*100)/v.sepEstr);
+      const nE = nEstribosViga(v);
       estr += nE*perim;
       const lV1 = lBarraCIRSOC_viga(v.longLibre, v.phi||10).lTramo;
       const lV2 = v.phi2 ? lBarraCIRSOC_viga(v.longLibre, v.phi2).lTramo : lV1;
@@ -8654,7 +8659,7 @@ function piezasObra(){
       if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(colAltHierro(c), p).lTramo, c.cantElem*nb);
     });
     if(c.phiEstr){
-      const nE = Math.ceil((lBarraCIRSOC(colAltHierro(c), c.phi||12).lTramo*1000)/c.sepEstr);
+      const nE = nEstribosCol(c);
       add({...b, phi:+c.phiEstr, parte:'estribos'}, estriboPerim(c), c.cantElem*nE);
     }
   });
@@ -8664,7 +8669,7 @@ function piezasObra(){
       [[v.phi,v.nBarras,'Ø1'],[v.phi2,v.n2,'Ø2'],[v.phi3,v.n3,'Ø3']].forEach(([p,nb,et])=>{
         if(p && nb) add({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p).lTramo, nb);
       });
-      if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, vigaPerim(v), Math.ceil((v.longLibre*100)/v.sepEstr));
+      if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, vigaPerim(v), nEstribosViga(v));
       zapataViga(v)?.piezas.forEach(pz=>add({...b, phi:pz.phi, parte:pz.parte}, pz.L, pz.N));
     });
   });
@@ -8816,7 +8821,7 @@ function recortesObra(){
       if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC(colAltHierro(c), p), c.cantElem*nb);
     });
     if(c.phiEstr){
-      const nE = Math.ceil((lBarraCIRSOC(colAltHierro(c), c.phi||12).lTramo*1000)/c.sepEstr);
+      const nE = nEstribosCol(c);
       add({...b, phi:+c.phiEstr, parte:'estribos'}, _cortesBarra(estriboPerim(c), c.cantElem*nE));
     }
   });
@@ -8826,7 +8831,7 @@ function recortesObra(){
       [[v.phi,v.nBarras,'Ø1'],[v.phi2,v.n2,'Ø2'],[v.phi3,v.n3,'Ø3']].forEach(([p,nb,et])=>{
         if(p && nb) barras({...b, phi:+p, parte:'barras '+et}, lBarraCIRSOC_viga(v.longLibre, p), nb);
       });
-      if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, _cortesBarra(vigaPerim(v), Math.ceil((v.longLibre*100)/v.sepEstr)));
+      if(v.phiEstr) add({...b, phi:+v.phiEstr, parte:'estribos'}, _cortesBarra(vigaPerim(v), nEstribosViga(v)));
       zapataViga(v)?.piezas.forEach(pz=>add({...b, phi:pz.phi, parte:pz.parte}, _cortesBarra(pz.L, pz.N)));
     });
   });
