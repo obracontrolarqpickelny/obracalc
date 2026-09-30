@@ -3694,7 +3694,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
         </div>
 
         <div class="card rec-compra-card">
-          <div class="card-header"><span class="card-icon">🔩</span><span class="card-title">Hierro a comprar · barras de <span class="uc-barra">12</span> m</span></div>
+          <div class="card-header"><span class="card-icon">🔩</span><span class="card-title">Hierro a comprar · barras de <span class="rc-largo-barra" title="Largo de la barra comercial. Se cambia en ⚖ Unidades comerciales">12</span> m</span></div>
           <div class="card-body">
             <div class="rec-modo">
               <label class="rec-modo-op"><input type="radio" name="rec-modo" value="sin" onchange="setOptimizar(false)">
@@ -8913,7 +8913,7 @@ function renderCompraHierro(plan){
   if(!el) return;
   const on = optimizarCortesOn();
   document.querySelectorAll('input[name="rec-modo"]').forEach(x=>{ x.checked = (x.value==='con')===on; x.closest('.rec-modo-op')?.classList.toggle('on', x.checked); });
-  document.querySelectorAll('.uc-barra').forEach(x=>{ x.textContent = String(BARRA_COMERCIAL).replace('.',','); });
+  document.querySelectorAll('.rc-largo-barra').forEach(x=>{ x.textContent = String(BARRA_COMERCIAL).replace('.',','); });
   const B = BARRA_COMERCIAL, pct = r('res-pct')/100 + 1;
   const P = Object.values(plan).sort((a,b)=>a.phi-b.phi);
   if(!P.length){ el.innerHTML = '<div class="obras-vacio">Sin hierros cargados.</div>'; return; }
@@ -10466,6 +10466,8 @@ function applySnapshot(snap, opts){
     const el=document.getElementById(id);
     if(el && (el.type==='checkbox'||el.type==='radio')) el.checked = !!on;
   });
+  // Recortes: por defecto optimizado (obras guardadas antes de existir la opción)
+  if(!snap.checks || !('rec-optimizar' in snap.checks)){ const o = document.getElementById('rec-optimizar'); if(o) o.checked = true; }
 
   if(O.render!==false) renderAll();
   return true;
@@ -10847,7 +10849,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {};
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true;
   return s;
 }
 
