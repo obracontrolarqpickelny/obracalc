@@ -3854,7 +3854,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <div class="stat">
             <div class="stat-label">Sup. total obra</div>
             <div class="stat-value" id="res-sup">—</div>
-            <div class="stat-unit">m²</div>
+            <div class="stat-unit" id="res-sup-det">m²</div>
           </div>
           <div class="stat green">
             <div class="stat-label">% increm. por imprevistos</div>
@@ -9570,7 +9570,13 @@ function renderTablaResumen(secciones){
 
 function calcResumen(){
   const d = datosResumen();
-  setTxt('res-sup', d.supTotal);
+  // Arriba: el total computable y, debajo, cómo se compone
+  const _cub = supCubiertaTotal(), _semi = supSemiTotal();
+  const _f = v => (Math.round(v*100)/100).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/,00$/,'');
+  setTxt('res-sup', _f(_cub + _semi/2));
+  setTxt('res-sup-det', _semi > 0.004
+    ? `m² · cubierta ${_f(_cub)} + semicubierta ${_f(_semi)} al 50 % (${_f(_semi/2)})`
+    : 'm² cubiertos');
   setTxt('res-incr', r('res-pct'));
   setTxt('res-rec', n(d.mlRec,1));
   const el = document.getElementById('res-materiales');
@@ -11098,7 +11104,7 @@ async function exportarExcel(){
   // ENCABEZADO
   rows.push([`CÓMPUTO DE MATERIALES - ${obra}`,'','','']);
   rows.push([`Propietario: ${prop}`,'','','']);
-  rows.push([`Superficie: ${supCubiertaTotal()} m² · Incremento: ${r('res-pct')}%`,'','','']);
+  rows.push([`Superficie: ${textoSuperficies()} · Incremento: ${r('res-pct')}%`,'','','']);
   sep(); hdr(); sep();
 
   // MATERIALES — misma fuente que el Resumen y el PDF (datosResumen), así el
