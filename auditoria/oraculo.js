@@ -127,14 +127,16 @@ function oraculo(snap) {
 
   // ── MAMPOSTERÍA ──
   const mz = mort('mamp');
-  const desp = f('mamp-desp')/100, despM = Math.max(f('mamp-desp-mort'),0)/100;
+  // Definición 30/09: sin desperdicio propio; el % de la pestaña (o el general)
+  const pTab = t => { const v = parseFloat(F['pct-'+t]); return isFinite(v) && v >= 0 ? v/100 : f('res-pct')/100; };
+  const desp = pTab('mamp'), despM = 0;
   const ARM = {on:false, cada:4, nBar:2, phi:6, phiC:4.2, sepC:50, cem:1, are:3};
   const muros = [{titulo:'Muro principal', lad:(F['mamp-lad-nombre']||'').trim()||'Ladrillón', esp:f('lad-esp')||0.17, largo:f('lad-largo')||0.25,
     alto:f('lad-alto')||0.06, junta:f('lad-junta')||0.03, sup:Object.fromEntries(area('mamp').map(n => [n.k, f('mamp-sup-'+n.suf)])),
     hil:f('mamp-hid-hil'), lM:f('mamp-hid-largo'), arm:{...ARM, ...(snap.mampArmP||{})}},
     ...(snap.murosExtra || []).map(m => ({titulo:m.titulo, lad:m.ladNombre, esp:+m.esp||0.17, largo:+m.largo||0.25, alto:+m.alto||0.06,
       junta:+m.junta>=0 ? +m.junta : 0.03, sup:m.sup||{}, hil:+m.hil||0, lM:+m.lMuros||0, arm:{...ARM, ...(m.arm||{})}}))];
-  const mamp = {lad:0, ladNet:0, alb:0, port:0, cal:0, arena:0, hidro:0, porLad:{}};
+  const mamp = {lad:0, ladNet:0, ladExacto:0, alb:0, port:0, cal:0, arena:0, hidro:0, porLad:{}};
   const mzH = mezcla({cem: f('mamp-hid-cem') || 1, are: f('mamp-hid-are')});
   let P0 = null;
   muros.forEach((m, i) => {
@@ -144,7 +146,7 @@ function oraculo(snap) {
     const sups = area('mamp').map(n => ({k:n.k, s:+m.sup[n.k]||0})).filter(x => x.s > 0);
     const tot = sups.reduce((s,x) => s + x.s, 0);
     const net = CEIL(tot*lpm), conD = CEIL(net*(1 + desp));
-    mamp.ladNet += net; mamp.lad += conD; mamp.porLad[m.lad] = (mamp.porLad[m.lad]||0) + conD;
+    mamp.ladNet += net; mamp.lad += conD; mamp.ladExacto += tot*lpm; mamp.porLad[m.lad] = (mamp.porLad[m.lad]||0) + tot*lpm;
     const supH = Math.min(+m.sup.PB||0, Math.max(Math.floor(m.hil),0)*(m.alto + m.junta)*Math.max(m.lM,0));
     const mortH = supH*mm2;
     const comunT = Math.max(tot*mm2 - mortH, 0);
@@ -193,12 +195,12 @@ function oraculo(snap) {
 
   // ── CONTRAPISO ──
   const ec = f('carp-esp')/100, ct = F['cont-horm-tipo'] || 'obra';
-  const cont = {cem:0, arena:0, ripio:0, elab:{}};
+  const cont = {cem:0, arena:0, ripio:0, elab:{}}; const mCarp = mezcla({cem:1, are:3});
   const filaCp = (s, esp, sC, t, armMl, armPhi) => {
     const vol = s*esp;
-    if (t === 'obra') { cont.cem += vol*hf.cemKg*0.60; cont.arena += vol*hf.arena; cont.ripio += vol*hf.piedra; }
+    if (t === 'obra') { cont.cem += vol*hf.cemKg; cont.arena += vol*hf.arena; cont.ripio += vol*hf.piedra; }
     else if (vol > 0) cont.elab[t] = (cont.elab[t]||0) + vol;
-    cont.cem += sC*ec*8.75/0.035; cont.arena += sC*ec*0.05/0.035;
+    cont.cem += sC*ec*mCarp.port; cont.arena += sC*ec*mCarp.arena;
     if (armMl > 0) entera(armPhi, armMl, 'cp');
   };
   const cpPhi = {};
@@ -222,19 +224,20 @@ function oraculo(snap) {
   // ── LOSAS ──
   const losa = {l12:0, l16:0, horm:{}, mallaM2:0};
   (snap.losas || []).forEach(l => {
-    const nL = CEIL((+l.cant||0)*(+l.sup||0)*CEIL(1000/(+l.sep>0 ? +l.sep : 150))*1.05);
+    const nL = CEIL((+l.cant||0)*(+l.sup||0)*CEIL(1000/(+l.sep>0 ? +l.sep : 150)));
     if (+l.alt === 16) losa.l16 += nL; else losa.l12 += nL;
     const vc = (+l.cant||0)*(+l.sup||0)*((+l.capComp||7)/100), t = l.hormTipo || 'H17';
     losa.horm[t] = (losa.horm[t]||0) + vc;
     if (l.arm === 'hierro') entera(+l.phi, (+l.cant||0)*(+l.sup||0)*(2/((+l.sepArm||200)/1000))*1.10, 'losa');
-    else losa.mallaM2 += (+l.cant||0)*(+l.sup||0)*1.05;
+    else losa.mallaM2 += (+l.cant||0)*(+l.sup||0)*1.10;
   });
   let macVol = 0;
   (snap.losas_macizas || []).forEach(l => {
     macVol += l.cant*l.ancho*l.largo*(l.alto/100);
     const nBX = CEIL(l.largo/(l.sepX/1000)) + 1, nBY = CEIL(l.ancho/(l.sepY/1000)) + 1;
-    if (+l.phiX) pz(+l.phiX, l.ancho, Math.round(l.cant*nBX*l.factor), 'mac');
-    if (+l.phiY) pz(+l.phiY, l.largo, Math.round(l.cant*nBY*l.factor), 'mac');
+    const Lb = (luz, ph) => +luz > 0 ? +luz + 2*(0.15 + 12*ph/1000) : 0;
+    if (+l.phiX) pz(+l.phiX, Lb(l.ancho, +l.phiX), Math.round(l.cant*nBX*l.factor), 'mac');
+    if (+l.phiY) pz(+l.phiY, Lb(l.largo, +l.phiY), Math.round(l.cant*nBY*l.factor), 'mac');
   });
   out.losa = losa; out.macVol = macVol;
 
@@ -248,7 +251,7 @@ function oraculo(snap) {
   const mA = mezcla({cem:f('techo-ais-cem'), alb:f('techo-ais-alb'), are:f('techo-ais-are'), liv:f('techo-ais-liv')});
   const mC = mezcla({cem:f('techo-carp-cem'), alb:f('techo-carp-alb'), are:f('techo-carp-are')});
   out.techo = {port: vA*mA.port + vC*mC.port, alb: vA*mA.alb + vC*mC.alb, arena: vA*mA.arena + vC*mC.arena, aisl: vA*mA.liv, ins,
-    membranaM2: tSup/9*1.1*10, emulsion: tSup*0.9};
+    membranaM2: tSup/9*10, emulsion: tSup*0.9};
 
   // ── HORMIGÓN POR TIPO (toda la obra) ──
   const H = {}; const addH = (t, v) => { if (v > 0) H[t] = (H[t]||0) + v; };
@@ -268,7 +271,8 @@ function oraculo(snap) {
     arenaF: rev.arenaF,
     ripio: obra*hf.piedra + cont.ripio,
     piedra: out.cim.piedra,
-    ladrillon: mamp.lad,
+    ladrillon: mamp.ladExacto,
+    mallaSima: losa.mallaM2 + Object.values(cpMalla).reduce((a,b)=>a+b,0),
     loseta: losa.l12, loseta16: losa.l16,
     membrana: out.techo.membranaM2, emulsion: out.techo.emulsion,
     hidrofugo: rev.hidro + mamp.hidro, hidroMasa: basHid + out.cim.hidro,

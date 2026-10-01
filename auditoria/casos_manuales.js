@@ -67,18 +67,21 @@ setTimeout(() => {
     ok('barras X (sin error de coma flotante: 1,2/0,15 = 8)', bx.N, 9); ok('barras Y', by.N, 8); ok('Ø10 metros', S._hierros[10], 20.64);
     ok('Tarjeta de arriba H17 (bases + cimientos)', +d.querySelector('#bases-stats-top .stat-value').textContent.replace(',','.'), 0.6);
 
-    // ─ CASO 4: muro 10 m², ladrillo 0,25×0,05, espesor 0,12, junta 0,015, cem. alb. 1:4, desp. 5 % ─
+    // ─ CASO 4: muro 10 m², ladrillo 0,25×0,05, espesor 0,12, junta 0,015, cem. alb. 1:4; desperdicio = % de la pestaña ─
     caso = 'Muro'; S = vacia();
     set('lad-largo', 0.25); set('lad-alto', 0.05); set('lad-esp', 0.12); set('lad-junta', 0.015); set('mamp-sup-pb', 10);
-    set('mamp-desp', 5); set('mamp-desp-mort', 0); set('mamp-mort-tipo', '2'); set('mz-mamp-t2-alb', 1); set('mz-mamp-t2-are', 4);
+    set('mamp-mort-tipo', '2'); set('mz-mamp-t2-alb', 1); set('mz-mamp-t2-are', 4);
     w.renderAll();
-    // Ladrillos/m² = 1/(0,265×0,065) = 58,055 → 580,55 → 581 netos → ×1,05 = 610,05 → 611
-    ok('ladrillos netos', S.resultados.mamp.ladNetos, 581); ok('ladrillos con desperdicio', S.resultados.mamp.ladrillones, 611);
+    // Ladrillos/m² = 1/(0,265×0,065) = 58,055 → 580,55 → 581 netos → a pedir con el 12 % general: 650,72 → 651
+    ok('ladrillos netos', S.resultados.mamp.ladNetos, 581); ok('ladrillos a pedir (sólo el % general 12)', S.resultados.mamp.ladrillones, 651);
     // Mortero/m² = 0,12 − 58,055×0,25×0,05×0,12 = 0,032917 m³ → 0,32917 m³
     // Cem. alb. 1:4 por m³ (vol. absolutos): 1.200/(0,41379 + 2,30769 + 0,66)/0,97 → 344,23 kg/m³ · arena 1,14743 m³/m³
     ok('cem. alb. kg: 0,32917 × 344,23', S.resultados.mamp.cemAlbKg, 113.31); ok('arena m³: 0,32917 × 1,14743', S.resultados.mamp.arena, 0.37770);
     set('pct-mamp', 20); w.pctTabsCambio && w.pctTabsCambio();
-    R = resumen(); ok('Resumen ladrillos a pedir con 20 % de la pestaña: 611 × 1,2 = 733,2', R['Ladrillón'].cant, 733.2);
+    ok('pestaña: a pedir con 20 % = 581 × 1,2 = 697,2 → 698', S.resultados.mamp.ladrillones, 698);
+    R = resumen(); ok('Resumen ladrillos netos (sin desperdicio propio)', R['Ladrillón'].neto, 580.55);
+    ok('Resumen ladrillos a pedir: 580,55 × 1,2 = 696,66 (un solo %)', R['Ladrillón'].cant, 696.66);
+    it = item(/Mampostería/); ok('PDF ítem: ladrillos a pedir = Resumen', fItem(it, /Ladrillón/)?.cant, 696.66);
     set('pct-mamp', '');
 
     // ─ CASO 5: contrapiso PB 20 m² × 10 cm en obra + carpeta 20 m² × 3,5 cm; dosaje 1:3:3, a/c 0,5 ─
@@ -87,11 +90,12 @@ setTimeout(() => {
     w.renderAll();
     // Dosaje 1:3:3 → cemento 1.400/((0,45161+1,73077+1,66667+0,7)/0,985) = 303,14 kg/m³ · arena = ripio = 0,64958 m³/m³
     ok('cemento del dosaje kg/m³', S.hormFactor.cemBol25*25, 303.14);
-    // Contrapiso 2 m³ al 60 % del cemento: 2 × 303,14 × 0,6 = 363,77 kg · carpeta 0,7 m³ × 250 = 175 kg → 538,77 kg
-    ok('cemento total kg', S.resultados.cont.cemPb25*25, 538.77);
-    // Arena: 2 × 0,64958 = 1,29916 + carpeta 0,7 × 1,428571 = 1,0 → 2,29916 · ripio 1,29916
-    ok('arena m³', S.resultados.cont.arena, 2.29916); ok('ripio m³', S.resultados.cont.ripio, 1.29916);
-    R = resumen(); ok('Resumen cemento neto (kg ÷ 25 = bolsas)', R['Cemento Portland'].neto, 538.77/25);
+    // Contrapiso 2 m³ con el dosaje completo: 2 × 303,14 = 606,28 kg
+    // Carpeta 1:3 (vol. absolutos, a/c 0,55): 1.400/3.100 + 4.500/2.600 + 0,77 = 2,95238 → /0,97 = 3,04369 m³
+    //   → cemento 1.400/3,04369 = 459,97 kg/m³ · arena 3/3,04369 = 0,98565 m³/m³; carpeta 0,7 m³ → 321,98 kg y 0,68995 m³
+    ok('cemento total kg: 606,28 + 321,98', S.resultados.cont.cemPb25*25, 928.26);
+    ok('arena m³: 1,29916 + 0,68995', S.resultados.cont.arena, 1.98911); ok('ripio m³', S.resultados.cont.ripio, 1.29916);
+    R = resumen(); ok('Resumen cemento neto (kg ÷ 25 = bolsas)', R['Cemento Portland'].neto, 928.26/25);
 
     // ─ CASO 6: revoque grueso interior PB 10 m² × 2,5 cm, cem. alb. 1:5 ─
     caso = 'Revoque'; S = vacia();
@@ -113,8 +117,26 @@ setTimeout(() => {
     caso = 'Losa'; S = vacia();
     S.losas = [{id:1, denom:'L1', cant:1, sup:10, alt:12, phi:'6', sep:500, capComp:5, hormTipo:'H17', nivel:'PB', arm:'malla'}];
     w.renderAll();
-    // Losetas: 1000/500 = 2 por m² × 10 × 1,05 = 21 · capa 10 × 0,05 = 0,5 m³
-    ok('losetas', S.resultados.losa.losetas12, 21); ok('H° capa m³', S.resultados.losa.byTipo.H17, 0.5);
+    // Losetas: 1000/500 = 2 por m² × 10 = 20 netas · capa 10 × 0,05 = 0,5 m³ · malla 10 m² + 10 % solape = 11 m²
+    ok('losetas netas', S.resultados.losa.losetas12, 20); ok('H° capa m³', S.resultados.losa.byTipo.H17, 0.5);
+    R = resumen(); ok('Resumen losetas a pedir: 20 × 1,12 (sólo el %)', R['Losetas 12 cm'].cant, 22.4);
+    const rm = Object.values(R).find(f => f.k==='mallaSima'); ok('Resumen malla neta m² (con solape)', rm?.neto * w.uc('mallaSima').cont, 11); ok('Resumen malla a pedir: 11 × 1,12', rm?.base, 12.32);
+    set('pct-losa', 5); R = resumen(); ok('con 5 % en Losas: losetas 20 × 1,05', R['Losetas 12 cm'].cant, 21);
+    it = item(/Losas/); ok('PDF ítem: losetas = Resumen', fItem(it, /Losetas 12/)?.cant, 21); set('pct-losa', '');
+
+    // ─ CASO 8b: losa maciza 3,00 × 5,00, Ø8 c/150 en X e Y (CIRSOC: 15 cm de anclaje + gancho 12 Ø por extremo) ─
+    caso = 'Losa maciza'; S = vacia();
+    S.losas_macizas = [{id:1, denom:'LM1', cant:1, ancho:3, largo:5, alto:12, phiX:'8', sepX:150, phiY:'8', sepY:150, factor:1, nivel:'PB'}];
+    w.renderAll();
+    // X: 5/0,15 = 33,3 → 34 + 1 = 35 barras de 3 + 2×(0,15 + 0,096) = 3,492 m · Y: 3/0,15 = 20 + 1 = 21 de 5,492 m
+    const [mx, my] = w.macizaBarras(S.losas_macizas[0]);
+    ok('barras X', mx.N, 35); ok('largo barra X', mx.L, 3.492); ok('barras Y', my.N, 21); ok('largo barra Y', my.L, 5.492);
+    ok('Ø8 metros: 35 × 3,492 + 21 × 5,492', S._hierros[8], 237.552); ok('pestaña ml hierro', S.resultados.losaMac.ml, 237.552);
+
+    // ─ CASO 8c: cubierta 90 m² → membrana 90/9 = 10 rollos netos, a pedir sólo con el % ─
+    caso = 'Cubierta'; S = vacia(); set('techo-sup', 90); w.renderAll();
+    ok('rollos netos', S.resultados.techo.membra, 10);
+    R = resumen(); ok('Resumen membrana neta (m²)', R['Membrana Asfáltica'].neto * w.uc('membrana').cont, 100); ok('Resumen membrana a pedir m²: 100 × 1,12', R['Membrana Asfáltica'].base, 112);
 
     // ─ CASO 9: redondeo — 25 barras con 12 % = 28 exactas (antes pedía 29) ─
     caso = 'Redondeo'; S = vacia();

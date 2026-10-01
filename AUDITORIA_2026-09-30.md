@@ -47,16 +47,29 @@ detalle = subtotales = consolidado = total general — verificado:
 - Pestañas = Σ sus ítems: 0 diferencias.
 - Casos a mano: 47 / 47.
 
-## Definiciones pendientes (reglas que funcionan como están programadas pero conviene confirmar)
+## Definiciones resueltas por el usuario (01/10/2026) — aplicadas y verificadas
 
-1. **Doble desperdicio** en: ladrillos (desperdicio de Mampostería + % de incremento), losetas (+5 % y +12 % fijo),
-   malla de losa (+5 % y +10 %), membrana (9 m² útiles por rollo de 10, +10 % y +5 %), mortero de mampostería
-   (desperdicio de mortero + %).
-2. Vigas con **techo liviano**: H° en obra × 1,5.
-3. **Contrapiso en obra**: 60 % del cemento del dosaje; carpeta 8,75 kg cemento y 0,05 m³ arena por m² de 3,5 cm.
-4. **Losas macizas**: barras del largo total, sin descontar recubrimiento ni sumar ganchos.
-5. Alambre y clavos sólo sobre H° armado de columnas, vigas, bases y losas macizas (no capa de compresión ni contrapiso armado).
-6. Constantes técnicas: aire 1,5 % (H°) y 3 % (morteros); densidades; ciclópeo 45 % piedra; solapes +10 %.
+| # | Definición | Cambio en la app |
+|---|---|---|
+| D1 | Un solo desperdicio: el % de incremento de cada pestaña | Ladrillos y mortero de mampostería: se quitaron las casillas "Desperdicio / rotura" (5 %) y "Desperdicio de mortero" (13 %). Losetas: sin +5 % propio ni +12 % fijo. Malla de losa: sin +5 % (queda el 10 % de solape entre paneles, igual que en contrapiso). Membrana: sin +10 % ni +5 % (quedan 9 m² útiles por rollo de 10 m², el resto es solape). Ahora todos toman el % de su pestaña (antes la malla no tomaba ninguno). |
+| D2 | Techo liviano: H° de vigas × 1,5 | Sin cambios (confirmado). |
+| D3 | Contrapiso con el dosaje de Dosificaciones; carpeta 1 : 3 (cemento portland : arena gruesa) | Contrapiso en obra: 100 % del dosaje (antes 60 % del cemento). Carpeta: kg y m³ de la mezcla 1 : 3 por volúmenes absolutos → 459,97 kg de cemento y 0,986 m³ de arena por m³ (antes 250 kg y 1,43 m³). |
+| D4 | Losas macizas: ganchos y anclajes según CIRSOC 201 | Ancho/largo = luz libre entre apoyos; cada barra + 15 cm de anclaje en cada apoyo (art. 12.11.1) + gancho normal a 90° de 12 Ø en cada extremo (art. 7.1). Ej.: 3,00 m Ø8 → 3,492 m. |
+| D5 | Alambre y clavos sólo en H° armado de columnas, vigas, bases y losas macizas | Sin cambios (confirmado). |
+
+Impacto en la obra de ejemplo (a pedir): cemento portland 772 → 1.000 bolsas (contrapiso al 100 % +144, carpeta 1:3 +60, más el %),
+cemento de albañilería 520 → 490, arena gruesa 74,3 → 68,3 m³, ladrillones 10.035 → 9.556, losetas 367 → 348, membrana 14 → 13 rollos,
+hierro Ø8 61 → 67 barras (ganchos y anclajes de losas macizas).
+
+Verificación: oráculo actualizado con las mismas reglas → 0 diferencias en los 5 escenarios; casos a mano 64 / 64
+(nuevos: ladrillos con un solo %, carpeta 1:3, losetas y malla, losa maciza CIRSOC, membrana); botones, "Ir a la pieza",
+% por pestaña y "A pedir" de Recortes sin cambios. La malla de losas + contrapiso del Resumen ahora coincide con la suma de los ítems
+(antes 50,88 vs 46,25 m²).
+
+## Constantes técnicas vigentes (sin cambios)
+
+Aire 1,5 % (H°) y 3 % (morteros); densidades; ciclópeo 45 % piedra; solapes de barras +10 %; emulsión 0,9 L/m²;
+emulsión, aislación, hidrófugo, alambre y clavos con +5 % fijo (no se suman al % de la pestaña).
 
 ## Riesgos
 
@@ -73,12 +86,12 @@ detalle = subtotales = consolidado = total general — verificado:
 | Columnas | CORREGIDO Y VERIFICADO (E1, E4, E6, E8) |
 | Vigas (VF/VA, VD/VE/VC, zapatas) | CORREGIDO Y VERIFICADO (E1, E8) |
 | Bases y cimientos | VERIFICADO |
-| Mampostería (muros, armado, antepechos) | CORREGIDO Y VERIFICADO (E7) |
+| Mampostería (muros, armado, antepechos) | CORREGIDO Y VERIFICADO (E7, D1) |
 | Revoques y cielorrasos | VERIFICADO |
-| Contrapiso / carpeta / sectores | VERIFICADO |
-| Losas pretensadas y macizas | CORREGIDO Y VERIFICADO (E2, E5) |
-| Cubierta | CORREGIDO Y VERIFICADO (E3) |
+| Contrapiso / carpeta / sectores | CORREGIDO Y VERIFICADO (D3) |
+| Losas pretensadas y macizas | CORREGIDO Y VERIFICADO (E2, E5, D1, D4) |
+| Cubierta | CORREGIDO Y VERIFICADO (E3, D1) |
 | Recortes / plan de corte | VERIFICADO |
 | Unidades comerciales | VERIFICADO |
 | Resumen / PDF por ítem / dashboard | CORREGIDO Y VERIFICADO (E8) |
-| Reglas de desperdicio y constantes listadas arriba | PENDIENTE DE DEFINICIÓN |
+| Reglas de desperdicio (D1–D5) | CORREGIDO Y VERIFICADO |

@@ -3114,12 +3114,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
               </div>
               <div id="mamp-niv-extra"></div>
               <button type="button" class="btn-niv-add" onclick="agregarNivel(event)">＋ Agregar nivel</button>
-              <div class="field">
-                <div class="field-label">Desperdicio / rotura <span class="field-hint">%</span>
-                  <span class="field-hint" style="color:var(--text3);margin-left:4px;">El cómputo neto NO incluye este %</span>
-                </div>
-                <input type="number" id="mamp-desp" value="5" step="1" min="0" max="30" class="input-editable" oninput="calcMamposteria()">
-              </div>
+              <div class="field-hint" style="color:var(--text3);margin:2px 0 8px;line-height:1.45;">Desperdicio de ladrillos y de mortero: el <b>% de incremento</b> de arriba de esta pestaña (uno solo).</div>
               <div class="field">
                 <div class="field-label">Ladrillo / bloque <span class="field-hint">así figura en el Resumen</span></div>
                 <input type="text" id="mamp-lad-nombre" value="Ladrillón" class="input-editable" oninput="calcMamposteria()">
@@ -3146,10 +3141,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                   <div class="field-label">Junta de asiento <span class="field-hint">m</span></div>
                   <input type="number" id="lad-junta" value="0.03" step="0.005" class="input-editable" oninput="calcMamposteria()">
                 </div>
-                <div class="field">
-                  <div class="field-label">Desperdicio de mortero <span class="field-hint">%</span></div>
-                  <input type="number" id="mamp-desp-mort" value="13" step="1" min="0" max="50" class="input-editable" oninput="calcMamposteria()">
-                </div>
+                <div class="field"></div>
               </div>
               <div style="font-size:11px;color:var(--text3);line-height:1.5;">
                 Mezcla del mortero: <b id="mamp-mezcla-lbl" style="color:var(--text2);">—</b> ·
@@ -3656,7 +3648,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           </div>
           <div class="alert alert-blue" style="margin:8px 12px 0;">
             <span class="alert-icon">ℹ️</span>
-            <div>Para escaleras: factor 1.5 sobre la malla. Para losas macizas sin negativos: factor 2 (doble malla). El hormigón se calcula por el volumen real (largo × ancho × alto).</div>
+            <div>Ancho y largo = <b>luz libre entre apoyos</b>. Cada barra lleva 15 cm de anclaje dentro de cada apoyo y gancho normal a 90° de 12 Ø en cada extremo (CIRSOC 201). Escaleras: factor 1.5 sobre la malla. Losas macizas sin negativos: factor 2 (doble malla). El hormigón se calcula por el volumen real (largo × ancho × alto).</div>
           </div>
           <div class="table-wrap" style="margin-top:0;">
             <table id="tabla-losas-macizas">
@@ -3672,7 +3664,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
                   <th class="center">Ø malla Y<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas_macizas','phiY')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="right">Sep. Y (mm)<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas_macizas','sepY')" title="Poner el mismo valor en todas las filas">⇊</button></th>
                   <th class="center" data-tip="1 = simple, 1.5 = escalera, 2 = doble (sin negativos)">Factor<br>malla<button type="button" class="col-apl" onclick="colAplAbrir(event,'losas_macizas','factor')" title="Poner el mismo valor en todas las filas">⇊</button></th>
-                  <th class="right">ml hierro</th>
+                  <th class="right" data-tip="Barras con anclaje de 15 cm en cada apoyo + gancho a 90° de 12 Ø (CIRSOC 201)">ml hierro</th>
                   <th class="right">m³ H°</th>
                   <th></th>
                 </tr>
@@ -5031,7 +5023,7 @@ function _selResultado(tb, ids){
       add(l.hormTipo||'H17', l.cant * l.sup * ((l.capComp||7)/100));
       const los = losaLosetas(l);
       if(+l.alt===16) l16 += los; else l12 += los;
-      malla += l.cant * l.sup * 1.05;
+      malla += l.cant * l.sup * SIMA_SOLAPE;
     });
     if(l12) extra.push({q:l12, mat:'Losetas 12 cm', cant:n(l12,0)+' u.'});
     if(l16) extra.push({q:l16, mat:'Losetas 16 cm', cant:n(l16,0)+' u.'});
@@ -7573,12 +7565,13 @@ function muroPrincipal(){
     hil:r('mamp-hid-hil'), lMuros:r('mamp-hid-largo'), arm: armDe(0)};
 }
 function calcMuro(m){
-  const despPct  = r('mamp-desp') / 100;
-  const despMort = Math.max(r('mamp-desp-mort'), 0) / 100;
+  // Ladrillos y mortero netos: el desperdicio es sólo el % de incremento de la pestaña
+  // (antes había además un desperdicio propio de ladrillos y otro de mortero → doble).
+  const despPct  = pctTab('mamp') - 1;
   const largo = +m.largo || 0.25, alto = +m.alto || 0.06, esp = +m.esp || 0.17, junta = +m.junta >= 0 ? +m.junta : 0.03;
-  // Ladrillos por m² (geométrico, sin desperdicio) y mortero por m² (muro − ladrillos, + desperdicio)
+  // Ladrillos por m² (geométrico, sin desperdicio) y mortero por m² (muro − ladrillos)
   const ladPm2 = 1 / ((largo + junta) * (alto + junta));
-  const mortM2 = Math.max(0, esp - ladPm2*largo*alto*esp) * (1 + despMort);
+  const mortM2 = Math.max(0, esp - ladPm2*largo*alto*esp);
   const niveles = nivelesArea('mamp').map(nv=>({k:nv.k, label:nv.largo, color:nv.color, sup:+(m.sup||{})[nv.k]||0})).filter(x=>x.sup>0);
   const totSup = niveles.reduce((s,x)=>s+x.sup, 0);
   const ladNetos = ceilQ(totSup * ladPm2);
@@ -7607,7 +7600,7 @@ function calcMuro(m){
   niveles.forEach(x=>{
     const h = x.k==='PB' ? mortH : 0;
     const m3t = Math.max(x.sup*mortM2 - h, 0), m3 = m3t * (1 - fr), m3A = m3t * fr;
-    const d = {sup:x.sup, lad:x.sup*ladPm2*(1+despPct), alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
+    const d = {sup:x.sup, lad:x.sup*ladPm2, alb:m3*mz.rend.albKg, port:m3*mz.rend.portKg + (h?portH:0),
       cal:m3*mz.rend.calKg, arena:m3*mz.rend.arenaM3 + (h?arenaH:0), hidro: h?hidroH:0, arm:{}};
     if(armado){
       const mlHil = x.sup / (alto + junta) / armado.cada;          // metros de hilada armada
@@ -7700,7 +7693,7 @@ function muroResHTML(c){
   return `<div class="field-label" style="margin-bottom:8px;">${_escHtml(c.m.titulo)} · ${n(c.totSup,1)} m² · ${_escHtml(c.m.ladNombre)}</div>`
     + fila(`${_escHtml(c.m.ladNombre)} / m²`, n(c.ladPm2,2), 'uds/m²')
     + fila('Mortero / m²', n(c.mortM2,4), 'm³/m²')
-    + fila(`A pedir (+${(c.despPct*100).toFixed(0)}% desp.)`, c.ladConDesp.toLocaleString('es-AR'), 'unidades', true)
+    + fila(`A pedir (+${n(c.despPct*100,0)} % de la pestaña)`, c.ladConDesp.toLocaleString('es-AR'), 'unidades', true)
     + fila('Mortero total', n(c.mortM3,2), 'm³')
     + uc(c.albKg, 'Cem. alb.', 'cemAlb') + uc(c.portKg, 'Cemento Portland', 'portland') + uc(c.calKg, 'Cal', 'cal')
     + fila('Arena gruesa', n(c.arenaM3,2), 'm³')
@@ -7765,7 +7758,7 @@ function calcMamposteria(){
   // Stats (todos los muros)
   const ladTot = S('ladNetos'), ladTotDesp = S('ladConDesp');
   setTxt('mamp-stat-lad', ladTot.toLocaleString('es'));
-  setTxt('mamp-stat-lad-unit', `uds netas${extras.length?' · todos los muros':''} · +desp.: ${ladTotDesp.toLocaleString('es')}`);
+  setTxt('mamp-stat-lad-unit', `uds netas${extras.length?' · todos los muros':''} · a pedir: ${ladTotDesp.toLocaleString('es')}`);
   if(mz.tipo==='2'){
     setTxt('mamp-stat-cem-lbl', 'Cem. albañilería');
     setTxt('mamp-stat-cem', n(cemAlbBol, 1));
@@ -7827,7 +7820,7 @@ function calcMamposteria(){
       <div class="dosaje-unit">uds (${n(ladPm2,2)}/m² × ${totSup.toFixed(1)})</div>
     </div>
     <div class="dosaje-row" style="background:var(--accent-dim2);border-radius:6px;padding:6px 8px;">
-      <div class="dosaje-material" style="font-weight:700;color:var(--text);">A pedir (+${(despPct*100).toFixed(0)}% desp.)</div>
+      <div class="dosaje-material" style="font-weight:700;color:var(--text);">A pedir (+${n(despPct*100,0)} % de la pestaña)</div>
       <div class="dosaje-value" style="color:var(--accent);font-size:16px;">${ladConDesp.toLocaleString('es')}</div>
       <div class="dosaje-unit">unidades</div>
     </div>
@@ -7861,7 +7854,7 @@ function calcMamposteria(){
     ['alb','cal','port','arena'].forEach(q=>{ p[q] = Math.max(p[q] + x.d[q], 0); });
     p.arm[x.phi] = (p.arm[x.phi]||0) + x.mlBar; p.arm[x.phiC] = (p.arm[x.phiC]||0) + x.nC*x.lC;
   });
-  const porMuro = todos.filter(c=>c.ladConDesp>0).map(c=>({titulo:c.m.titulo, nombre:c.m.ladNombre, ladrillones:c.ladConDesp, sup:c.totSup}));
+  const porMuro = todos.filter(c=>c.ladNetos>0).map(c=>({titulo:c.m.titulo, nombre:c.m.ladNombre, ladrillones:c.totSup*c.ladPm2, aPedir:c.ladConDesp, sup:c.totSup}));
 
   state.resultados = state.resultados || {};
   state.resultados.mamp = {ladrillones: ladTotDesp, ladNetos: ladTot, cemAlb: cemAlbBol, cemAlbKg: albKg,
@@ -7869,8 +7862,8 @@ function calcMamposteria(){
 
   const tipos = [...new Set(porMuro.map(x=>x.nombre))];
   const cols = [{lbl:'m²', v:d=>d.sup, fmt:fmtN(1)}];
-  (tipos.length ? tipos : [P.m.ladNombre]).forEach(t=>cols.push({lbl:`${_escHtml(t)}<br><span class="niv-ayuda">con desperdicio</span>`,
-    v:d=>(d.ladPorTipo||{})[t]||0, fmt:v=>v>0?`<b>${ceilQ(v).toLocaleString('es-AR')}</b>`:'—'}));
+  (tipos.length ? tipos : [P.m.ladNombre]).forEach(t=>cols.push({lbl:`${_escHtml(t)}<br><span class="niv-ayuda">a pedir (+${n((pctTab('mamp')-1)*100,0)} %)</span>`,
+    v:d=>((d.ladPorTipo||{})[t]||0)*pctTab('mamp'), fmt:v=>v>0?`<b>${ceilQ(v).toLocaleString('es-AR')}</b>`:'—'}));
   if(albKg>0.01)  cols.push({lbl:'Cem. alb.',  v:d=>d.alb,  fmt:fmtUC('cemAlb')});
   if(portKg>0.01) cols.push({lbl:'Cemento',    v:d=>d.port, fmt:fmtUC('portland')});
   if(calKg>0.01)  cols.push({lbl:'Cal',        v:d=>d.cal,  fmt:fmtUC('cal')});
@@ -8050,18 +8043,20 @@ const MALLAS_SIMA = Object.keys(SIMA_INFO).map(t=>[t, mallaNom(t)]);
 const SIMA_POR_PHI = {'4.2':'Q92', '5':'Q131', '6':'Q188', '7':'Q257', '8':'Q335'};
 const mallaDeLosa = l => l.malla || SIMA_POR_PHI[String(l.phi)] || 'Q188';
 const SIMA_SOLAPE = 1.10;   // +10 % de m² de malla por solapes entre paneles
+const CARP_DOSAJE = {cem:1, are:3};   // carpeta: 1 cemento portland : 3 arena gruesa
 function calcContrapiso(){
   const ec = r('carp-esp')/100;
   const contTipo = document.getElementById('cont-horm-tipo')?.value||'obra';
   const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
-  // Carpeta (planilla): 8,75 kg de cemento y 0,05 m³ de arena por m² de 3,5 cm
-  const CARP_CEM_KG_M3 = 8.75/0.035, CARP_ARENA_M3M3 = 0.05/0.035;
-  // Contrapiso en obra: mezcla más pobre que el dosaje madre (60 % del cemento)
+  // Carpeta: mortero 1 : 3 (cemento portland : arena gruesa), kg y m³ por m³ de mortero
+  const mzCarp = rendMezcla({cem:CARP_DOSAJE.cem, are:CARP_DOSAJE.are});
+  const CARP_CEM_KG_M3 = mzCarp.portKg, CARP_ARENA_M3M3 = mzCarp.arenaM3;
+  // Contrapiso en obra: el dosaje de H° de Dosificaciones (cemento, arena y ripio completos)
   const mat = (o, tipoH) => {
     const el = tipoH!=='obra';
     const mlArm = o.phi ? o.sup * (2 / (o.sep/1000)) * o.capas * 1.10 : 0;   // barras en X e Y, +10 % solapes
     return {...o, tipoH, mlArm, vol:o.sup*o.esp, volC:o.supC*ec,
-      cemB25: (el ? 0 : o.sup*o.esp*hf.cemBol25*0.60) + o.supC*ec*CARP_CEM_KG_M3/25,
+      cemB25: (el ? 0 : o.sup*o.esp*hf.cemBol25) + o.supC*ec*CARP_CEM_KG_M3/25,
       arena:  (el ? 0 : o.sup*o.esp*hf.arena) + o.supC*ec*CARP_ARENA_M3M3,
       ripio:   el ? 0 : o.sup*o.esp*hf.piedra,
       elab:    el ? o.sup*o.esp : 0};
@@ -8095,7 +8090,7 @@ function calcContrapiso(){
   });
   const volGral = filasCp.filter(x=>x.tipoH===contTipo).reduce((s,x)=>s+x.vol, 0);
   renderHormResult('cont', volGral, contTipo);
-  if(contTipo==='obra') setTxt('cont-horm-result', `${n(volGral,2)} m³ de contrapiso en obra · mezcla con el 60 % del cemento del dosaje de Dosificaciones`);
+  if(contTipo==='obra') setTxt('cont-horm-result', `${n(volGral,2)} m³ de contrapiso en obra · dosaje de H° de Dosificaciones · carpeta 1 : 3 (cemento : arena gruesa)`);
 
   const fila = (mat, val, unit, estilo) => `<div class="dosaje-row"${estilo?` style="${estilo}"`:''}><div class="dosaje-material">${mat}</div><div class="dosaje-value">${val}</div><div class="dosaje-unit">${unit}</div></div>`;
   document.getElementById('cont-resultado').innerHTML = `
@@ -8266,7 +8261,7 @@ function renderLosas(){
     // Capa de compresión: malla electrosoldada (rollo 2,4×6 m = 14,4 m²) o
     // hierros cortados y atados (barras en X e Y, +10 % de solapes)
     const arm = l.arm==='hierro' ? 'hierro' : 'malla';
-    const mallaRollos = arm==='malla' ? l.cant * l.sup * 1.05 / 14.4 : 0;
+    const mallaRollos = arm==='malla' ? l.cant * l.sup * SIMA_SOLAPE / 14.4 : 0;
     const mlArm = arm==='hierro' ? l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10 : 0;
     // Capa de compresión H°: sup × espesor_m
     const capCompM3 = l.cant * l.sup * ((l.capComp||7)/100);
@@ -8418,20 +8413,25 @@ function addLosaMaciza(){
 
 // ── LOSAS: cálculo central (auditoría, E2/E5) ───────────────────────────
 // Losetas de una losa pretensada: viguetas por metro según la separación (mm),
-// +5 %. Separación 0 o vacía → 150 mm (antes daba infinito).
+// netas (el desperdicio es el % de la pestaña). Separación 0 o vacía → 150 mm.
 function losaLosetas(l){
   const sep = +l.sep > 0 ? +l.sep : 150;
-  return ceilQ((+l.cant||0) * (+l.sup||0) * ceilQ(1000/sep) * 1.05);
+  return ceilQ((+l.cant||0) * (+l.sup||0) * ceilQ(1000/sep));
 }
 // Barras de una losa maciza: en X (largo = ancho, repartidas en el largo) y en Y.
 // La cantidad es ENTERA (antes la pestaña usaba barras fraccionarias con factor 1,5
 // y no coincidía con el plan de corte). Separación 0 o vacía → 150 mm.
+// Largo de cada barra (CIRSOC 201): ancho/largo = luz libre entre apoyos; en cada
+// extremo la barra entra 15 cm en el apoyo (art. 12.11.1) y termina en gancho
+// normal a 90° con 12 Ø de extensión (art. 7.1).
+const MAC_ANCLAJE = 0.15, MAC_GANCHO_D = 12;
+const macizaLargo = (luz, phi) => (+luz||0) > 0 ? +luz + 2*(MAC_ANCLAJE + MAC_GANCHO_D*(+phi||0)/1000) : 0;
 function macizaBarras(l){
   const sX = +l.sepX > 0 ? +l.sepX : 150, sY = +l.sepY > 0 ? +l.sepY : 150, fac = +l.factor || 1, cant = +l.cant || 0;
   const nBX = ceilQ((+l.largo||0)/(sX/1000)) + 1, nBY = ceilQ((+l.ancho||0)/(sY/1000)) + 1;
   return [
-    {dir:'X', phi:+l.phiX||0, L:+l.ancho||0, N:Math.round(cant*nBX*fac), nUnit:nBX},
-    {dir:'Y', phi:+l.phiY||0, L:+l.largo||0, N:Math.round(cant*nBY*fac), nUnit:nBY},
+    {dir:'X', phi:+l.phiX||0, L:macizaLargo(l.ancho, l.phiX), N:Math.round(cant*nBX*fac), nUnit:nBX},
+    {dir:'Y', phi:+l.phiY||0, L:macizaLargo(l.largo, l.phiY), N:Math.round(cant*nBY*fac), nUnit:nBY},
   ];
 }
 function calcLosasMacizas(){
@@ -8467,9 +8467,9 @@ function calcLosas(){
       totalMlArm += ml;
       porPhiLosa[l.phi] = (porPhiLosa[l.phi]||0) + ml;
     } else {
-      totalM6 += l.cant * l.sup * 1.05 / 14.4;
+      totalM6 += l.cant * l.sup * SIMA_SOLAPE / 14.4;
       const t = mallaDeLosa(l);
-      mallasLosa[t] = (mallasLosa[t]||0) + l.cant * l.sup * 1.05;
+      mallasLosa[t] = (mallasLosa[t]||0) + l.cant * l.sup * SIMA_SOLAPE;
     }
     const volComp = l.cant * l.sup * ((l.capComp||7)/100);
     totalHcomp += volComp;
@@ -8500,7 +8500,7 @@ function calcLosas(){
     const p = P(l.nivel);
     p.los   += losaLosetas(l);
     if(l.arm==='hierro') p.mlArm += l.cant * l.sup * (2/((l.sepArm||200)/1000)) * 1.10;
-    else p.malla += l.cant * l.sup * 1.05 / 14.4;
+    else p.malla += l.cant * l.sup * SIMA_SOLAPE / 14.4;
     p.hc    += l.cant * l.sup * ((l.capComp||7)/100);
   });
   (state.losas_macizas||[]).forEach(l=>{
@@ -8590,9 +8590,9 @@ function calcTecho(){
   }
   const sup=r('techo-sup');
   const tipo=document.getElementById('techo-aislacion')?.value||'1';
-  // Rollos de membrana: 9 m² útiles por rollo de 10 m², +10 %. Sin redondear acá (auditoría, E3):
-  // se redondea una sola vez, en la cantidad a pedir.
-  const membra = sup/9*1.1;
+  // Rollos de membrana: 9 m² útiles por rollo de 10 m² (el resto es solape). El desperdicio
+  // es el % de la pestaña. Sin redondear acá: se redondea una sola vez, en la cantidad a pedir.
+  const membra = sup/9;
   const emulsión = sup*0.9;
 
   // Capas con mezcla editable (partes en volumen, mismo criterio que los morteros):
@@ -8655,7 +8655,7 @@ function calcTecho(){
         return {nombre:z.nombre, sup:z.sup,
           port: vA*mA.portKg + vC*mC.portKg, alb: vA*mA.albKg + vC*mC.albKg,
           arena: vA*mA.arenaM3 + vC*mC.arenaM3, liv: vA*mA.livM3,
-          memb: ucDesdeBase('membrana', z.sup/9*1.1*10), emul: z.sup*0.9};
+          memb: ucDesdeBase('membrana', z.sup/9*10), emul: z.sup*0.9};
       });
       const suma = k => datos.reduce((t,d)=>t+d[k], 0);
       const cols = [
@@ -9858,14 +9858,15 @@ function datosResumen(){
           ? Object.entries(res.mamp.porMuro.reduce((o,m)=>{ o[m.nombre]=(o[m.nombre]||0)+m.ladrillones; return o; }, {}))
               .map(([nom,q])=>U(nom,'ladrillon', q, pct))
           : [U('Ladrillones','ladrillon', res.mamp?.ladrillones||0, pct)]),
-      U('Losetas 12 cm','loseta', res.losa?.losetas12||0, 1.12),
-      U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, 1.12),
+      U('Losetas 12 cm','loseta', res.losa?.losetas12||0, pct),
+      U('Losetas 16 cm','loseta16', res.losa?.losetas16||0, pct),
       // Malla electrosoldada: losas y contrapiso son lo mismo, se suman por código
+      // (m² con el solape entre paneles; el desperdicio es el % de cada pestaña)
       ...Object.entries((()=>{ const m={};
-          Object.entries(res.losa?.mallas||{}).forEach(([t,m2])=>m[t]=(m[t]||0)+m2*1.10);
-          Object.entries(res.cont?.mallas||{}).forEach(([t,m2])=>m[t]=(m[t]||0)+m2);
-          return m; })()).map(([t,m2])=>U(mallaNom(t),'mallaSima', m2, 1)),
-      U('Membrana Asfáltica','membrana', membrana*10, 1.05),
+          const suma = (o, f) => Object.entries(o||{}).forEach(([t,m2])=>{ const x = m[t] || (m[t] = {q:0, qf:0}); x.q += m2; x.qf += m2*f; });
+          suma(res.losa?.mallas, pctTab('losa')); suma(res.cont?.mallas, pctTab('cp'));
+          return m; })()).map(([t,x])=>U(mallaNom(t),'mallaSima', x.q, x.q>0 ? x.qf/x.q : 1)),
+      U('Membrana Asfáltica','membrana', membrana*10, pct),
       U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
       ...aisl,
       U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoques y hiladas hidrófugas de PB'),
@@ -10134,7 +10135,7 @@ const ITEM_MAT = [
   ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
   ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
 ];
-const ITEM_INCR_FIJO = {'msima:':1, loseta:1.12, loseta16:1.12, malla:1.10, membrana:1.05, emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
+const ITEM_INCR_FIJO = {emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
 
 // ── % DE INCREMENTO POR PESTAÑA ─────────────────────────────────────────
 // Cada pestaña puede tener su % (ej. mampostería 20 %, vigas 10 %); vacío = el
@@ -10170,6 +10171,7 @@ function pctTabsCambio(){
     res.innerHTML = propios.length ? `Por pestaña: ${propios.join(' · ')} <span>· el resto usa el general. Cada material toma el % de las pestañas de donde sale.</span>`
       : '<span>Todas las pestañas usan este %. En cada pestaña podés poner uno propio.</span>';
   }
+  if(typeof calcMamposteria==='function' && document.getElementById('mamp-niveles')) calcMamposteria();
   if(document.getElementById('page-resumen')?.classList.contains('active')) calcResumen();
 }
 
@@ -10267,7 +10269,7 @@ function materialesPorItem(){
     arr.forEach(l=>{
       if(l._t==='p'){
         add(it, +l.alt===16 ? 'loseta16' : 'loseta', losaLosetas(l));
-        add(it, 'malla', l.cant*l.sup*1.05);
+        add(it, 'malla', l.cant*l.sup*SIMA_SOLAPE);
         horm(it, l.hormTipo||'H17', l.cant*l.sup*((l.capComp||7)/100));
       } else { const vm = l.cant*l.ancho*l.largo*(l.alto/100); horm(it, 'H17', vm); acc(it, vm); }
     });
