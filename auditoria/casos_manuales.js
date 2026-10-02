@@ -44,11 +44,11 @@ setTimeout(() => {
     S.columnas[0].sepEstr = 200; ok('otra fila c/20 → cruces c/10: 6 + 6 + 9 + 1', w.nEstribosCol(S.columnas[0]), 22); S.columnas[0].sepEstr = 150;
     S.columnas[0].alt = 1.0; ok('columna corta 1,00: todo densificado → 1/0,075 = 14 + 1', w.nEstribosCol(S.columnas[0]), 15); S.columnas[0].alt = 3; w.renderAll();
     R = resumen();
-    ok('Resumen H17 elaborado a pedir (exacto)', R['H° H17 elaborado'].cant, 0.12);
+    ok('Resumen H17 elaborado neto', R['H° H17 elaborado'].neto, 0.12); ok('Resumen H17 elaborado a pedir: 0,12 × 1,12 (% general)', R['H° H17 elaborado'].cant, 0.1344);
     ok('Resumen Ø12 a pedir: 2 × 1,12 = 2,24 → 3', Math.ceil(R['Hierro Ø12'].cant - 1e-9), 3);
     ok('Resumen alambre N°14 neto: 0,12 × 3,5', R['Alambre N°14'].neto, 0.42);
     ok('Resumen clavos 2" neto: 0,12 × 1', R['Clavos punta París 2"'].neto, 0.12);
-    it = item(/Columnas/); ok('PDF ítem Columnas · H17', fItem(it, /H17/).cant, 0.12); ok('PDF ítem Columnas · Ø12 (barras de 12 m en m)', fItem(it, /Ø12/).neto*12, 24);
+    it = item(/Columnas/); ok('PDF ítem Columnas · H17 a pedir: 0,12 × 1,12', fItem(it, /H17/).cant, 0.1344); ok('PDF ítem Columnas · Ø12 (barras de 12 m en m)', fItem(it, /Ø12/).neto*12, 24);
 
     // ─ CASO 2: 1 viga VD 20×30, luz 4,00, 4 Ø10, estribos Ø6 c/20, H21 ─
     caso = 'Viga'; S = vacia();
@@ -60,7 +60,7 @@ setTimeout(() => {
     // Estribos con reestribado: zona = máx(0,60; 2×0,30; 4/5 = 0,80) = 0,80 c/10 → 8 + 8; centro 2,40/0,20 = 12 → 29
     // 16×26 → 0,84 + 0,12 = 0,96 m → 27,84 m; 12 por barra → 3 barras
     ok('estribos (con reestribado)', w.nEstribosViga(S.vigas_vd[0]), 29); ok('Ø6 metros', S._hierros[6], 27.84); ok('Ø6 barras', S._barrasPorPhi[6], 3);
-    ok('Resumen H21 elaborado', resumen()['H° H21 elaborado'].cant, 0.24);
+    ok('Resumen H21 elaborado a pedir: 0,24 × 1,12', resumen()['H° H21 elaborado'].cant, 0.2688);
 
     // ─ CASO 3: 1 base 1,00 × 1,20 × 0,50, Ø10 c/15 en X e Y, H17 ─
     caso = 'Base'; S = vacia();
@@ -180,6 +180,7 @@ setTimeout(() => {
     ok('borrado → vuelve a la con incremento', resumen()['Membrana Asfáltica'].final, 11.2);
 
     require('./caso_pct.js')(w, d, ok, vacia, resumen, x => { caso = x; });
+    require('./caso_pct.js').elab(w, d, ok, vacia, resumen, x => { caso = x; });
 
     const malos = filas.filter(x => x.startsWith('✗'));
     console.log(filas.join('\n'));

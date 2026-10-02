@@ -111,7 +111,7 @@ Impacto en la obra de ejemplo: estribos de columnas 2.281 → 3.154, de vigas 33
 ## Auditoría del % de incremento por pestaña (02/10/2026)
 
 Regla: cada material lleva el % de la pestaña de donde sale; si la pestaña no tiene % propio, el general del Resumen
-(mayor o menor, incluido 0 %). Sólo el H° elaborado se pide exacto.
+(mayor o menor, incluido 0 %). Desde el 02/10 también el H° elaborado (antes se pedía exacto), a pedido del usuario.
 
 | # | Hallazgo | Corrección |
 |---|---|---|
@@ -123,3 +123,4 @@ Regla: cada material lleva el % de la pestaña de donde sale; si la pestaña no 
 Prueba nueva `auditoria/test_pct_tabs.js`: % distinto en cada pestaña (Columnas 15, Vigas 0, Bases 30, Mampostería 20, Revoques 5,
 Contrapiso 7, Losas 3, general 12) → cada material del Resumen = Σ (cantidad de cada ítem × % de su pestaña): 0 errores en 3 escenarios.
 Casos a mano 108 / 108 (nuevo: columna en obra con 15 %, 5 %, 0 % y vacío = general, en Resumen, tarjeta, materiales del H° y panel de hierros).
+| I5 | H° elaborado se pedía exacto, sin % | Lleva el % de su pestaña como el resto (Resumen, PDF por ítem, tarjeta "A pedir" y "Materiales del hormigón"). Caso a mano: columna H21 1 m³ con Columnas 10 % + viga H21 1 m³ con Vigas 0 % → 2,10 m³; pestañas vacías → 2,24 m³ (12 % general). |

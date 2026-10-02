@@ -23,7 +23,7 @@ setTimeout(() => {
     else if (key.startsWith('msima:')) k = 'malla:' + key.slice(6);
     else if (key === 'malla') k = 'malla:Q188';
     if (k.startsWith('msima:')) k = 'malla:' + key.slice(6);
-    const f = key.startsWith('H:') ? 1 : 1 + PCT[it.tab]/100;
+    const f = 1 + PCT[it.tab]/100;   // todos, también el H° elaborado
     esp[k] = (esp[k]||0) + q*f; neto[k] = (neto[k]||0) + q;
   }));
   const RS = {};

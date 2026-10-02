@@ -4802,7 +4802,7 @@ function hormMatHTML(porTipo, o){
     if(!(v > 0.0005)) return;
     total += v;
     if(t==='obra' || t==='mano') return;
-    filas += fila(`<b>${(HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')} elaborado</b>`, `<b>${n(v,2)} m³</b>`, 'pedir exacto', 'hm-elab');
+    filas += fila(`<b>${(HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')} elaborado</b>`, `<b>${n(v*fP,2)} m³</b>`, fP!==1 ? `${n(v,2)} m³ + ${n((fP-1)*100,0)} %` : '', 'hm-elab');
   });
   const vo = (porTipo.obra||0) + (porTipo.mano||0);
   if(vo > 0.0005){
@@ -9880,7 +9880,8 @@ function datosResumen(){
     if(fTab && f===pct){
       const clave = k==='hierro' ? 'hierro:' + (String(mat).match(/Ø([\d,.]+)/)?.[1]||'').replace(',','.')
                   : k==='alambre' ? (/14/.test(mat) ? 'al14' : 'al17')
-                  : k==='clavos' ? (/2½/.test(mat) ? 'cl25' : 'cl2') : k;
+                  : k==='clavos' ? (/2½/.test(mat) ? 'cl25' : 'cl2')
+                  : k==='hormElab' ? 'H:' + (String(mat).match(/H\d+/)?.[0]||'') : k;
       if(fTab[clave]) f = fTab[clave];
     }
     return {
@@ -9895,7 +9896,7 @@ function datosResumen(){
   const elab = Object.entries(hormByTipo)
     .filter(([t,v])=>t!=='obra'&&t!=='mano'&&v>0.01)
     .sort((a,b)=>a[0].localeCompare(b[0]))
-    .map(([t,v])=>U((HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')+' elaborado','hormElab',v,1,'pedir exacto'));
+    .map(([t,v])=>U((HORM_TIPOS[t]?.label||t).replace(/\s*\(elab\.\)/,'')+' elaborado','hormElab',v,pct,'con el % de cada pestaña'));
 
   // Hierros: se piden por barra — sin metros lineales (base = metros)
   const barras = Object.keys(hierros).filter(p=>(hierros[p]||0)>0.1).sort((a,b)=>+a-+b)
@@ -10245,7 +10246,7 @@ const ITEM_MAT = [
 ];
 // Todos los materiales llevan el % de la pestaña de donde salen (antes alambre, clavos,
 // emulsión, aislación e hidrófugos tenían +5 % fijo y el hidrófugo de masa ninguno).
-// Sólo el H° elaborado se pide exacto.
+// El H° elaborado también (antes se pedía exacto).
 const ITEM_INCR_FIJO = {};
 
 // ── % DE INCREMENTO POR PESTAÑA ─────────────────────────────────────────
@@ -10402,7 +10403,7 @@ function materialesPorItem(){
   return {pct, supTotal: supCubiertaTotal(), secciones, items};
 }
 // Materiales (clave → cantidad en unidad base) → filas con presentación comercial y el
-// % de la pestaña (el H° elaborado va exacto). La usan el PDF por ítem y cada pestaña.
+// % de la pestaña (también el H° elaborado). La usan el PDF por ítem y cada pestaña.
 function filasMateriales(m, tab){
   const filas = [];
   ITEM_MAT.forEach(([key, lbl, k])=>{
@@ -10410,7 +10411,7 @@ function filasMateriales(m, tab){
       .sort((a,b)=> (parseFloat(a.split(':')[1])||0) - (parseFloat(b.split(':')[1])||0) || a.localeCompare(b));
     claves.forEach(x=>{
       const q = m[x];
-      const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pctTab(tab));
+      const f = ITEM_INCR_FIJO[key] ?? pctTab(tab);
       const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
                    : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : key==='msima:' ? mallaNom(x.slice(6)) : lbl;
       filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f), f});
@@ -10437,7 +10438,7 @@ function renderPedirTabs(){
     el.innerHTML = !filas.length ? '' : `<div class="pedir-tit">A pedir de esta pestaña · <b>+${n((f-1)*100, (f-1)*100 % 1 ? 1 : 0)} %</b>
         <span>${propio ? 'el % de esta pestaña' : 'el % general del Resumen'} · es lo que va al Resumen y al PDF</span></div>
       <table class="pedir-t"><thead><tr><th>Material</th><th class="right">Neto</th><th class="right">A pedir</th><th>Unidad</th></tr></thead><tbody>`
-      + filas.map(x=>`<tr><td>${_escHtml(x.mat)}</td><td class="right muted">${fmtRes(x.neto, x.entero)}</td><td class="right"><b>${fmtRes(x.cant, x.entero)}</b>${x.f===1 && /elaborado/.test(x.mat) ? ' <span class="muted">exacto</span>' : ''}</td><td class="muted">${_escHtml(x.unidad)}</td></tr>`).join('')
+      + filas.map(x=>`<tr><td>${_escHtml(x.mat)}</td><td class="right muted">${fmtRes(x.neto, x.entero)}</td><td class="right"><b>${fmtRes(x.cant, x.entero)}</b></td><td class="muted">${_escHtml(x.unidad)}</td></tr>`).join('')
       + '</tbody></table>';
     // Paneles "Resumen de hierros": barras a pedir de esta pestaña por Ø
     // (en vigas, del grupo que muestra el panel: VF/VA, VD/VE/VC o todas)
