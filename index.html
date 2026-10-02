@@ -1953,7 +1953,6 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .res-aj-pie { font-size: 11px; color: var(--text3); margin: 8px 4px 0; }
 .res-aj-pie a { color: var(--accent); font-weight: 600; }
 .res-aj-ej { color: var(--blue); font-weight: 700; }
-.reestr-tab input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
 .pct-tabs-res { font-size: 11px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
 .pct-tabs-res span { color: var(--text3); }
 
@@ -2611,12 +2610,6 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-col" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
-        <div class="pct-tab reestr-tab" title="Estribos densificados en ambos extremos de cada elemento (cruces)">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="col-reestr" checked onchange="renderColumnas();scheduleAutosave()"> <span>Reestribado en los cruces</span></label>
-          <span>· separación</span>
-          <input type="number" id="col-sep-dens" class="input-editable pct-tab-inp" step="5" min="0" placeholder="mitad" oninput="renderColumnas();scheduleAutosave()">
-          <span>mm</span><span class="pct-tab-ayuda">vacío = la mitad de la de cada fila · zona en cada extremo = el mayor de 60 cm, 2 × la mayor dimensión de la sección y 1/5 de la luz de H°</span>
-        </div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">3</span>
           <div class="edit-guide-text">
@@ -2729,12 +2722,6 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <span>Incremento de <b>Vigas</b></span>
           <input type="number" id="pct-vig" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
-        </div>
-        <div class="pct-tab reestr-tab" title="Estribos densificados en ambos extremos de cada elemento (cruces)">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="vig-reestr" checked onchange="renderVigas('vf');renderVigas('vd');scheduleAutosave()"> <span>Reestribado en los cruces</span></label>
-          <span>· separación</span>
-          <input type="number" id="vig-sep-dens" class="input-editable pct-tab-inp" step="0.5" min="0" placeholder="mitad" oninput="renderVigas('vf');renderVigas('vd');scheduleAutosave()">
-          <span>cm</span><span class="pct-tab-ayuda">vacío = la mitad de la de cada fila · zona en cada extremo = el mayor de 60 cm, 2 × la mayor dimensión de la sección y 1/5 de la luz de H°</span>
         </div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">4</span>
@@ -5575,8 +5562,8 @@ function phiSelectHtml(val, onchg, sinVacio){
 // viga. Uno en cada punta: altura ÷ separación + 1.
 // Reestribado en los cruces: en cada extremo del elemento los estribos van
 // densificados en una zona de largo = el mayor de 60 cm, 2 × la mayor dimensión
-// de la sección y 1/5 de la luz de hormigón. Separación en esa zona: la de la
-// casilla de la pestaña o, vacía, la mitad de la separación de la fila.
+// de la sección y 1/5 de la luz de hormigón. Separación en esa zona:
+// la mitad de la separación de cada fila. Se aplica siempre.
 //   Ltot = largo con estribos (columna: alt. total; viga: long. libre) · Lh = luz de H°
 function zonaDensif(Lh, dimMax){ return Math.max(0.60, 2*(+dimMax||0), (+Lh||0)/5); }
 function nEstribosDensif(Ltot, Lh, dimMax, s, sd){
@@ -5586,13 +5573,8 @@ function nEstribosDensif(Ltot, Lh, dimMax, s, sd){
   if(2*lz >= Ltot) return ceilQ(Ltot/sd - 1e-9) + 1;           // todo el elemento densificado
   return 2*ceilQ(lz/sd - 1e-9) + ceilQ((Ltot - 2*lz)/s - 1e-9) + 1;
 }
-// Separación en los cruces (m) de una fila, o 0 si el reestribado está apagado
-function sepDensif(tab, s){
-  if(document.getElementById(tab+'-reestr')?.checked === false) return 0;
-  const v = parseFloat(document.getElementById(tab+'-sep-dens')?.value);
-  const sd = isFinite(v) && v > 0 ? v/(tab==='col' ? 1000 : 100) : s/2;
-  return sd < s ? sd : 0;
-}
+// Separación en los cruces: siempre la mitad de la separación de cada fila
+function sepDensif(tab, s){ return s > 0 ? s/2 : 0; }
 function colDimMax(c){ const {A, B} = colSecc(c); return Math.max(+A||0, +B||0)/100; }
 function nEstribosCol(c){
   const h = colAltHierro(c), s = (+c.sepEstr||150)/1000;
@@ -11324,7 +11306,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.mampArmP = null; s.antepechos = []; s.antepMort = null; s.resAjustes = {}; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true; s.checks['col-reestr'] = true; s.checks['vig-reestr'] = true;
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.mampArmP = null; s.antepechos = []; s.antepMort = null; s.resAjustes = {}; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true;
   return s;
 }
 

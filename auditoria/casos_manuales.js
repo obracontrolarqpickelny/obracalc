@@ -40,9 +40,8 @@ setTimeout(() => {
     // centro 3 − 1,20 = 1,80 c/15 → 12 espacios; 28 espacios + 1 = 29 estribos
     // estribo 16×16 → 0,64 + 2 ganchos 0,06 = 0,76 m; 29 × 0,76 = 22,04 m; 15 por barra → 2 barras
     ok('estribos por columna (con reestribado)', w.nEstribosCol(S.columnas[0]), 29); ok('Ø6 metros', S._hierros[6], 22.04); ok('Ø6 barras', S._barrasPorPhi[6], 2);
-    d.getElementById('col-reestr').checked = false; ok('sin reestribado: 3/0,15 + 1', w.nEstribosCol(S.columnas[0]), 21); d.getElementById('col-reestr').checked = true;
-    set('col-sep-dens', 100); ok('cruces c/10 cm: 6 + 6 + 12 + 1', w.nEstribosCol(S.columnas[0]), 25); set('col-sep-dens', '');
     S.columnas[0].altT = 4.3; ok('alt. total 4,30 (luz H° 3): zona 0,60 → 16 + 3,10/0,15 = 21 → 38', w.nEstribosCol(S.columnas[0]), 38); S.columnas[0].altT = null;
+    S.columnas[0].sepEstr = 200; ok('otra fila c/20 → cruces c/10: 6 + 6 + 9 + 1', w.nEstribosCol(S.columnas[0]), 22); S.columnas[0].sepEstr = 150;
     S.columnas[0].alt = 1.0; ok('columna corta 1,00: todo densificado → 1/0,075 = 14 + 1', w.nEstribosCol(S.columnas[0]), 15); S.columnas[0].alt = 3; w.renderAll();
     R = resumen();
     ok('Resumen H17 elaborado a pedir (exacto)', R['H° H17 elaborado'].cant, 0.12);
@@ -61,7 +60,6 @@ setTimeout(() => {
     // Estribos con reestribado: zona = máx(0,60; 2×0,30; 4/5 = 0,80) = 0,80 c/10 → 8 + 8; centro 2,40/0,20 = 12 → 29
     // 16×26 → 0,84 + 0,12 = 0,96 m → 27,84 m; 12 por barra → 3 barras
     ok('estribos (con reestribado)', w.nEstribosViga(S.vigas_vd[0]), 29); ok('Ø6 metros', S._hierros[6], 27.84); ok('Ø6 barras', S._barrasPorPhi[6], 3);
-    d.getElementById('vig-reestr').checked = false; ok('sin reestribado: 4/0,20 + 1', w.nEstribosViga(S.vigas_vd[0]), 21); d.getElementById('vig-reestr').checked = true;
     ok('Resumen H21 elaborado', resumen()['H° H21 elaborado'].cant, 0.24);
 
     // ─ CASO 3: 1 base 1,00 × 1,20 × 0,50, Ø10 c/15 en X e Y, H17 ─

@@ -56,8 +56,7 @@ function oraculo(snap) {
 
   // ── Reestribado en cruces (02/10): zona = máx(0,60; 2 × mayor dim.; luz H°/5) en cada extremo ──
   const CK = snap.checks || {};
-  const sdDe = (tab, s) => { if (CK[tab+'-reestr'] === false) return 0; const v = parseFloat(F[tab+'-sep-dens']);
-    const sd = isFinite(v) && v > 0 ? v/(tab==='col' ? 1000 : 100) : s/2; return sd < s ? sd : 0; };
+  const sdDe = (tab, s) => s > 0 ? s/2 : 0;   // siempre, la mitad de la separación de la fila
   const nEst = (Lt, Lh, dm, s, sd) => { if (!(Lt > 0 && s > 0)) return 0; if (!(sd > 0)) return CEIL(Lt/s - 1e-9) + 1;
     const z = Math.max(0.60, 2*dm, Lh/5); if (2*z >= Lt) return CEIL(Lt/sd - 1e-9) + 1;
     return 2*CEIL(z/sd - 1e-9) + CEIL((Lt - 2*z)/s - 1e-9) + 1; };
