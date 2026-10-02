@@ -1600,8 +1600,10 @@ tr[data-niv] > td:first-child { box-shadow: inset 4px 0 0 var(--niv, transparent
   th { background: #f5f5f5 !important; font-size: 9pt !important; }
 
   /* Ocultar columna "Neto" (3ª col) y header de incremento en hierros */
-  .res-col-neto, .res-col-header-neto,
+  .res-col-neto, .res-col-header-neto, .res-col-inc, .res-aj-pie,
   th.right:first-of-type, td.right:first-of-type { display: none !important; }
+  .res-aj input { border: none !important; background: none !important; color: #000 !important; }
+  .res-aj input::placeholder { color: #000 !important; opacity: 1; }
 
   /* Notas internas, textos menores, muted */
   .muted { color: #666 !important; }
@@ -1944,6 +1946,14 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .pct-tab-ayuda { font-size: 11px; color: var(--text3); }
 .pct-tab.propio { border-style: solid; border-color: var(--accent); background: var(--accent-dim2); }
 .pct-tab.propio .pct-tab-ayuda { display: none; }
+.res-aj input { width: 92px !important; text-align: right; padding: 3px 6px !important; font-size: 12.5px !important; font-weight: 700; color: var(--blue); }
+.res-aj input::placeholder { color: var(--accent); font-weight: 600; opacity: .75; }
+.res-ajustada td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+.res-aj-th { color: var(--blue) !important; }
+.res-aj-pie { font-size: 11px; color: var(--text3); margin: 8px 4px 0; }
+.res-aj-pie a { color: var(--accent); font-weight: 600; }
+.res-aj-ej { color: var(--blue); font-weight: 700; }
+.reestr-tab input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
 .pct-tabs-res { font-size: 11px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
 .pct-tabs-res span { color: var(--text3); }
 
@@ -2601,6 +2611,12 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-col" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pct-tab reestr-tab" title="Estribos densificados en ambos extremos de cada elemento (cruces)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="col-reestr" checked onchange="renderColumnas();scheduleAutosave()"> <span>Reestribado en los cruces</span></label>
+          <span>· separación</span>
+          <input type="number" id="col-sep-dens" class="input-editable pct-tab-inp" step="5" min="0" placeholder="mitad" oninput="renderColumnas();scheduleAutosave()">
+          <span>mm</span><span class="pct-tab-ayuda">vacío = la mitad de la de cada fila · zona en cada extremo = el mayor de 60 cm, 2 × la mayor dimensión de la sección y 1/5 de la luz de H°</span>
+        </div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">3</span>
           <div class="edit-guide-text">
@@ -2713,6 +2729,12 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <span>Incremento de <b>Vigas</b></span>
           <input type="number" id="pct-vig" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
+        </div>
+        <div class="pct-tab reestr-tab" title="Estribos densificados en ambos extremos de cada elemento (cruces)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="vig-reestr" checked onchange="renderVigas('vf');renderVigas('vd');scheduleAutosave()"> <span>Reestribado en los cruces</span></label>
+          <span>· separación</span>
+          <input type="number" id="vig-sep-dens" class="input-editable pct-tab-inp" step="0.5" min="0" placeholder="mitad" oninput="renderVigas('vf');renderVigas('vd');scheduleAutosave()">
+          <span>cm</span><span class="pct-tab-ayuda">vacío = la mitad de la de cada fila · zona en cada extremo = el mayor de 60 cm, 2 × la mayor dimensión de la sección y 1/5 de la luz de H°</span>
         </div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">4</span>
@@ -5551,8 +5573,42 @@ function phiSelectHtml(val, onchg, sinVacio){
 // Estribos: en la altura total de la columna (fondo de zanja → cara superior de la
 // viga superior, sin la pata ni el anclaje de las barras) y en la luz libre de la
 // viga. Uno en cada punta: altura ÷ separación + 1.
-function nEstribosCol(c){ const h = colAltHierro(c), s = (+c.sepEstr||150)/1000; return h>0 && s>0 ? ceilQ(h/s - 1e-9) + 1 : 0; }
-function nEstribosViga(v){ const L = +v.longLibre||0, s = (+v.sepEstr||20)/100; return L>0 && s>0 ? ceilQ(L/s - 1e-9) + 1 : 0; }
+// Reestribado en los cruces: en cada extremo del elemento los estribos van
+// densificados en una zona de largo = el mayor de 60 cm, 2 × la mayor dimensión
+// de la sección y 1/5 de la luz de hormigón. Separación en esa zona: la de la
+// casilla de la pestaña o, vacía, la mitad de la separación de la fila.
+//   Ltot = largo con estribos (columna: alt. total; viga: long. libre) · Lh = luz de H°
+function zonaDensif(Lh, dimMax){ return Math.max(0.60, 2*(+dimMax||0), (+Lh||0)/5); }
+function nEstribosDensif(Ltot, Lh, dimMax, s, sd){
+  if(!(Ltot>0 && s>0)) return 0;
+  if(!(sd>0) || sd>=s) return ceilQ(Ltot/s - 1e-9) + 1;
+  const lz = zonaDensif(Lh, dimMax);
+  if(2*lz >= Ltot) return ceilQ(Ltot/sd - 1e-9) + 1;           // todo el elemento densificado
+  return 2*ceilQ(lz/sd - 1e-9) + ceilQ((Ltot - 2*lz)/s - 1e-9) + 1;
+}
+// Separación en los cruces (m) de una fila, o 0 si el reestribado está apagado
+function sepDensif(tab, s){
+  if(document.getElementById(tab+'-reestr')?.checked === false) return 0;
+  const v = parseFloat(document.getElementById(tab+'-sep-dens')?.value);
+  const sd = isFinite(v) && v > 0 ? v/(tab==='col' ? 1000 : 100) : s/2;
+  return sd < s ? sd : 0;
+}
+function colDimMax(c){ const {A, B} = colSecc(c); return Math.max(+A||0, +B||0)/100; }
+function nEstribosCol(c){
+  const h = colAltHierro(c), s = (+c.sepEstr||150)/1000;
+  return nEstribosDensif(h, +c.alt||h, colDimMax(c), s, sepDensif('col', s));
+}
+function nEstribosViga(v){
+  const L = +v.longLibre||0, s = (+v.sepEstr||20)/100;
+  return nEstribosDensif(L, L, Math.max(+v.ancho||20, +v.alto||20)/100, s, sepDensif('vig', s));
+}
+// Texto de la separación para la tabla: "c/150mm · cruces c/75 (0,60 m)"
+function txtSepEstr(tab, sep, Lh, dimMax){
+  const u = tab==='col' ? 'mm' : 'cm', s = sep/(tab==='col' ? 1000 : 100), sd = sepDensif(tab, s);
+  if(!(sd>0)) return `c/${sep}${u}`;
+  const k = tab==='col' ? 1000 : 100;
+  return `c/${sep}${u} · cruces c/${n(sd*k, sd*k%1 ? 1 : 0)} (${n(zonaDensif(Lh, dimMax),2)} m)`;
+}
 function colAltHierro(c){ return +c.altT > 0 ? +c.altT : (+c.alt || 0); }
 function lBarraCIRSOC(alt, phi_mm){
   const L = BARRA_COMERCIAL;
@@ -6041,7 +6097,7 @@ function renderColumnas(){
         <button class="estr-btn" onclick="openEstriboPicker('col',${c.id})" title="Cambiar tipo de estribo">
           ${tipoInfo?.abbr||'simple'} <span style="opacity:.6;">▾</span>
         </button>
-        <div class="estr-preview" style="margin-top:3px;">Ø${c.phiEstr} c/${c.sepEstr}mm · ${perim.toFixed(2)}m</div>
+        <div class="estr-preview" style="margin-top:3px;">Ø${c.phiEstr} ${txtSepEstr('col', c.sepEstr, +c.alt||colAltHierro(c), colDimMax(c))} · ${perim.toFixed(2)}m</div>
         <div style="display:flex;gap:4px;margin-top:3px;align-items:center;">
           ${phiSelectHtml(c.phiEstr, `updateCol(${c.id},'phiEstr',+this.value);calcColTotals()`)}
           <input type="number" value="${c.sepEstr}" onchange="updateCol(${c.id},'sepEstr',+this.value);calcColTotals()" class="sep-input" title="Separación mm">
@@ -6623,6 +6679,7 @@ const MORTEROS = [
   {k:'fe',   lbl:'Revoque fino exterior',   sub:'arena fina',            sel:'rev-opc-fe',     tipos:['2','1','3']},
   {k:'cg',   lbl:'Cielorraso grueso',       sub:'aplicado · arena gruesa', sel:'cg-mort-tipo', tipos:['2','1']},
   {k:'cr',   lbl:'Cielorraso fino',         sub:'enlucido · yeso o arena fina', sel:'cr-mort-tipo', tipos:['4','2','1']},
+  {k:'carp', lbl:'Carpeta niveladora',      sub:'sobre contrapiso · arena gruesa', sel:'carp-mort-tipo', tipos:['3','1']},
 ];
 // Valores iniciales: reproducen los consumos que ya usaba la planilla
 // (mampostería 18,6 kg cem. alb. + 0,078 m³ arena por m² · grueso 7,5 kg/m²)
@@ -6634,6 +6691,7 @@ const MORT_DEF = {
   fe:   {tipo:'2', t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}, t3:{cem:1, are:3}},
   cg:   {tipo:'2', t2:{alb:1, are:4}, t1:{cem:0.25, cal:1, are:4}},
   cr:   {tipo:'4', t4:{ykg:YESO_KG_M2CM}, t2:{alb:1, are:3}, t1:{cem:0.125, cal:1, are:2}},
+  carp: {tipo:'3', t3:{cem:1, are:3}, t1:{cem:1, cal:0.25, are:3}},
 };
 
 // Dosificaciones habituales (ayuda memoria, se editan en la tabla y se guardan con la obra)
@@ -6645,6 +6703,7 @@ const MORT_SUG = {
   fe:   'Cem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)\nCemento 1:3',
   cg:   'Cem.+cal ¼:1:4 (opción 1)\nCem. alb. 1:4 (opción 2)',
   cr:   'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2 (opción 1)\nCem. alb. 1:3 (opción 2)',
+  carp: 'Cemento 1:3 (tradicional)\nCem.+cal 1:¼:3 (más trabajable)\nCemento 1:4 (tránsito liviano)',
 };
 // Textos de ayuda memoria que traía la versión anterior (si no se editaron, se actualizan)
 const MORT_SUG_VIEJO = {
@@ -6655,6 +6714,7 @@ const MORT_SUG_VIEJO = {
   fe:   'Cem. alb. 1:3\nCem.+cal ⅛:1:3\nCemento 1:3',
   cr:   ['Yeso 1000\nCem.+cal ⅛:1:3\nCem. alb. 1:3', 'Yeso 5 (kg/m² por cm)\nCem.+cal ⅛:1:2\nCem. alb. 1:3'],
   cg:   [],
+  carp: [],
 };
 const _FRAC = {'⅛':0.125, '¼':0.25, '½':0.5, '¾':0.75};
 function _parteTxt(t){
@@ -6844,6 +6904,7 @@ function morteroCambio(){
   calcMortero();
   calcMamposteria();
   calcRevoques();
+  if(typeof calcContrapiso==='function') calcContrapiso();
 }
 
 // Link "cambiar en Dosificaciones" → abre la pestaña en la tarjeta de morteros
@@ -6922,7 +6983,7 @@ function renderVigas(tipo){
       </td>
       <td class="center" style="min-width:110px;">
         <button class="estr-btn" onclick="openEstriboPicker('${src}',${v.id})">${tipoInfo?.abbr||'simple'} ▾</button>
-        <div class="estr-preview" style="margin-top:3px;">Ø${v.phiEstr} c/${v.sepEstr}cm · ${perim.toFixed(2)}m</div>
+        <div class="estr-preview" style="margin-top:3px;">Ø${v.phiEstr} ${txtSepEstr('vig', v.sepEstr, +v.longLibre||0, Math.max(+v.ancho||20, +v.alto||20)/100)} · ${perim.toFixed(2)}m</div>
         <div style="display:flex;gap:4px;margin-top:3px;">
           ${phiSelectHtml(v.phiEstr,`updateViga('${tipo}',${v.id},'phiEstr',+this.value);calcVigaTotals()`)}
           <input type="number" value="${v.sepEstr}"
@@ -8043,14 +8104,13 @@ const MALLAS_SIMA = Object.keys(SIMA_INFO).map(t=>[t, mallaNom(t)]);
 const SIMA_POR_PHI = {'4.2':'Q92', '5':'Q131', '6':'Q188', '7':'Q257', '8':'Q335'};
 const mallaDeLosa = l => l.malla || SIMA_POR_PHI[String(l.phi)] || 'Q188';
 const SIMA_SOLAPE = 1.10;   // +10 % de m² de malla por solapes entre paneles
-const CARP_DOSAJE = {cem:1, are:3};   // carpeta: 1 cemento portland : 3 arena gruesa
 function calcContrapiso(){
   const ec = r('carp-esp')/100;
   const contTipo = document.getElementById('cont-horm-tipo')?.value||'obra';
   const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
-  // Carpeta: mortero 1 : 3 (cemento portland : arena gruesa), kg y m³ por m³ de mortero
-  const mzCarp = rendMezcla({cem:CARP_DOSAJE.cem, are:CARP_DOSAJE.are});
-  const CARP_CEM_KG_M3 = mzCarp.portKg, CARP_ARENA_M3M3 = mzCarp.arenaM3;
+  // Carpeta: la mezcla de "Carpeta niveladora" en Dosificaciones (tradicional 1:3 cemento : arena gruesa)
+  const mzCarpM = mortero('carp'), mzCarp = mzCarpM.rend;
+  const CARP_CEM_KG_M3 = mzCarp.portKg, CARP_ARENA_M3M3 = mzCarp.arenaM3, CARP_CAL_KG_M3 = mzCarp.calKg || 0;
   // Contrapiso en obra: el dosaje de H° de Dosificaciones (cemento, arena y ripio completos)
   const mat = (o, tipoH) => {
     const el = tipoH!=='obra';
@@ -8059,6 +8119,7 @@ function calcContrapiso(){
       cemB25: (el ? 0 : o.sup*o.esp*hf.cemBol25) + o.supC*ec*CARP_CEM_KG_M3/25,
       arena:  (el ? 0 : o.sup*o.esp*hf.arena) + o.supC*ec*CARP_ARENA_M3M3,
       ripio:   el ? 0 : o.sup*o.esp*hf.piedra,
+      calKg:   o.supC*ec*CARP_CAL_KG_M3,
       elab:    el ? o.sup*o.esp : 0};
   };
   const niveles = nivelesArea('cp').map(nv=>mat({nv,
@@ -8076,7 +8137,7 @@ function calcContrapiso(){
   const filasCp = [...niveles, ...sectores];
   const T = k => filasCp.reduce((s,x)=>s+x[k], 0);
   const volCP = T('vol'), volCarp = T('volC');
-  const cemCarp = volCarp*CARP_CEM_KG_M3/25, arCarp = volCarp*CARP_ARENA_M3M3;
+  const cemCarp = volCarp*CARP_CEM_KG_M3/25, arCarp = volCarp*CARP_ARENA_M3M3, calCarp = volCarp*CARP_CAL_KG_M3;
   const cemCp = T('cemB25') - cemCarp, arCp = T('arena') - arCarp, ripCp = T('ripio');
   const elabPorTipo = {};
   filasCp.forEach(x=>{ if(x.elab>0) elabPorTipo[x.tipoH] = (elabPorTipo[x.tipoH]||0) + x.elab; });
@@ -8090,7 +8151,7 @@ function calcContrapiso(){
   });
   const volGral = filasCp.filter(x=>x.tipoH===contTipo).reduce((s,x)=>s+x.vol, 0);
   renderHormResult('cont', volGral, contTipo);
-  if(contTipo==='obra') setTxt('cont-horm-result', `${n(volGral,2)} m³ de contrapiso en obra · dosaje de H° de Dosificaciones · carpeta 1 : 3 (cemento : arena gruesa)`);
+  if(contTipo==='obra') setTxt('cont-horm-result', `${n(volGral,2)} m³ de contrapiso en obra · dosaje de H° de Dosificaciones · carpeta ${mzCarpM.label}`);
 
   const fila = (mat, val, unit, estilo) => `<div class="dosaje-row"${estilo?` style="${estilo}"`:''}><div class="dosaje-material">${mat}</div><div class="dosaje-value">${val}</div><div class="dosaje-unit">${unit}</div></div>`;
   document.getElementById('cont-resultado').innerHTML = `
@@ -8101,6 +8162,7 @@ function calcContrapiso(){
         + fila('Arena gruesa contrapiso', n(arCp,2), 'm³')
         + fila('Ripio clasificado', n(ripCp,2), 'm³') : ''}
     ${fila('Cemento carpeta', n(ucDesdeB25('portland',cemCarp),1), ucLabel('portland'), 'border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;')}
+    ${calCarp>0.001 ? fila('Cal carpeta', n(ucDesdeBase('cal', calCarp),1), ucLabel('cal')) : ''}
     ${fila('Arena carpeta', n(arCarp,2), 'm³')}
     ${Object.entries(porPhiCp).sort((a,b)=>+a[0]-+b[0]).map(([p,ml])=>fila(`Armadura Ø${String(p).replace('.',',')}`, n(ml,1)+' m', `${ceilQ(ml/BARRA_COMERCIAL)} barras ${BARRA_COMERCIAL} m`)).join('')}
     ${Object.entries(mallas).map(([t,m2])=>fila(mallaNom(t), n(m2,1)+' m²', `${n(ucDesdeBase('mallaSima', m2),1)} ${ucLabel('mallaSima')}`)).join('')}
@@ -8114,7 +8176,7 @@ function calcContrapiso(){
   const contCemTotal = cemCp + cemCarp;
   const contArena    = arCp + arCarp;
   const tiposE = Object.keys(elabPorTipo);
-  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, elaborado: elabTot,
+  state.resultados.cont = {cemPb25:contCemTotal, arena:contArena, ripio:ripCp, calKg:calCarp, elaborado: elabTot,
     tipo: tiposE.length===1 ? tiposE[0] : (elabTot ? contTipo : 'obra'), elabPorTipo, porPhi: porPhiCp, mallas, niveles, sectores};
 
   setTxt('cont-stat-elab',  elabTot ? n(elabTot,2)+' m³ '+tiposE.join(' + ') : '—');
@@ -9776,7 +9838,7 @@ function datosResumen(){
 
   // Cemento de albañilería y cal, en kg (mampostería + revoques + cubierta)
   const cemAlbKgTot = (res.mamp?.cemAlbKg||0) + (res.rev?.cemAlbKg||0) + (res.techo?.albKg||0);
-  const calKgTot    = (res.rev?.calKg||0) + (res.mamp?.calKg||0);
+  const calKgTot    = (res.rev?.calKg||0) + (res.mamp?.calKg||0) + (res.cont?.calKg||0);
 
   // ── Áridos total ───────────────────────────────────────────────────────
   // H° en obra: col + vig + bases + cimientos
@@ -9879,6 +9941,14 @@ function datosResumen(){
   ];
   // Sólo lo que se usa en esta obra: lo que da 0 no aparece (pantalla, PDF, Excel, CSV)
   secciones.forEach(sec=>{ sec.filas = sec.filas.filter(f=>(f.base||0) > 1e-6); });
+  // Cantidad final: la escrita a mano en el Resumen o, si no hay, la con incremento
+  const aj = state.resAjustes || {};
+  secciones.forEach(sc=>sc.filas.forEach(f=>{
+    f.clave = f.k + '|' + f.mat;
+    const v = aj[f.clave];
+    f.ajustado = v != null && v !== '' && isFinite(+v);
+    f.final = f.ajustado ? +v : f.cant;
+  }));
   return {pct, supTotal, mlRec, secciones};
 }
 
@@ -9895,27 +9965,54 @@ const RES_COLGROUP = '<colgroup><col style="width:46%"><col style="width:22%"><c
 // Una sola tabla para todas las secciones: el encabezado (Material · Unidad ·
 // Cantidad) va una vez arriba y cada sección es una fila-título.
 const RES_ICON = {'res-aglomerantes':'🏭', 'res-horm':'🪨', 'res-hierros':'🔩', 'res-aridos':'⛰', 'res-losas':'⬜'};
-function renderTablaResumen(secciones){
+// editable = la tabla del Resumen: suma la columna "A pedir final" (lo que sale en el PDF)
+const RES_COLGROUP_ED = '<colgroup><col style="width:38%"><col style="width:17%"><col style="width:14%"><col style="width:14%"><col style="width:17%"></colgroup>';
+function renderTablaResumen(secciones, editable){
+  const nc = editable ? 5 : 4;
   const cuerpo = secciones.map(sec=>{
     const filas = sec.filas.length
-      ? sec.filas.map(f=>`<tr${f.nota?` title="${_escHtml(f.nota)}"`:''}>
+      ? sec.filas.map(f=>`<tr${f.nota?` title="${_escHtml(f.nota)}"`:''}${f.ajustado?' class="res-ajustada"':''}>
           <td>${f.mat}</td>
           <td class="muted">${f.unidad}</td>
           <td class="right res-col-neto">${fmtRes(f.neto, f.entero)}</td>
-          <td class="right accent">${fmtRes(f.cant, f.entero)}</td>
+          ${editable
+            ? `<td class="right res-col-inc${f.ajustado?' muted':' accent'}">${fmtRes(f.cant, f.entero)}</td>
+               <td class="right res-aj"><input type="number" min="0" step="${f.entero?1:0.01}" value="${f.ajustado?f.final:''}"
+                 placeholder="${fmtRes(f.cant, f.entero)}" data-aj="${_escHtml(f.clave)}" onchange="resAjuste(this)"
+                 title="Cantidad que sale en el PDF. Vacío = la con incremento (${fmtRes(f.cant, f.entero)})"></td>`
+            : `<td class="right accent">${fmtRes(f.final ?? f.cant, f.entero)}</td>`}
         </tr>`).join('')
-      : `<tr><td class="muted" colspan="4">${sec.vacio||'—'}</td></tr>`;
-    return `<tbody class="res-sec"><tr class="res-sec-tit"><td colspan="4">${RES_ICON[sec.el]||''} ${sec.titulo}</td></tr>${filas}</tbody>`;
+      : `<tr><td class="muted" colspan="${nc}">${sec.vacio||'—'}</td></tr>`;
+    return `<tbody class="res-sec"><tr class="res-sec-tit"><td colspan="${nc}">${RES_ICON[sec.el]||''} ${sec.titulo}</td></tr>${filas}</tbody>`;
   }).join('');
   return `<div class="table-wrap" style="border:none;">
-    <table class="res-tabla">${RES_COLGROUP}
+    <table class="res-tabla${editable?' res-editable':''}">${editable ? RES_COLGROUP_ED : RES_COLGROUP}
       <thead><tr>
         <th>Material</th><th>Unidad</th>
         <th class="right res-col-neto res-col-header-neto">Neto</th>
-        <th class="right">Cantidad <span style="text-transform:none;letter-spacing:0;font-weight:400;">(c/ incremento)</span></th>
+        ${editable
+          ? `<th class="right res-col-inc">Con incremento</th>
+             <th class="right res-aj-th" title="Escribí la cantidad que querés pedir (redondeo, más material…). Vacío = la con incremento. Es la que sale en el PDF.">A pedir final <span style="text-transform:none;letter-spacing:0;font-weight:400;">(editable · va al PDF)</span></th>`
+          : `<th class="right">Cantidad <span style="text-transform:none;letter-spacing:0;font-weight:400;">(a pedir)</span></th>`}
       </tr></thead>
       ${cuerpo}
     </table></div>`;
+}
+// Cantidad escrita a mano en el Resumen (vacío = vuelve a la con incremento)
+function resAjuste(inp){
+  const k = inp.dataset.aj, v = inp.value.trim();
+  state.resAjustes = state.resAjustes || {};
+  if(v === '' || !isFinite(+v)) delete state.resAjustes[k];
+  else state.resAjustes[k] = Math.max(+v, 0);
+  scheduleAutosave();
+  calcResumen();
+}
+function resAjustesBorrar(){
+  const nAj = Object.keys(state.resAjustes||{}).length;
+  if(!nAj){ showToast('No hay cantidades escritas a mano','',1800); return; }
+  if(!confirm(`¿Borrar las ${nAj} cantidades escritas a mano? Vuelven a la con incremento.`)) return;
+  state.resAjustes = {};
+  scheduleAutosave(); calcResumen();
 }
 
 function calcResumen(){
@@ -9930,7 +10027,12 @@ function calcResumen(){
   setTxt('res-incr', r('res-pct'));
   setTxt('res-rec', n(d.mlRec,1));
   const el = document.getElementById('res-materiales');
-  if(el) el.innerHTML = renderTablaResumen(d.secciones);
+  if(el){
+    const nAj = d.secciones.reduce((t,sc)=>t + sc.filas.filter(f=>f.ajustado).length, 0);
+    el.innerHTML = renderTablaResumen(d.secciones, true)
+      + `<div class="res-aj-pie">${nAj ? `<b>${nAj}</b> cantidad${nAj>1?'es':''} escrita${nAj>1?'s':''} a mano (en <span class="res-aj-ej">azul</span>) · <a href="#" onclick="resAjustesBorrar();return false;">volver todas a la con incremento</a>`
+        : 'La columna <b>A pedir final</b> es la que sale en el PDF. Si no escribís nada, va la cantidad con incremento.'}</div>`;
+  }
 }
 
 // ── UNIDADES COMERCIALES: página ──────────────────────────────────────────
@@ -10066,7 +10168,7 @@ function exportResumen(){
   d.secciones.forEach(s=>{
     if(!s.filas.length) return;
     txt += `\n${s.titulo.toUpperCase()}\n`;
-    s.filas.forEach(f=>{ txt += `${f.mat}: ${fmtRes(f.cant, f.entero)} ${f.unidad}\n`; });
+    s.filas.forEach(f=>{ txt += `${f.mat}: ${fmtRes(f.final ?? f.cant, f.entero)} ${f.unidad}\n`; });
   });
   txt += `\nNOTAS\n` + NOTAS_RESUMEN.map(t=>'· '+t).join('\n') + '\n';
   // Sin portapapeles (o si el navegador lo niega): se muestra el texto para copiarlo a mano
@@ -10251,13 +10353,13 @@ function materialesPorItem(){
   const cpN = (res.cont?.niveles||[]).filter(x=>x.sup>0 || x.supC>0);
   cpN.forEach(x=>{
     const it = nuevo(tit('Contrapiso y carpeta', x.nv.k, cpN.length>1), 'cp');
-    add(it,'portland',x.cemB25*25); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
+    add(it,'portland',x.cemB25*25); add(it,'cal',x.calKg||0); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
     if(x.elab>0) add(it,'H:'+(x.tipoH||res.cont.tipo||'H17'), x.elab);
     if(x.mlArm>0) add(it,'hierro:'+x.phi, ceilQ(x.mlArm/B)*B);
   });
   (res.cont?.sectores||[]).filter(x=>x.sup>0 || x.supC>0).forEach(x=>{
     const it = nuevo(`Contrapiso · ${x.nombre} · ${x.nv.largo}`, 'cp');
-    add(it,'portland',x.cemB25*25); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
+    add(it,'portland',x.cemB25*25); add(it,'cal',x.calKg||0); add(it,'arenaG',x.arena); add(it,'ripio',x.ripio);
     if(x.elab>0) add(it,'H:'+x.tipoH, x.elab);
     if(x.mlArm>0) add(it,'hierro:'+x.phi, ceilQ(x.mlArm/B)*B);
     if(x.mallaM2>0) add(it,'msima:'+x.malla, x.mallaM2);
@@ -10361,7 +10463,7 @@ function htmlPdfResumen(datos, subtitulo, notasExtra){
       <tbody class="seccion">
         <tr class="h2"><td colspan="3">${s.titulo}</td></tr>
         ${s.filas.length
-          ? s.filas.map(f=>`<tr><td>${_escHtml(f.mat)}</td><td class="u">${_escHtml(f.unidad)}</td><td class="c">${fmtRes(f.cant, f.entero)}</td></tr>`).join('')
+          ? s.filas.map(f=>`<tr><td>${_escHtml(f.mat)}</td><td class="u">${_escHtml(f.unidad)}</td><td class="c">${fmtRes(f.final ?? f.cant, f.entero)}</td></tr>`).join('')
           : `<tr><td colspan="3" class="u">${_escHtml(s.vacio||'—')}</td></tr>`}
       </tbody>`).join('')
     + '</table>';
@@ -10448,9 +10550,9 @@ async function exportCSV(){
   // ; como separador y coma decimal (Excel en español), igual que exportarExcel
   const q = c => `"${String(c).replace(/"/g,'""')}"`;
   const num = (v, entero) => entero ? String(ceilQ(v)) : (Math.round(v*100)/100).toFixed(2).replace('.',',');
-  const filas = [['Sección','Material','Unidad','Cantidad neta','Con incremento']];
+  const filas = [['Sección','Material','Unidad','Cantidad neta','Con incremento','A pedir final']];
   datosResumen().secciones.forEach(s=>s.filas.forEach(f=>{
-    filas.push([s.titulo, f.mat, f.unidad, num(f.neto,f.entero), num(f.cant,f.entero)]);
+    filas.push([s.titulo, f.mat, f.unidad, num(f.neto,f.entero), num(f.cant,f.entero), num(f.final ?? f.cant,f.entero)]);
   }));
   const csv = '﻿' + filas.map(fi=>fi.map(q).join(';')).join('\r\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
@@ -10780,6 +10882,7 @@ function applySnapshot(snap, opts){
   state.mampArmP = snap.mampArmP || null;
   state.antepechos = Array.isArray(snap.antepechos) ? snap.antepechos : [];
   state.antepMort = snap.antepMort || null;
+  state.resAjustes = (snap.resAjustes && typeof snap.resAjustes==='object') ? snap.resAjustes : {};
   construirNivelesExtra();
 
   // Campos del formulario (sincrónico: el DOM estático ya existe)
@@ -11221,7 +11324,7 @@ function snapshotVacio(nombre){
   s.fields['obra-prop'] = nombre;
   Object.keys(s.checks).forEach(id=>{ s.checks[id] = false; });
   ['columnas','vigas_vf','vigas_vd','bases','losas','losas_macizas','recortes'].forEach(k=>{ s[k] = []; });
-  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.mampArmP = null; s.antepechos = []; s.antepMort = null; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true;
+  s.nivelesExtra = []; s.nivSel = {}; s.nivelesActivos = []; s.murosExtra = []; s.listas = {}; s.cpSectores = []; s.techoSectores = []; s.nivOcultos = {}; s.mampArmP = null; s.antepechos = []; s.antepMort = null; s.resAjustes = {}; s.checks = s.checks || {}; s.checks['rec-optimizar'] = true; s.checks['col-reestr'] = true; s.checks['vig-reestr'] = true;
   return s;
 }
 
@@ -11496,6 +11599,7 @@ function captureSnapshot(){
     techoSectores: state.techoSectores||[],
     nivOcultos: state.nivOcultos||{},
     mampArmP: state.mampArmP||null, antepechos: state.antepechos||[], antepMort: state.antepMort||null,
+    resAjustes: state.resAjustes||{},
     nivSel: state.nivSel||{},
   };
 }
@@ -11515,7 +11619,7 @@ async function exportarExcel(){
 
   const rows = [];
   const h1 = (t) => rows.push([t,'','','']);
-  const hdr = () => rows.push(['MATERIAL','UNIDAD','CANTIDAD NETA','CON INCREMENTO']);
+  const hdr = () => rows.push(['MATERIAL','UNIDAD','CANTIDAD NETA','A PEDIR']);
   const sep = () => rows.push(['','','','']);
   const row = (mat,unit,neto,conInc) => rows.push([mat,unit,x(neto),x(conInc)]);
 
@@ -11532,7 +11636,7 @@ async function exportarExcel(){
     if(!sec.filas.length) rows.push([sec.vacio||'—','','','']);
     sec.filas.forEach(fi=>{
       const fmt = v => fi.entero ? String(ceilQ(v)) : x(v);
-      rows.push([fi.mat, fi.unidad, fmt(fi.neto), fmt(fi.cant)]);
+      rows.push([fi.mat, fi.unidad, fmt(fi.neto), fmt(fi.final ?? fi.cant)]);
     });
     sep();
   });

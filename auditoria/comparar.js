@@ -39,7 +39,7 @@ setTimeout(() => {
     chk('Mampostería', 'cal kg', R.mamp.calKg, O.mamp.cal); chk('Mampostería', 'arena m³', R.mamp.arena, O.mamp.arena); chk('Mampostería', 'hidrófugo L', R.mamp.hidroL, O.mamp.hidro);
     chk('Revoques', 'cemento kg', R.rev.portKg, O.rev.port); chk('Revoques', 'cem. alb. kg', R.rev.cemAlbKg, O.rev.alb); chk('Revoques', 'cal kg', R.rev.calKg, O.rev.cal);
     chk('Revoques', 'yeso kg', R.rev.yesoKg, O.rev.yeso); chk('Revoques', 'arena gruesa m³', R.rev.arenaGr, O.rev.arenaG); chk('Revoques', 'arena fina m³', R.rev.arenaFi, O.rev.arenaF); chk('Revoques', 'hidrófugo L', R.rev.sika, O.rev.hidro);
-    chk('Contrapiso', 'cemento kg', R.cont.cemPb25*25, O.cont.cem); chk('Contrapiso', 'arena m³', R.cont.arena, O.cont.arena); chk('Contrapiso', 'ripio m³', R.cont.ripio, O.cont.ripio);
+    chk('Contrapiso', 'cemento kg', R.cont.cemPb25*25, O.cont.cem); chk('Contrapiso', 'arena m³', R.cont.arena, O.cont.arena); chk('Contrapiso', 'ripio m³', R.cont.ripio, O.cont.ripio); chk('Contrapiso', 'cal kg', R.cont.calKg, O.cont.cal);
     Object.keys({...(R.cont.elabPorTipo||{}), ...O.cont.elab}).forEach(t => chk('Contrapiso', `H° ${t} m³`, (R.cont.elabPorTipo||{})[t], O.cont.elab[t]));
     chk('Losas', 'losetas 12', R.losa.losetas12, O.losa.l12); chk('Losas', 'losetas 16', R.losa.losetas16, O.losa.l16);
     Object.keys({...R.losa.byTipo, ...O.losa.horm}).forEach(t => chk('Losas', `H° capa ${t} m³`, R.losa.byTipo[t], O.losa.horm[t]));

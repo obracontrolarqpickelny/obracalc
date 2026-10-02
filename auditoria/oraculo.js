@@ -39,8 +39,8 @@ function oraculo(snap) {
   const DEF = {mamp:{tipo:'2',t2:{alb:1,are:4},t1:{cem:1,cal:1,are:5}}, gi:{tipo:'2',t2:{alb:1,are:5},t1:{cem:0.25,cal:1,are:4}},
     ge:{tipo:'2',t2:{alb:1,are:5},t1:{cem:0.25,cal:1,are:4},t3:{cem:1,are:3}}, fi:{tipo:'2',t2:{alb:1,are:3},t1:{cem:0.125,cal:1,are:2}},
     fe:{tipo:'2',t2:{alb:1,are:3},t1:{cem:0.125,cal:1,are:2},t3:{cem:1,are:3}}, cg:{tipo:'2',t2:{alb:1,are:4},t1:{cem:0.25,cal:1,are:4}},
-    cr:{tipo:'4',t4:{ykg:5},t2:{alb:1,are:3},t1:{cem:0.125,cal:1,are:2}}};
-  const SEL = {mamp:'mamp-mort-tipo', gi:'rev-opc-gi', ge:'rev-opc-ge', fi:'rev-opc-fi', fe:'rev-opc-fe', cg:'cg-mort-tipo', cr:'cr-mort-tipo'};
+    cr:{tipo:'4',t4:{ykg:5},t2:{alb:1,are:3},t1:{cem:0.125,cal:1,are:2}}, carp:{tipo:'3',t3:{cem:1,are:3},t1:{cem:1,cal:0.25,are:3}}};
+  const SEL = {mamp:'mamp-mort-tipo', gi:'rev-opc-gi', ge:'rev-opc-ge', fi:'rev-opc-fi', fe:'rev-opc-fe', cg:'cg-mort-tipo', cr:'cr-mort-tipo', carp:'carp-mort-tipo'};
   const CAMPOS = {'1':['cem','cal','are'], '2':['alb','are'], '3':['cem','are'], '4':['ykg']};
   const mort = k => { const d = DEF[k]; let t = F[SEL[k]] || d.tipo; if (!d['t'+t]) t = d.tipo;
     const pr = {}; CAMPOS[t].forEach(cc => { const v = parseFloat(F[`mz-${k}-t${t}-${cc}`]); pr[cc] = isFinite(v) && v >= 0 ? v : d['t'+t][cc]; });
@@ -54,6 +54,13 @@ function oraculo(snap) {
   const lBarra = (luz, phi, anclajes) => { let br = luz + (anclajes===1 ? 0.25 + 0.06*phi : 2*0.06*phi), e = 0; while (br > B*(e+1)) { e++; br += 0.1*phi; } return CEIL(br/0.5 - 1e-9)*0.5; };
   const gancho = (phiE, man) => (man != null && man !== '' ? +man : 2*10*phiE/10) / 100;   // m por pieza (2 ganchos de 10Ø)
 
+  // ── Reestribado en cruces (02/10): zona = máx(0,60; 2 × mayor dim.; luz H°/5) en cada extremo ──
+  const CK = snap.checks || {};
+  const sdDe = (tab, s) => { if (CK[tab+'-reestr'] === false) return 0; const v = parseFloat(F[tab+'-sep-dens']);
+    const sd = isFinite(v) && v > 0 ? v/(tab==='col' ? 1000 : 100) : s/2; return sd < s ? sd : 0; };
+  const nEst = (Lt, Lh, dm, s, sd) => { if (!(Lt > 0 && s > 0)) return 0; if (!(sd > 0)) return CEIL(Lt/s - 1e-9) + 1;
+    const z = Math.max(0.60, 2*dm, Lh/5); if (2*z >= Lt) return CEIL(Lt/sd - 1e-9) + 1;
+    return 2*CEIL(z/sd - 1e-9) + CEIL((Lt - 2*z)/s - 1e-9) + 1; };
   // ── COLUMNAS ── (sólo estribo rectangular simple se recalcula aparte; otros tipos se marcan)
   const colTipo = F['col-horm-tipo'] || 'H17';
   let colVol = 0; out.colPorTipoEstr = {};
@@ -65,7 +72,7 @@ function oraculo(snap) {
     colVol += (+col.cantElem||0) * area * (+col.alt||0);
     const h = +col.altT > 0 ? +col.altT : (+col.alt||0);
     [[col.phi, col.nBarras], [col.phi2, col.n2], [col.phi3, col.n3]].forEach(([ph, nb]) => { if (ph && nb) pz(+ph, lBarra(h, +ph, 1), (+col.cantElem||0)*nb, 'col'); });
-    const nE = h > 0 ? CEIL(h/((+col.sepEstr||150)/1000) - 1e-9) + 1 : 0;
+    const sC = (+col.sepEstr||150)/1000, nE = nEst(h, +col.alt||h, Math.max(A, Bb)/100, sC, sdDe('col', sC));
     const tipo = col.estribType || 1;
     const r = col.recub ?? 2, q = v => Math.max(Math.round(v*10)/10, 1), Ae = A - 2*r, Be = Bb - 2*r, g = gancho(col.phiEstr, col.gancho);
     let largo = null;
@@ -97,7 +104,7 @@ function oraculo(snap) {
     const t = v.techoLiviano ? 'obra' : (v.hormTipo || 'H17');
     vigTipo[t] = (vigTipo[t]||0) + vol*(v.techoLiviano ? 1.5 : 1);
     [[v.phi||10, v.nBarras], [v.phi2, v.n2], [v.phi3, v.n3]].forEach(([ph, nb]) => { if (ph && nb) pz(+ph, lBarra(L, +ph, 2), +nb, 'vig'); });
-    const nE = L > 0 ? CEIL(L/((+v.sepEstr||20)/100) - 1e-9) + 1 : 0;
+    const sV = (+v.sepEstr||20)/100, nE = nEst(L, L, Math.max(+v.ancho||20, +v.alto||20)/100, sV, sdDe('vig', sV));
     if ((v.estribType||1) === 1 && !v.estriboManual) {
       const r = v.recub ?? 2, ea = Math.max(Math.round(((+v.ancho||20) - 2*r)*10)/10, 1), eb = Math.max(Math.round(((+v.alto||20) - 2*r)*10)/10, 1);
       pz(+v.phiEstr, 2*(ea+eb)/100 + gancho(v.phiEstr, v.gancho), nE, 'vig-estr');
@@ -195,12 +202,12 @@ function oraculo(snap) {
 
   // ── CONTRAPISO ──
   const ec = f('carp-esp')/100, ct = F['cont-horm-tipo'] || 'obra';
-  const cont = {cem:0, arena:0, ripio:0, elab:{}}; const mCarp = mezcla({cem:1, are:3});
+  const cont = {cem:0, arena:0, ripio:0, cal:0, elab:{}}; const mCarp = mort('carp').r;
   const filaCp = (s, esp, sC, t, armMl, armPhi) => {
     const vol = s*esp;
     if (t === 'obra') { cont.cem += vol*hf.cemKg; cont.arena += vol*hf.arena; cont.ripio += vol*hf.piedra; }
     else if (vol > 0) cont.elab[t] = (cont.elab[t]||0) + vol;
-    cont.cem += sC*ec*mCarp.port; cont.arena += sC*ec*mCarp.arena;
+    cont.cem += sC*ec*mCarp.port; cont.arena += sC*ec*mCarp.arena; cont.cal += sC*ec*mCarp.cal;
     if (armMl > 0) entera(armPhi, armMl, 'cp');
   };
   const cpPhi = {};
@@ -265,7 +272,7 @@ function oraculo(snap) {
   out.resumen = {
     portland: obra*hf.cemKg + rev.port + cont.cem + mamp.port + out.techo.port,
     cemAlb: mamp.alb + rev.alb + out.techo.alb,
-    cal: rev.cal + mamp.cal,
+    cal: rev.cal + mamp.cal + cont.cal,
     yeso: rev.yeso,
     arenaG: obra*hf.arena + cont.arena + mamp.arena + rev.arenaG + out.techo.arena,
     arenaF: rev.arenaF,

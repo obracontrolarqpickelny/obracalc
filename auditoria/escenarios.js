@@ -2,6 +2,9 @@
 const set = (d, id, v) => { const e = d.getElementById(id); if (e) e.value = v; };
 const chk = (d, id, v) => { const e = d.getElementById(id); if (e) e.checked = v; };
 module.exports = {
+  // Carpeta con cal, separación en cruces escrita en columnas, reestribado apagado en vigas
+  variantes: (w, d, S) => { set(d,'carp-mort-tipo','1'); set(d,'mz-carp-t1-cem',1); set(d,'mz-carp-t1-cal',0.5); set(d,'mz-carp-t1-are',4);
+    set(d,'col-sep-dens',100); chk(d,'vig-reestr',false); S.columnas[0].sepEstr = 200; S.columnas[1].altT = 1.0; },
   base: () => {},
   filas: (w, d, S) => {
     w.addColumna(); const c = S.columnas.at(-1); Object.assign(c, {cantElem:3, secA:25, secB:40, phi:16, nBarras:6, alt:3.2, altT:4.6, phiEstr:8, sepEstr:120, estribType:1});

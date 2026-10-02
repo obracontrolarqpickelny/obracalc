@@ -36,8 +36,14 @@ setTimeout(() => {
     ok('H° m³ (pestaña)', S.resultados.col.horm, 0.12);
     // Barra: 3,00 + 0,25 pata + 60×0,012 = 3,97 → 4,00 m; 4 barras = 16 m; 3 piezas por barra de 12 → 2 barras
     ok('Ø12 metros', S._hierros[12], 16); ok('Ø12 barras (Resumen, sin %)', S._barrasPorPhi[12], 2);
-    // Estribos: 3,00/0,15 = 20 + 1 = 21; estribo 16×16 → 0,64 + 2 ganchos 0,06 = 0,76 m; 21 × 0,76 = 15,96 m; 15 por barra → 2 barras
-    ok('estribos por columna', w.nEstribosCol(S.columnas[0]), 21); ok('Ø6 metros', S._hierros[6], 15.96); ok('Ø6 barras', S._barrasPorPhi[6], 2);
+    // Estribos con reestribado: zona = máx(0,60; 2×0,20; 3/5 = 0,60) = 0,60 m c/7,5 cm → 8 + 8 espacios;
+    // centro 3 − 1,20 = 1,80 c/15 → 12 espacios; 28 espacios + 1 = 29 estribos
+    // estribo 16×16 → 0,64 + 2 ganchos 0,06 = 0,76 m; 29 × 0,76 = 22,04 m; 15 por barra → 2 barras
+    ok('estribos por columna (con reestribado)', w.nEstribosCol(S.columnas[0]), 29); ok('Ø6 metros', S._hierros[6], 22.04); ok('Ø6 barras', S._barrasPorPhi[6], 2);
+    d.getElementById('col-reestr').checked = false; ok('sin reestribado: 3/0,15 + 1', w.nEstribosCol(S.columnas[0]), 21); d.getElementById('col-reestr').checked = true;
+    set('col-sep-dens', 100); ok('cruces c/10 cm: 6 + 6 + 12 + 1', w.nEstribosCol(S.columnas[0]), 25); set('col-sep-dens', '');
+    S.columnas[0].altT = 4.3; ok('alt. total 4,30 (luz H° 3): zona 0,60 → 16 + 3,10/0,15 = 21 → 38', w.nEstribosCol(S.columnas[0]), 38); S.columnas[0].altT = null;
+    S.columnas[0].alt = 1.0; ok('columna corta 1,00: todo densificado → 1/0,075 = 14 + 1', w.nEstribosCol(S.columnas[0]), 15); S.columnas[0].alt = 3; w.renderAll();
     R = resumen();
     ok('Resumen H17 elaborado a pedir (exacto)', R['H° H17 elaborado'].cant, 0.12);
     ok('Resumen Ø12 a pedir: 2 × 1,12 = 2,24 → 3', Math.ceil(R['Hierro Ø12'].cant - 1e-9), 3);
@@ -52,8 +58,10 @@ setTimeout(() => {
     ok('H° H21 m³: 0,2 × 0,3 × 4', S.resultados.vig.byTipo.H21, 0.24);
     // Barra 4 + 2×60×0,010 = 5,20 → 5,50 m; 4 barras = 22 m; 2 por barra → 2 barras
     ok('Ø10 metros', S._hierros[10], 22); ok('Ø10 barras', S._barrasPorPhi[10], 2);
-    // Estribos: 4/0,20 = 20 + 1 = 21; 16×26 → 0,84 + 0,12 = 0,96 m → 20,16 m; 12 por barra → 2 barras
-    ok('estribos', w.nEstribosViga(S.vigas_vd[0]), 21); ok('Ø6 metros', S._hierros[6], 20.16); ok('Ø6 barras', S._barrasPorPhi[6], 2);
+    // Estribos con reestribado: zona = máx(0,60; 2×0,30; 4/5 = 0,80) = 0,80 c/10 → 8 + 8; centro 2,40/0,20 = 12 → 29
+    // 16×26 → 0,84 + 0,12 = 0,96 m → 27,84 m; 12 por barra → 3 barras
+    ok('estribos (con reestribado)', w.nEstribosViga(S.vigas_vd[0]), 29); ok('Ø6 metros', S._hierros[6], 27.84); ok('Ø6 barras', S._barrasPorPhi[6], 3);
+    d.getElementById('vig-reestr').checked = false; ok('sin reestribado: 4/0,20 + 1', w.nEstribosViga(S.vigas_vd[0]), 21); d.getElementById('vig-reestr').checked = true;
     ok('Resumen H21 elaborado', resumen()['H° H21 elaborado'].cant, 0.24);
 
     // ─ CASO 3: 1 base 1,00 × 1,20 × 0,50, Ø10 c/15 en X e Y, H17 ─
@@ -96,6 +104,12 @@ setTimeout(() => {
     ok('cemento total kg: 606,28 + 321,98', S.resultados.cont.cemPb25*25, 928.26);
     ok('arena m³: 1,29916 + 0,68995', S.resultados.cont.arena, 1.98911); ok('ripio m³', S.resultados.cont.ripio, 1.29916);
     R = resumen(); ok('Resumen cemento neto (kg ÷ 25 = bolsas)', R['Cemento Portland'].neto, 928.26/25);
+    // Carpeta con cal 1:¼:3 (Dosificaciones): 1.400/3.100 + 150/2.300 + 4.500/2.600 + 1.550×0,55/1.000 = 3,10010 → /0,97 = 3,19598
+    //   → cemento 438,05 kg/m³ · cal 46,93 kg/m³ · arena 0,93868 m³/m³; × 0,7 m³
+    set('carp-mort-tipo', '1'); set('mz-carp-t1-cem', 1); set('mz-carp-t1-cal', 0.25); set('mz-carp-t1-are', 3); w.morteroCambio();
+    ok('carpeta con cal: cal kg 0,7 × 46,93', S.resultados.cont.calKg, 32.85); ok('cemento total kg: 606,28 + 0,7 × 438,05', S.resultados.cont.cemPb25*25, 912.92);
+    R = resumen(); ok('Resumen cal neta (bolsas 25 kg)', R['Cal Hidratada Especial'].neto * w.uc('cal').cont, 32.85);
+    set('carp-mort-tipo', '3'); w.morteroCambio();
 
     // ─ CASO 6: revoque grueso interior PB 10 m² × 2,5 cm, cem. alb. 1:5 ─
     caso = 'Revoque'; S = vacia();
@@ -154,6 +168,18 @@ setTimeout(() => {
     caso = 'Negativo'; S = vacia();
     const inp = d.getElementById('mamp-sup-pb'); inp.value = '-5'; inp.dispatchEvent(new w.Event('input', {bubbles:true}));
     ok('la casilla queda en 0', +inp.value, 0);
+
+    // ─ CASO 11: Resumen — cantidad escrita a mano (columna A pedir final) ─
+    caso = 'A pedir final'; S = vacia(); set('techo-sup', 90); w.renderAll(); w.calcResumen();
+    const inpA = [...d.querySelectorAll('#res-materiales input[data-aj]')].find(x => /Membrana/.test(x.dataset.aj));
+    ok('vacío: placeholder = con incremento 11,2 → 12 rollos enteros', parseFloat(inpA.placeholder.replace(',', '.')), 12);
+    inpA.value = '15'; inpA.dispatchEvent(new w.Event('change', {bubbles:true}));
+    R = resumen(); ok('final = 15', R['Membrana Asfáltica'].final, 15); ok('con incremento no cambia', R['Membrana Asfáltica'].cant, 11.2);
+    const pdf = w.htmlPdfResumen(); ok('el PDF lleva 15 y no 11,2', /Membrana[^]*?>15<\/td>/.test(pdf) && !/>11,20</.test(pdf) ? 1 : 0, 1);
+    ok('se guarda con la obra', w.captureSnapshot().resAjustes['membrana|Membrana Asfáltica'], 15);
+    const inpB = [...d.querySelectorAll('#res-materiales input[data-aj]')].find(x => /Membrana/.test(x.dataset.aj));
+    inpB.value = ''; inpB.dispatchEvent(new w.Event('change', {bubbles:true}));
+    ok('borrado → vuelve a la con incremento', resumen()['Membrana Asfáltica'].final, 11.2);
 
     const malos = filas.filter(x => x.startsWith('✗'));
     console.log(filas.join('\n'));

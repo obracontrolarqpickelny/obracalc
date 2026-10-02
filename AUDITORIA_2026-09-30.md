@@ -95,3 +95,15 @@ emulsión, aislación, hidrófugo, alambre y clavos con +5 % fijo (no se suman a
 | Unidades comerciales | VERIFICADO |
 | Resumen / PDF por ítem / dashboard | CORREGIDO Y VERIFICADO (E8) |
 | Reglas de desperdicio (D1–D5) | CORREGIDO Y VERIFICADO |
+
+## Cambios del 02/10/2026 (verificados con el mismo método)
+
+| # | Pedido | Cambio |
+|---|---|---|
+| P1 | Resumen: columna editable | Nueva columna **A pedir final**: vacía = la cantidad con incremento; lo escrito a mano es lo que sale en el PDF, el texto copiado, el CSV y el Excel. Se guarda con la obra (`resAjustes`). "Neto" y "Con incremento" no cambian. |
+| P2 | Carpeta niveladora en Dosificaciones | Nueva fila de mortero: Cemento + arena (tradicional 1 : 3) o Cemento + cal + arena (1 : ¼ : 3). El contrapiso toma esa mezcla; la cal, si la lleva, va al Resumen. |
+| P3 | Reestribado en los cruces (columnas y vigas) | En cada extremo, zona = el mayor de 0,60 m, 2 × la mayor dimensión de la sección y 1/5 de la luz de H°; separación = la de la casilla de la pestaña o, vacía, la mitad de la de la fila. Se puede apagar por pestaña. En vigas continuas cargadas en una fila, la regla del 1/5 da el mismo largo total densificado (40 %) que tramo por tramo. |
+
+Verificación: oráculo con la misma regla → 0 diferencias en 6 escenarios (nuevo: "variantes", con carpeta con cal, separación escrita y reestribado apagado);
+casos a mano 78 / 78 (estribos calculados a mano: columna 20×20 de 3 m c/15 → 29; viga 20×30 de 4 m c/20 → 29; apagado → 21; carpeta con cal; columna editable → PDF).
+Impacto en la obra de ejemplo: estribos de columnas 2.281 → 3.154, de vigas 338 → 487; hierro Ø6 229 → 319 barras.
