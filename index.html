@@ -1953,6 +1953,18 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .res-aj-pie { font-size: 11px; color: var(--text3); margin: 8px 4px 0; }
 .res-aj-pie a { color: var(--accent); font-weight: 600; }
 .res-aj-ej { color: var(--blue); font-weight: 700; }
+.pedir-tab:empty { display: none; }
+.pedir-tab { margin: -4px 0 14px; padding: 8px 12px 10px; border: 1px solid var(--accent); border-radius: 10px; background: var(--bg2, var(--card)); }
+.pedir-tit { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.pedir-tit b { color: var(--accent); }
+.pedir-tit span { font-size: 10.5px; color: var(--text3); margin-left: 6px; }
+.pedir-t { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pedir-t th { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--border); }
+.pedir-t th.right, .pedir-t td.right { text-align: right; }
+.pedir-t td { padding: 3px 6px; border-bottom: 1px solid var(--border); }
+.pedir-t td b { color: var(--accent); }
+.pedir-phi { margin-left: 8px; font-size: 11px; color: var(--text2); }
+.pedir-phi b { color: var(--accent); }
 .pct-tabs-res { font-size: 11px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
 .pct-tabs-res span { color: var(--text3); }
 
@@ -2610,6 +2622,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-col" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-col"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">3</span>
           <div class="edit-guide-text">
@@ -2723,6 +2736,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-vig" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-vig"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">4</span>
           <div class="edit-guide-text">
@@ -2903,6 +2917,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-bas" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-bas"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">5</span>
           <div class="edit-guide-text">
@@ -3074,6 +3089,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-mamp" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-mamp"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">6</span>
           <div class="edit-guide-text">
@@ -3222,6 +3238,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-rev" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-rev"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">7</span>
           <div class="edit-guide-text">
@@ -3452,6 +3469,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-cp" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-cp"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">8</span>
           <div class="edit-guide-text">
@@ -3596,6 +3614,7 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
           <input type="number" id="pct-losa" class="input-editable pct-tab-inp" step="1" min="0" placeholder="12" oninput="pctTabsCambio()">
           <span>%</span><span class="pct-tab-ayuda">vacío = usa el general del Resumen (<b class="pct-gral">12</b> %)</span>
         </div>
+        <div class="pedir-tab" id="pedir-losa"></div>
         <div class="edit-guide-banner">
           <span class="edit-guide-step">9</span>
           <div class="edit-guide-text">
@@ -4773,6 +4792,7 @@ function renderHormResult(prefix, vol_m3, tipo){
 // el dosaje de Dosificaciones. Más alambre y clavos del H° armado.
 function hormMatHTML(porTipo, o){
   o = o || {};
+  const fP = +o.f > 0 ? +o.f : 1;
   const hf = state.hormFactor || {cemBol25:9.4, arena:0.504, piedra:0.672};
   const ac = parseFloat(document.getElementById('dos-ac')?.value) || 0.50;
   const fila = (mat, cant, com, cls) => `<tr${cls?` class="${cls}"`:''}><td>${mat}</td><td class="right">${cant}</td><td class="right hm-com">${com||''}</td></tr>`;
@@ -4786,17 +4806,17 @@ function hormMatHTML(porTipo, o){
   });
   const vo = (porTipo.obra||0) + (porTipo.mano||0);
   if(vo > 0.0005){
-    const cemKg = vo * hf.cemBol25 * 25, ar = vo * hf.arena, rp = vo * hf.piedra;
-    filas += fila(`H° en obra · ${n(vo,2)} m³`, '', '', 'hm-sub');
+    const cemKg = vo * hf.cemBol25 * 25 * fP, ar = vo * hf.arena * fP, rp = vo * hf.piedra * fP;
+    filas += fila(`H° en obra · ${n(vo,2)} m³${fP!==1 ? ` · a pedir con +${n((fP-1)*100,0)} %` : ''}`, '', '', 'hm-sub');
     filas += fila('Cemento Portland', `${n(cemKg,0)} kg`, com('portland', cemKg));
     filas += fila('Arena gruesa', `${n(ar,2)} m³`, com('arenaG', ar, 2));
     filas += fila('Ripio clasificado', `${n(rp,2)} m³`, com('ripio', rp, 2));
-    filas += fila('Agua', `${n(cemKg*ac,0)} litros`, `a/c ${String(ac).replace('.',',')}`);
+    filas += fila('Agua', `${n(cemKg/fP*ac,0)} litros`, `a/c ${String(ac).replace('.',',')}`);
   }
   (o.extra||[]).forEach(x=>{ if(x.q > 0.0005) filas += fila(x.mat, x.cant, x.com||''); });
   const arm = o.armadoM3 ?? total;   // alambre y clavos: sólo H° armado (no cimientos)
   if(arm > 0.0005){
-    const al = arm * (ACCESORIOS_M3.al14 + ACCESORIOS_M3.al17), cl = arm * (ACCESORIOS_M3.cl2 + ACCESORIOS_M3.cl25);
+    const al = arm * (ACCESORIOS_M3.al14 + ACCESORIOS_M3.al17) * fP, cl = arm * (ACCESORIOS_M3.cl2 + ACCESORIOS_M3.cl25) * fP;
     filas += fila('Alambre N°14 + N°17', `${n(al,1)} kg`, com('alambre', al), 'hm-acc');
     filas += fila('Clavos 2" + 2½"', `${n(cl,1)} kg`, com('clavos', cl), 'hm-acc');
   }
@@ -4820,22 +4840,22 @@ function pintarMatHormigon(){
   const put = (el, porTipo, o) => { if(el) el.innerHTML = hormMatHTML(porTipo, o); };
   // Columnas
   const colT = document.getElementById('col-horm-tipo')?.value || 'H17';
-  put(document.getElementById('col-horm-mat'), {[colT]: res.col?.horm || 0});
+  put(document.getElementById('col-horm-mat'), {[colT]: res.col?.horm || 0}, {f: pctTab('col')});
   // Vigas (VF/VA + VD/VE/VC; techo liviano va como H° en obra ×1,5)
   const vig = res.vig?.byTipo || {};
   const cv = _cajaHormMat('vig-horm-mat', document.getElementById('vig-stat-elab')?.closest('.grid-3'), 'Materiales del hormigón · vigas');
-  put(cv, vig); setTxt('vig-horm-mat-tot', suma(vig) ? n(suma(vig),2)+' m³' : '');
+  put(cv, vig, {f: pctTab('vig')}); setTxt('vig-horm-mat-tot', suma(vig) ? n(suma(vig),2)+' m³' : '');
   // Bases y cimientos
   const bc = {...(res.bases?.byTipo || {})};
   if(res.cim?.volHorm > 0){ const t = res.cim.hormTipo || 'obra'; bc[t] = (bc[t]||0) + res.cim.volHorm; }
   const cb = _cajaHormMat('bas-horm-mat', document.getElementById('fund-tot')?.closest('.card'), 'Materiales del hormigón · bases y cimientos');
-  put(cb, bc, {armadoM3: suma(res.bases?.byTipo || {}), extra: [{q: res.cim?.piedra || 0, mat: 'Piedra bola (cimientos)', cant: n(res.cim?.piedra || 0, 2) + ' m³'}]});
+  put(cb, bc, {f: pctTab('bas'), armadoM3: suma(res.bases?.byTipo || {}), extra: [{q: res.cim?.piedra || 0, mat: 'Piedra bola (cimientos)', cant: n((res.cim?.piedra || 0)*pctTab('bas'), 2) + ' m³'}]});
   setTxt('bas-horm-mat-tot', suma(bc) ? n(suma(bc),2)+' m³ de H°' : '');
   // Losas: capa de compresión + losas macizas (H17)
   const lo = {...(res.losa?.byTipo || {})};
   if(res.losaMac?.horm > 0) lo.H17 = (lo.H17||0) + res.losaMac.horm;
   const cl = _cajaHormMat('losa-horm-mat', document.getElementById('losas-stats-top'), 'Materiales del hormigón · losas (capa de compresión y macizas)');
-  put(cl, lo); setTxt('losa-horm-mat-tot', suma(lo) ? n(suma(lo),2)+' m³' : '');
+  put(cl, lo, {f: pctTab('losa')}); setTxt('losa-horm-mat-tot', suma(lo) ? n(suma(lo),2)+' m³' : '');
 }
 
 // Dispatch recalc desde el selector
@@ -5032,7 +5052,7 @@ function _selResultado(tb, ids){
       add(l.hormTipo||'H17', l.cant * l.sup * ((l.capComp||7)/100));
       const los = losaLosetas(l);
       if(+l.alt===16) l16 += los; else l12 += los;
-      malla += l.cant * l.sup * SIMA_SOLAPE;
+      if(l.arm!=='hierro') malla += l.cant * l.sup * SIMA_SOLAPE;
     });
     if(l12) extra.push({q:l12, mat:'Losetas 12 cm', cant:n(l12,0)+' u.'});
     if(l16) extra.push({q:l16, mat:'Losetas 16 cm', cant:n(l16,0)+' u.'});
@@ -6185,7 +6205,7 @@ function calcColTotals(){
 
   // Actualizar panel resumen por Ø
   const PHI_COLORS={6:'#6a9fd8',8:'#6db87a',10:'#d4a853',12:'#d4854a',16:'#a07ecc',20:'#e07070'};
-  const rDiv = document.getElementById('col-resumen-phi');
+  const rDiv = document.getElementById('col-resumen-phi');  // barras netas · a pedir lo completa renderPedirTabs
   if(rDiv){
     const rows = Object.entries(hierrosPhi)
       .filter(([,d])=>d.ml>0.01)
@@ -6195,7 +6215,7 @@ function calcColTotals(){
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PHI_COLORS[phi]||'#999'};flex-shrink:0;"></span>
           <span style="min-width:38px;font-weight:700;color:${PHI_COLORS[phi]||'#999'};">Ø ${phi}</span>
           <span style="flex:1;color:var(--text3);">${n(d.ml,1)} ml</span>
-          <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span>
+          <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span><span class="pedir-phi" data-tab="col" data-phi="${phi}"></span>
           ${d.sobrante>0.1?`<span style="color:var(--green);font-size:9px;">(sob: ${d.sobrante.toFixed(2)} m)</span>`:''}
         </div>`).join('');
     rDiv.innerHTML = rows || '<span style="color:var(--text3);">Sin datos</span>';
@@ -7114,11 +7134,12 @@ function renderVigPhiPanel(){
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PHI_COLORS[p]||'#999'};flex-shrink:0;"></span>
         <span style="min-width:38px;font-weight:700;color:${PHI_COLORS[p]||'#999'};">Ø ${p}</span>
         <span style="flex:1;color:var(--text3);">${n(d.ml,1)} ml</span>
-        <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span>
+        <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span><span class="pedir-phi" data-tab="vig" data-phi="${p}"></span>
         ${d.sobrante>0.1?`<span style="color:var(--green);font-size:9px;">(sob: ${d.sobrante.toFixed(2)} m)</span>`:''}
       </div>`).join('');
   rDiv.innerHTML = (rows||'<span style="color:var(--text3);">Sin datos</span>')
     + `<div style="font-size:9px;color:var(--text3);margin-top:4px;text-align:right;">${labTab}</div>`;
+  _pedirProgramar();
 }
 
 function calcVigaTotals(){
@@ -7375,7 +7396,7 @@ function calcBases(){
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PHI_COLORS[phi]||'#999'};flex-shrink:0;"></span>
           <span style="min-width:38px;font-weight:700;color:${PHI_COLORS[phi]||'#999'};">Ø ${phi}</span>
           <span style="flex:1;color:var(--text3);">${n(d.ml,1)} ml</span>
-          <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span>
+          <span style="font-weight:700;color:var(--text);">${d.barrasComerciales} barras</span><span class="pedir-phi" data-tab="bas" data-phi="${phi}"></span>
           ${d.sobrante>0.1?`<span style="color:var(--green);font-size:9px;">(sob: ${d.sobrante.toFixed(2)} m)</span>`:''}
         </div>`).join('');
     rDiv.innerHTML = rows||'<span style="color:var(--text3);">Sin datos</span>';
@@ -9431,6 +9452,7 @@ function optimizarCortes(){
 
 // ── DASHBOARD UPDATE ─────────────────────────────────────────────────────
 function updateDashboard(){
+  _pedirProgramar();
   const res=state.resultados||{};
   const sup=supCubiertaTotal();
   setVal('sup-total',sup,0);
@@ -9856,7 +9878,9 @@ function datosResumen(){
   const fTab = hayPctTabs() ? factoresPorMaterial() : null;
   const U = (mat, k, qBase, f, nota='') => {
     if(fTab && f===pct){
-      const clave = k==='hierro' ? 'hierro:' + (String(mat).match(/Ø([\d,.]+)/)?.[1]||'').replace(',','.') : k;
+      const clave = k==='hierro' ? 'hierro:' + (String(mat).match(/Ø([\d,.]+)/)?.[1]||'').replace(',','.')
+                  : k==='alambre' ? (/14/.test(mat) ? 'al14' : 'al17')
+                  : k==='clavos' ? (/2½/.test(mat) ? 'cl25' : 'cl2') : k;
       if(fTab[clave]) f = fTab[clave];
     }
     return {
@@ -9880,7 +9904,7 @@ function datosResumen(){
 
   // Aislación del techo: cantidad base en m³, presentación según Pomeca o Perlita
   const aisl = (techo.insul && techo.volAisl>0)
-    ? [U(`Aislación (${techo.insul})`, techo.insul==='Perlita'?'perlita':'pomeca', techo.volAisl, 1.05)] : [];
+    ? [U(`Aislación (${techo.insul})`, techo.insul==='Perlita'?'perlita':'pomeca', techo.volAisl, pct)] : [];
 
   const secciones = [
     {el:'res-aglomerantes', titulo:'Aglomerantes', filas:[
@@ -9911,14 +9935,14 @@ function datosResumen(){
           suma(res.losa?.mallas, pctTab('losa')); suma(res.cont?.mallas, pctTab('cp'));
           return m; })()).map(([t,x])=>U(mallaNom(t),'mallaSima', x.q, x.q>0 ? x.qf/x.q : 1)),
       U('Membrana Asfáltica','membrana', membrana*10, pct),
-      U('Emulsión Asfáltica','emulsion', emulsion, 1.05),
+      U('Emulsión Asfáltica','emulsion', emulsion, pct),
       ...aisl,
-      U('Hidrófugo SIKA 1','hidrofugo', hikaSika, 1.05, 'revoques y hiladas hidrófugas de PB'),
-      U('Hidrófugo de masa','hidroMasa', hidrBases+hidrCim, 1, 'bases + cim.'),
-      U('Alambre N°14','alambre', acc.al14, 1.05, '3,5 kg/m³ H° armado'),
-      U('Alambre N°17','alambre', acc.al17, 1.05, '3,5 kg/m³ H° armado'),
-      U('Clavos punta París 2"','clavos', acc.cl2, 1.05, '1 kg/m³ H° armado'),
-      U('Clavos punta París 2½"','clavos', acc.cl25, 1.05, '1 kg/m³ H° armado'),
+      U('Hidrófugo SIKA 1','hidrofugo', hikaSika, pct, 'revoques y hiladas hidrófugas de PB'),
+      U('Hidrófugo de masa','hidroMasa', hidrBases+hidrCim, pct, 'bases + cim.'),
+      U('Alambre N°14','alambre', acc.al14, pct, '3,5 kg/m³ H° armado'),
+      U('Alambre N°17','alambre', acc.al17, pct, '3,5 kg/m³ H° armado'),
+      U('Clavos punta París 2"','clavos', acc.cl2, pct, '1 kg/m³ H° armado'),
+      U('Clavos punta París 2½"','clavos', acc.cl25, pct, '1 kg/m³ H° armado'),
     ]},
   ];
   // Sólo lo que se usa en esta obra: lo que da 0 no aparece (pantalla, PDF, Excel, CSV)
@@ -10219,7 +10243,10 @@ const ITEM_MAT = [
   ['hidrofugo','Hidrófugo SIKA 1','hidrofugo'], ['hidroMasa','Hidrófugo de masa','hidroMasa'],
   ['al14','Alambre N°14','alambre'], ['al17','Alambre N°17','alambre'], ['cl2','Clavos punta París 2"','clavos'], ['cl25','Clavos punta París 2½"','clavos'],
 ];
-const ITEM_INCR_FIJO = {emulsion:1.05, pomeca:1.05, perlita:1.05, hidrofugo:1.05, hidroMasa:1, al14:1.05, al17:1.05, cl2:1.05, cl25:1.05};
+// Todos los materiales llevan el % de la pestaña de donde salen (antes alambre, clavos,
+// emulsión, aislación e hidrófugos tenían +5 % fijo y el hidrófugo de masa ninguno).
+// Sólo el H° elaborado se pide exacto.
+const ITEM_INCR_FIJO = {};
 
 // ── % DE INCREMENTO POR PESTAÑA ─────────────────────────────────────────
 // Cada pestaña puede tener su % (ej. mampostería 20 %, vigas 10 %); vacío = el
@@ -10256,6 +10283,8 @@ function pctTabsCambio(){
       : '<span>Todas las pestañas usan este %. En cada pestaña podés poner uno propio.</span>';
   }
   if(typeof calcMamposteria==='function' && document.getElementById('mamp-niveles')) calcMamposteria();
+  if(typeof pintarMatHormigon==='function') pintarMatHormigon();
+  _pedirProgramar();
   if(document.getElementById('page-resumen')?.classList.contains('active')) calcResumen();
 }
 
@@ -10353,7 +10382,7 @@ function materialesPorItem(){
     arr.forEach(l=>{
       if(l._t==='p'){
         add(it, +l.alt===16 ? 'loseta16' : 'loseta', losaLosetas(l));
-        add(it, 'malla', l.cant*l.sup*SIMA_SOLAPE);
+        if(l.arm!=='hierro') add(it, 'msima:'+mallaDeLosa(l), l.cant*l.sup*SIMA_SOLAPE);
         horm(it, l.hormTipo||'H17', l.cant*l.sup*((l.capComp||7)/100));
       } else { const vm = l.cant*l.ancho*l.largo*(l.alto/100); horm(it, 'H17', vm); acc(it, vm); }
     });
@@ -10369,22 +10398,58 @@ function materialesPorItem(){
   }
 
   // A filas con presentación comercial (mismo formato que el Resumen)
-  const secciones = items.map(it=>{
-    const filas = [];
-    ITEM_MAT.forEach(([key, lbl, k])=>{
-      const claves = Object.keys(it.m).filter(x=> key.endsWith(':') ? x.startsWith(key) : x===key)
-        .sort((a,b)=> (parseFloat(a.split(':')[1])||0) - (parseFloat(b.split(':')[1])||0) || a.localeCompare(b));
-      claves.forEach(x=>{
-        const q = it.m[x];
-        const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pctTab(it.tab));
-        const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
-                     : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : key==='msima:' ? 'Malla SIMA '+x.slice(6) : lbl;
-        filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f)});
-      });
-    });
-    return {titulo:it.titulo, filas};
-  }).filter(sc=>sc.filas.length);
+  const secciones = items.map(it=>({titulo:it.titulo, filas:filasMateriales(it.m, it.tab)})).filter(sc=>sc.filas.length);
   return {pct, supTotal: supCubiertaTotal(), secciones, items};
+}
+// Materiales (clave → cantidad en unidad base) → filas con presentación comercial y el
+// % de la pestaña (el H° elaborado va exacto). La usan el PDF por ítem y cada pestaña.
+function filasMateriales(m, tab){
+  const filas = [];
+  ITEM_MAT.forEach(([key, lbl, k])=>{
+    const claves = Object.keys(m).filter(x=> key.endsWith(':') ? x.startsWith(key) : x===key)
+      .sort((a,b)=> (parseFloat(a.split(':')[1])||0) - (parseFloat(b.split(':')[1])||0) || a.localeCompare(b));
+    claves.forEach(x=>{
+      const q = m[x];
+      const f = key==='H:' ? 1 : (ITEM_INCR_FIJO[key] ?? pctTab(tab));
+      const nombre = key==='H:' ? `${(HORM_TIPOS[x.slice(2)]?.label||x.slice(2)).replace(/\s*\(elab\.\)/,'')} elaborado`
+                   : key==='hierro:' ? `Hierro Ø${x.slice(7).replace('.',',')}` : key==='lad:' ? x.slice(4) : key==='msima:' ? mallaNom(x.slice(6)) : lbl;
+      filas.push({mat:nombre, k, unidad:ucLabel(k), entero:ucEntero(k), base:q*f, neto:ucDesdeBase(k,q), cant:ucDesdeBase(k,q*f), f});
+    });
+  });
+  return filas;
+}
+
+// ── A PEDIR DE CADA PESTAÑA (con su %) ──────────────────────────────────
+// Debajo de la casilla de % de cada pestaña: todos sus materiales, neto y a pedir.
+// Sale de los mismos ítems que el PDF por ítem y el Resumen, así nunca difiere.
+let _pedirT = null;
+function _pedirProgramar(){ clearTimeout(_pedirT); _pedirT = setTimeout(renderPedirTabs, 200); }
+function renderPedirTabs(){
+  if(!document.querySelector('.pedir-tab')) return;
+  let items;
+  try{ items = materialesPorItem().items; }catch(e){ return; }
+  const porTab = {};
+  items.forEach(it=>{ const o = porTab[it.tab] || (porTab[it.tab] = {}); Object.entries(it.m).forEach(([k,q])=>{ o[k] = (o[k]||0) + q; }); });
+  Object.keys(PCT_TABS).forEach(tab=>{
+    const el = document.getElementById('pedir-'+tab); if(!el) return;
+    const filas = filasMateriales(porTab[tab] || {}, tab);
+    const f = pctTab(tab), propio = (document.getElementById('pct-'+tab)?.value ?? '') !== '';
+    el.innerHTML = !filas.length ? '' : `<div class="pedir-tit">A pedir de esta pestaña · <b>+${n((f-1)*100, (f-1)*100 % 1 ? 1 : 0)} %</b>
+        <span>${propio ? 'el % de esta pestaña' : 'el % general del Resumen'} · es lo que va al Resumen y al PDF</span></div>
+      <table class="pedir-t"><thead><tr><th>Material</th><th class="right">Neto</th><th class="right">A pedir</th><th>Unidad</th></tr></thead><tbody>`
+      + filas.map(x=>`<tr><td>${_escHtml(x.mat)}</td><td class="right muted">${fmtRes(x.neto, x.entero)}</td><td class="right"><b>${fmtRes(x.cant, x.entero)}</b>${x.f===1 && /elaborado/.test(x.mat) ? ' <span class="muted">exacto</span>' : ''}</td><td class="muted">${_escHtml(x.unidad)}</td></tr>`).join('')
+      + '</tbody></table>';
+    // Paneles "Resumen de hierros": barras a pedir de esta pestaña por Ø
+    // (en vigas, del grupo que muestra el panel: VF/VA, VD/VE/VC o todas)
+    const vSub = tab==='vig' ? (_vigPhiTab||'all') : 'all';
+    const mPanel = vSub==='all' ? (porTab[tab] || {}) : items.filter(it=>it.tab==='vig' && (/^Vigas de fundación/.test(it.titulo) === (vSub==='vf')))
+      .reduce((o,it)=>{ Object.entries(it.m).forEach(([k,q])=>{ o[k] = (o[k]||0) + q; }); return o; }, {});
+    document.querySelectorAll(`.pedir-phi[data-tab="${tab}"]`).forEach(sp=>{
+      sp.title = `Barras del plan de corte (cada pieza cortada de barras de ${BARRA_COMERCIAL} m) + el % de la pestaña. Es lo que va al Resumen.`;
+      const q = mPanel['hierro:'+sp.dataset.phi];
+      sp.innerHTML = q > 0 ? `→ <b>${ceilQ(q*f/BARRA_COMERCIAL - 1e-9)}</b> a pedir (+${n((f-1)*100,0)} %)` : '';
+    });
+  });
 }
 
 // Pestaña de cada ítem, para ir desde el dashboard

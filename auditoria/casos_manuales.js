@@ -179,6 +179,8 @@ setTimeout(() => {
     inpB.value = ''; inpB.dispatchEvent(new w.Event('change', {bubbles:true}));
     ok('borrado → vuelve a la con incremento', resumen()['Membrana Asfáltica'].final, 11.2);
 
+    require('./caso_pct.js')(w, d, ok, vacia, resumen, x => { caso = x; });
+
     const malos = filas.filter(x => x.startsWith('✗'));
     console.log(filas.join('\n'));
     console.log(`\n${filas.length} verificaciones · ${malos.length} fallas`);

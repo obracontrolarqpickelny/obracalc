@@ -107,3 +107,19 @@ emulsión, aislación, hidrófugo, alambre y clavos con +5 % fijo (no se suman a
 Verificación: oráculo con la misma regla → 0 diferencias en 6 escenarios (nuevo: "variantes", con carpeta con cal y separaciones distintas por fila);
 casos a mano 78 / 78 (estribos calculados a mano: columna 20×20 de 3 m c/15 → 29; viga 20×30 de 4 m c/20 → 29; otra fila c/20 → cruces c/10 → 22; carpeta con cal; columna editable → PDF).
 Impacto en la obra de ejemplo: estribos de columnas 2.281 → 3.154, de vigas 338 → 487; hierro Ø6 229 → 319 barras.
+
+## Auditoría del % de incremento por pestaña (02/10/2026)
+
+Regla: cada material lleva el % de la pestaña de donde sale; si la pestaña no tiene % propio, el general del Resumen
+(mayor o menor, incluido 0 %). Sólo el H° elaborado se pide exacto.
+
+| # | Hallazgo | Corrección |
+|---|---|---|
+| I1 | Las pestañas mostraban sólo cantidades netas: al cambiar el % no cambiaba nada en pantalla | Tarjeta **"A pedir de esta pestaña"** debajo de la casilla de % (todas las pestañas: neto y a pedir, mismos ítems que el Resumen y el PDF); "Materiales del hormigón" y los paneles "Resumen de hierros" muestran lo que se pide con el % |
+| I2 | Alambre, clavos, emulsión, aislación e hidrófugo SIKA con +5 % fijo; hidrófugo de masa sin ningún % | Todos con el % de su pestaña (Resumen y PDF por ítem) |
+| I3 | En el Resumen, alambre y clavos no encontraban el % de su pestaña (claves distintas) | Misma clave que los ítems |
+| I4 | Losa pretensada con hierro atado: el PDF por ítem y la selección parcial le sumaban igual malla SIMA | Sólo las losas con malla |
+
+Prueba nueva `auditoria/test_pct_tabs.js`: % distinto en cada pestaña (Columnas 15, Vigas 0, Bases 30, Mampostería 20, Revoques 5,
+Contrapiso 7, Losas 3, general 12) → cada material del Resumen = Σ (cantidad de cada ítem × % de su pestaña): 0 errores en 3 escenarios.
+Casos a mano 108 / 108 (nuevo: columna en obra con 15 %, 5 %, 0 % y vacío = general, en Resumen, tarjeta, materiales del H° y panel de hierros).
