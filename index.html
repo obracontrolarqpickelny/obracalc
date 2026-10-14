@@ -2081,7 +2081,8 @@ tr.fila-selec > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
         <button class="btn btn-primary" onclick="guardarObra()" title="Ctrl+S">💾 Guardar</button>
         <button class="btn btn-secondary" onclick="abrirGuardarComo('version')" title="Otra versión de la misma obra">📑 Guardar como versión…</button>
         <button class="btn btn-secondary" onclick="abrirGuardarComo('nueva')">＋ Nueva obra</button>
-        <button class="btn btn-secondary" onclick="importarProyecto()">📂 Importar .json</button>
+        <button class="btn btn-secondary" onclick="importarProyecto()" title="Crea la obra con los datos del archivo y la abre: un .json de ObraCalc o un despiece (columnas, vigas, bases, losas)">📥 Nueva obra desde .json</button>
+        <button class="btn btn-secondary" onclick="descargarPlantillaDespiece()" title="Archivo de ejemplo con el formato del despiece, para completarlo o pasárselo a un agente">📄 Plantilla .json</button>
       </div>
       <div id="gc-box" class="gc-box" style="display:none;"></div>
 
@@ -11463,25 +11464,123 @@ async function exportarProyectoJSON(nombre, version){
 }
 
 function importarProyecto(){ document.getElementById('proj-import-input').click(); }
+// 📥 Nueva obra desde .json — en un paso: lee el archivo, arma la obra, la guarda y la abre.
+// Acepta: (1) un .json de ObraCalc (backup, "exportar" de la lista o snapshot directo);
+// (2) un DESPIECE: {obra:{…}, columnas:[…], vigas_vf:[…], vigas_vd:[…], bases:[…], losas:[…],
+//     losas_macizas:[…], campos:{…}} (ver "📄 Plantilla .json"), o {elementos:[{tipo, …}]}.
+// Si el archivo es de otra app (plan de obra, certificados…) lo dice claramente.
+const DESP_LISTAS = {columnas:'columna', vigas_vf:'viga_vf', vigas_vd:'viga_vd', bases:'base', losas:'losa', losas_macizas:'losa_maciza'};
+function tipoArchivoJSON(j){
+  if(!j || typeof j!=='object' || Array.isArray(j)) return 'desconocido';
+  const d = j.data || j;
+  if(d && d.v===1 && d.fields) return 'obracalc';
+  if(Object.keys(DESP_LISTAS).some(k=>Array.isArray(j[k])) || Array.isArray(j.elementos) || Array.isArray(j.acciones)) return 'despiece';
+  if(Array.isArray(j.tareas) && (Array.isArray(j.rubros) || Array.isArray(j.grupos))) return 'plan';
+  if(j.certificados || j.certs || /certif/i.test(JSON.stringify(Object.keys(j)))) return 'certif';
+  return 'desconocido';
+}
+const AVISO_JSON = {
+  plan: 'Este archivo es un PLAN DE OBRA (tareas, rubros y rendimientos de mano de obra). Se abre en Plan de obra / ObraGestión, no en ObraCalc.\n\nPara ObraCalc el archivo tiene que traer los elementos (columnas, vigas, bases, losas). Con "📄 Plantilla .json" descargás el formato para completarlo o pasárselo al agente del despiece.',
+  certif: 'Este archivo es de certificados (ObraCertif), no de ObraCalc.',
+  desconocido: 'Este archivo no es de ObraCalc: no trae una obra guardada ni elementos (columnas, vigas, bases, losas).\n\nCon "📄 Plantilla .json" descargás el formato que ObraCalc puede leer.',
+};
+// Despiece → snapshot de obra nueva (lo demás, como una obra nueva vacía)
+function snapshotDesdeDespiece(j, nombre){
+  const snap = snapshotVacio(nombre);
+  const o = j.obra || {};
+  const campos = {...(j.campos || {})};
+  if(o.nombre != null) campos['obra-nombre'] = o.nombre;
+  if(o.propietario != null) campos['obra-prop'] = o.propietario;
+  if(o.ubicacion != null) campos['obra-ubic'] = o.ubicacion;
+  if(o.año != null || o.anio != null) campos['obra-año'] = o.año ?? o.anio;
+  const avisos = [];
+  Object.entries(campos).forEach(([id, v])=>{
+    if(id in snap.fields) snap.fields[id] = String(v);
+    else if(snap.checks && id in snap.checks) snap.checks[id] = !!v;
+    else avisos.push(`campo "${id}" no existe`);
+  });
+  const elementos = [];
+  Object.entries(DESP_LISTAS).forEach(([k, tipo])=>(j[k]||[]).forEach(x=>elementos.push([tipo, x])));
+  (j.elementos||[]).forEach(x=>elementos.push([x.tipo, x]));
+  (j.acciones||[]).filter(a=>a && a.tipo==='agregar').forEach(a=>elementos.push([a.entidad, a.datos]));
+  const nid = {...(snap.nextId || state.nextId || {})};
+  const CONT = {columna:'col', viga_vf:'vf', viga_vd:'vf', base:'bas', losa:'losa', losa_maciza:'losaMac'};
+  const ARR  = {columna:'columnas', viga_vf:'vigas_vf', viga_vd:'vigas_vd', base:'bases', losa:'losas', losa_maciza:'losas_macizas'};
+  let n = 0;
+  elementos.forEach(([tipo, datos], i)=>{
+    if(!CONT[tipo] || !datos || typeof datos!=='object'){ avisos.push(`elemento ${i+1}: tipo "${tipo}" no válido`); return; }
+    const id = nid[CONT[tipo]] = (+nid[CONT[tipo]]||0) + 1;
+    const {tipo:_t, id:_i, ...resto} = datos;
+    (snap[ARR[tipo]] = snap[ARR[tipo]] || []).push(Object.assign(iaDefaults(tipo, id), resto, {id}));
+    n++;
+  });
+  snap.nextId = nid;
+  return {snap, n, avisos};
+}
 function importarArchivoJSON(input){
   const file = input.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const entry = JSON.parse(e.target.result);
-      const data = entry.data || entry;
-      if(!data || data.v!==1){ showToast('⚠️ Archivo inválido','',2500); return; }
-      const nombre = entry.nombre || data.fields?.['obra-nombre'] || file.name.replace(/\.json$/i,'');
-      const version = entry.version || V_PRINCIPAL;
-      if(_entrada(nombre, version) && !confirm(`"${nombre} · ${version}" ya existe en este navegador. ¿Reemplazarla por la del archivo?`)){ input.value=''; return; }
-      _guardarEntrada(nombre, version, data);
-      renderProjLista();
-      showToast(`✅ "${nombre} · ${version}" importada — abrila desde la lista`,'success',3000);
-    } catch { showToast('⚠️ Error al leer el archivo','',2500); }
-    input.value='';
+  reader.onload = async e => {
+    input.value = '';
+    let j;
+    try { j = JSON.parse(String(e.target.result).replace(/^\uFEFF/, '')); }
+    catch(err){ alert('No se pudo leer "'+file.name+'": no es un .json válido.\n\n'+(err.message||'')); return; }
+    const tipo = tipoArchivoJSON(j);
+    if(tipo!=='obracalc' && tipo!=='despiece'){ alert('"'+file.name+'"\n\n'+AVISO_JSON[tipo]); return; }
+    let snap, nombre, version = V_PRINCIPAL, n = 0, avisos = [];
+    const base = file.name.replace(/\.json$/i,'').replace(/_obracalc$/i,'').replace(/_/g,' ').trim();
+    if(tipo==='obracalc'){
+      snap = j.data || j;
+      nombre = j.nombre || snap.fields?.['obra-prop'] || snap.fields?.['obra-nombre'] || base;
+      version = j.version || V_PRINCIPAL;
+    } else {
+      nombre = (j.obra?.propietario || j.obra?.nombre || base || 'Obra').toString().trim();
+      ({snap, n, avisos} = snapshotDesdeDespiece(j, nombre));
+    }
+    nombre = prompt('Nombre de la obra nueva:', nombre);
+    if(nombre==null) return;
+    nombre = nombre.trim() || 'Obra';
+    if(_entrada(nombre, version) && !confirm(`"${nombre} · ${version}" ya existe en este navegador. ¿Reemplazarla por la del archivo?`)) return;
+    if(!(await _puedeCambiarDeObra('abrir la obra nueva'))) return;
+    saveAll();
+    applySnapshot(snap);
+    const snapFinal = captureSnapshot();       // con los cálculos y campos ya aplicados
+    if(!_guardarEntrada(nombre, version, snapFinal)) return;
+    saveAll();
+    setActiva({nombre, version});
+    marcarGuardado();
+    closeProyectos();
+    showPage(tipo==='despiece' && state.columnas.length ? 'columnas' : 'obra');
+    showToast(`✅ Obra "${nombre}" creada${tipo==='despiece' ? ` con ${n} elemento${n===1?'':'s'}` : ''} y abierta`,'success',3500);
+    if(avisos.length) alert('La obra se creó, pero hubo datos que no se cargaron:\n\n· ' + avisos.slice(0,20).join('\n· ') + (avisos.length>20 ? `\n… y ${avisos.length-20} más` : ''));
   };
   reader.readAsText(file);
+}
+// 📄 Plantilla del despiece: ejemplo completo con todos los campos de cada elemento
+async function descargarPlantillaDespiece(){
+  const ej = t => { const o = iaDefaults(t, 1); delete o.id; return o; };
+  const plantilla = {
+    _ayuda: [
+      'Formato de DESPIECE para ObraCalc. Abrir con "📥 Nueva obra desde .json" (Obras).',
+      'Cada lista es opcional; en cada elemento basta con poner los campos que cambian: los que faltan toman el valor de este ejemplo.',
+      'nivel: PB, PA, P3 (o el código de un nivel agregado). Medidas: secciones y estribos de vigas en cm; separación de estribos de columnas y de barras en mm; largos y alturas en m.',
+      'columnas: alt = altura libre (H°), altT = altura total del hierro; forma rect/cuad/circ/L/T; secA × secB en cm; phi/nBarras, phi2/n2, phi3/n3; estribos phiEstr c/sepEstr (mm).',
+      'vigas_vf (fundación/arriostramiento) y vigas_vd (dintel/encadenado/carga): longLibre en m; ancho × alto en cm; sepEstr en cm; hormTipo obra/H8/H13/H17/H21/H25.',
+      'bases: cant, ancho/largo/alto en m; parrilla phi c/sep y phi2 c/sep2 (mm). losas (pretensadas): sup en m², alt 12/16, capComp en cm. losas_macizas: ancho/largo (luz libre) m, alto cm, phiX/sepX, phiY/sepY.',
+      'campos (opcional): cualquier casilla de la app por su id, ej. "sup-pb": 120, "col-horm-tipo": "H21", "cim-largo": 45.',
+    ],
+    obra: {nombre:'Departamentos', propietario:'Nombre del comitente', ubicacion:'San Juan', año:new Date().getFullYear()},
+    campos: {'sup-pb': 0, 'sup-pa': 0, 'col-horm-tipo': 'H21'},
+    columnas: [{...ej('columna'), denom:'C1', nivel:'PB', cantElem:4, alt:2.7, altT:3.1}],
+    vigas_vf: [{...ej('viga_vf'), denom:'VF1', nivel:'PB', longLibre:5.4, ancho:20, alto:40}],
+    vigas_vd: [{...ej('viga_vd'), denom:'V1', nivel:'PB', longLibre:4.2, ancho:20, alto:30}],
+    bases: [{...ej('base'), denom:'B1', nivel:'PB', cant:4, ancho:1.2, largo:1.2, alto:0.5}],
+    losas: [{...ej('losa'), denom:'L1', nivel:'PA', sup:18.5}],
+    losas_macizas: [{...ej('losa_maciza'), denom:'LM1', nivel:'PA'}],
+  };
+  const blob = new Blob([JSON.stringify(plantilla, null, 2)], {type:'application/json'});
+  if(await iaGuardarArchivo('plantilla_despiece_obracalc.json', blob)) showToast('📄 Plantilla descargada','success',2200);
 }
 
 function openProyectos(){
@@ -11754,8 +11853,9 @@ function restaurarDesdeArchivo(input){
       // Aceptar tanto { nombre, data } como snapshot directo
       const snap = entry.data || entry;
       if(!snap || snap.v !== 1){
-        showToast('⚠️ Archivo no reconocido (v≠1)','',3000);
-        return;
+        const t = tipoArchivoJSON(entry);
+        alert('"'+file.name+'"\n\n' + (t==='despiece' ? 'Es un despiece: abrilo con "📥 Nueva obra desde .json" (Obras).' : AVISO_JSON[t]));
+        input.value=''; return;
       }
       const nombre = entry.nombre || file.name.replace('.json','');
       if(!confirm('¿Restaurar "' + nombre + '"?\nSe reemplazarán los datos actuales.')){
