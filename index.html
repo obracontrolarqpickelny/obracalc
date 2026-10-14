@@ -11499,6 +11499,19 @@ function snapshotDesdeDespiece(j, nombre){
     else if(snap.checks && id in snap.checks) snap.checks[id] = !!v;
     else avisos.push(`campo "${id}" no existe`);
   });
+  // Niveles en uso (PB siempre): PA, N3, TQ o niveles agregados
+  const niv = Array.isArray(j.niveles) ? j.niveles : Array.isArray(j.nivelesActivos) ? j.nivelesActivos : null;
+  if(niv) snap.nivelesActivos = niv.filter(k=>k && k!=='PB');
+  if(Array.isArray(j.nivelesExtra)) snap.nivelesExtra = j.nivelesExtra;
+  // Mampostería: armado del muro principal y muros agregados (otro espesor o ladrillo)
+  if(j.mampArmP && typeof j.mampArmP==='object') snap.mampArmP = {...j.mampArmP};
+  if(j.antepMort && typeof j.antepMort==='object') snap.antepMort = {...j.antepMort};
+  const conId = arr => arr.filter(x=>x && typeof x==='object').map((x, i)=>({...x, id: +x.id > 0 ? +x.id : i + 1}));
+  if(Array.isArray(j.murosExtra)) snap.murosExtra = conId(j.murosExtra).map(x=>({ladNombre:'Ladrillo', esp:0.17, largo:0.25, alto:0.06, junta:0.03, sup:{}, hil:0, lMuros:0, ...x}));
+  if(Array.isArray(j.antepechos)) snap.antepechos = conId(j.antepechos);
+  // Contrapiso: otros sectores · Cubierta: sectores
+  if(Array.isArray(j.cpSectores)) snap.cpSectores = conId(j.cpSectores).map(x=>({nombre:'', nivel:'PB', sup:0, esp:10, supC:0, horm:'', arm:'no', malla:'Q188', phi:6, sep:150, capas:1, ...x}));
+  if(Array.isArray(j.techoSectores)) snap.techoSectores = conId(j.techoSectores).map(x=>({nombre:'', sup:0, aisEsp:'', carpEsp:'', ...x}));
   const elementos = [];
   Object.entries(DESP_LISTAS).forEach(([k, tipo])=>(j[k]||[]).forEach(x=>elementos.push([tipo, x])));
   (j.elementos||[]).forEach(x=>elementos.push([x.tipo, x]));
@@ -11569,9 +11582,16 @@ async function descargarPlantillaDespiece(){
       'vigas_vf (fundación/arriostramiento) y vigas_vd (dintel/encadenado/carga): longLibre en m; ancho × alto en cm; sepEstr en cm; hormTipo obra/H8/H13/H17/H21/H25.',
       'bases: cant, ancho/largo/alto en m; parrilla phi c/sep y phi2 c/sep2 (mm). losas (pretensadas): sup en m², alt 12/16, capComp en cm. losas_macizas: ancho/largo (luz libre) m, alto cm, phiX/sepX, phiY/sepY.',
       'campos (opcional): cualquier casilla de la app por su id, ej. "sup-pb": 120, "col-horm-tipo": "H21", "cim-largo": 45.',
+      'niveles (opcional): niveles en uso además de PB, ej. ["PA", "TQ"] (TQ = tanque, N3 = 3° nivel).',
+      'murosExtra (opcional): otros muros {titulo, ladNombre, esp, largo, alto, junta (m), sup:{PB:m², PA:m²}, arm:{on, cada (hiladas), nBar, phi, phiC, sepC (cm), cem, are}}. mampArmP = armado del muro principal (mismos campos que arm).',
+      'cpSectores (opcional): otros contrapisos {nombre, nivel, sup m², esp cm, supC (carpeta m²), arm: no/malla/hierro, malla Q188, phi, sep mm, capas}. techoSectores: {nombre, sup m², aisEsp, carpEsp} (vacío = el general).',
     ],
     obra: {nombre:'Departamentos', propietario:'Nombre del comitente', ubicacion:'San Juan', año:new Date().getFullYear()},
     campos: {'sup-pb': 0, 'sup-pa': 0, 'col-horm-tipo': 'H21'},
+    niveles: ['PA'],
+    murosExtra: [{titulo:'Tabique 10 cm', ladNombre:'Ladrillo hueco 8×18×33', esp:0.08, largo:0.33, alto:0.18, junta:0.015, sup:{PB:20, PA:15}}],
+    cpSectores: [{nombre:'Cochera', nivel:'PB', sup:30, esp:12, supC:0, arm:'malla', malla:'Q188', capas:1}],
+    techoSectores: [{nombre:'Azotea', sup:80, aisEsp:'', carpEsp:''}],
     columnas: [{...ej('columna'), denom:'C1', nivel:'PB', cantElem:4, alt:2.7, altT:3.1}],
     vigas_vf: [{...ej('viga_vf'), denom:'VF1', nivel:'PB', longLibre:5.4, ancho:20, alto:40}],
     vigas_vd: [{...ej('viga_vd'), denom:'V1', nivel:'PB', longLibre:4.2, ancho:20, alto:30}],
